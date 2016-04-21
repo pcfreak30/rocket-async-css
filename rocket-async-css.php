@@ -9,7 +9,7 @@
  * that starts the plugin.
  *
  * @link              http://www.derrickhammer.com
- * @since             0.1.0
+ * @since             0.1.1
  * @package           Rocket_Async_Css
  *
  * @wordpress-plugin
