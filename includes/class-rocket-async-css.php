@@ -75,7 +75,7 @@ class Rocket_Async_Css {
 	public function __construct() {
 
 		$this->plugin_name = 'rocket-async-css';
-		$this->version     = '0.1.0';
+		$this->version     = '0.1.1';
 		$this->load_dependencies();
 		$this->loader->add_action( 'plugins_loaded', $this, 'on_plugins_loaded' );
 		$this->define_public_hooks();
@@ -368,7 +368,7 @@ class Rocket_Async_Css {
 					rocket_mkdir_p( $cache_path );
 				}
 				/** @var DOMElement $tag */
-				foreach ( $tags as $type => $tag_list ) {
+				foreach ( array_reverse( $tags, true ) as $type => $tag_list ) {
 					$css = '';
 					// If we have a user logged in, include user ID in filename to be unique as we may have user only JS content. Otherwise file will be a hash of (minify-global-UNIQUEID).js
 					if ( is_user_logged_in() ) {
