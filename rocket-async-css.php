@@ -9,14 +9,14 @@
  * that starts the plugin.
  *
  * @link              http://www.derrickhammer.com
- * @since             0.1.1
+ * @since             0.1.0
  * @package           Rocket_Async_Css
  *
  * @wordpress-plugin
  * Plugin Name:       WP Rocket ASYNC CSS
  * Plugin URI:        https://github.com/pcfreak30/rocket-async-css
  * Description:       WordPress plugin to combine all CSS load async including inline scripts. Extends WP-Rocket
- * Version:           0.1.0
+ * Version:           0.1.1.1
  * Author:            Derrick Hammer
  * Author URI:        http://www.derrickhammer.com
  * License:           GPL-2.0+
