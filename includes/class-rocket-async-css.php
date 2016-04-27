@@ -387,7 +387,7 @@ class Rocket_Async_Css {
 								// Get host of tag source
 								$href_host = parse_url( $href, PHP_URL_HOST );
 								// Being remote is defined as not having our home url and not being in the CDN list
-								if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) ) {
+								if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) {
 									$file = wp_remote_get( set_url_scheme( $href ), array(
 										'user-agent' => 'WP-Rocket',
 										'sslverify'  => false,
