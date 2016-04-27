@@ -437,6 +437,7 @@ class Rocket_Async_Css {
 					$external_tag->setAttribute( 'as', 'style' );
 					$external_tag->setAttribute( 'data-minify', '1' );
 					$external_tag->setAttribute( 'media', $type );
+					$external_tag->setAttribute( 'onload', "this.rel='stylesheet'" );
 					// Add element at beginning of header
 					$head->insertBefore( $external_tag, $head->firstChild );
 				}
