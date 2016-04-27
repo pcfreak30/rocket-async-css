@@ -75,7 +75,7 @@ class Rocket_Async_Css {
 	public function __construct() {
 
 		$this->plugin_name = 'rocket-async-css';
-		$this->version     = '0.1.1.1';
+		$this->version     = '0.1.2';
 		$this->load_dependencies();
 		$this->loader->add_action( 'plugins_loaded', $this, 'on_plugins_loaded' );
 		$this->define_public_hooks();

@@ -3,8 +3,8 @@ Contributors: pcfreak30
 Donate link: http://www.paypal.me/pcfreak30
 Tags: optimize, wp-rocket, async css
 Requires at least: 4.5
-Tested up to: 4.5
-Stable tag: 0.1.1.1
+Tested up to: 4.5.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,13 @@ This section describes how to install the plugin and get it working.
 4. View HTML source, and test it out!
 
 == Changelog ==
+
+### 0.1.1 ###
+
+* Web fetch dynamic styles being defined as not having a CSS extension
+* Add onload attribute for supported browsers
+* Remove onload attribute since preload isn't supported in csspreload.js
+* Use removeAttribute, don't set to null in csspreload.js
 
 ### 0.1.1 ###
 
