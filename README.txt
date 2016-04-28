@@ -1,10 +1,10 @@
 === Plugin Name ===
 Contributors: pcfreak30
-Donate link: http://www.paypal.me/pcfreak30
+Donate link: https://www.paypal.me/pcfreak30
 Tags: optimize, wp-rocket, async css
 Requires at least: 4.5
 Tested up to: 4.5.1
-Stable tag: 0.1.2
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,16 @@ This section describes how to install the plugin and get it working.
 4. View HTML source, and test it out!
 
 == Changelog ==
+
+### 0.2.0 ###
+
+Changes are code breaking to other plugins using Rocket ASYNC CSS!
+
+* Major refactoring
+* New function wrapper for singleton
+* Initialization runs on plugins_loaded after wp-rocket now (priority 11)
+* Purge cache on deactivation
+* Use constants for version and slug
 
 ### 0.1.1 ###
 
