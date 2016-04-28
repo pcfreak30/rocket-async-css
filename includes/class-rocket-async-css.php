@@ -46,22 +46,6 @@ class Rocket_Async_Css {
 	 * @var      Rocket_Async_Css_Loader $loader Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
-	/**
-	 * The unique identifier of this plugin.
-	 *
-	 * @since    0.1.0
-	 * @access   protected
-	 * @var      string $plugin_name The string used to uniquely identify this plugin.
-	 */
-	protected $plugin_name;
-	/**
-	 * The current version of the plugin.
-	 *
-	 * @since    0.1.0
-	 * @access   protected
-	 * @var      string $version The current version of the plugin.
-	 */
-	protected $version;
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -74,11 +58,14 @@ class Rocket_Async_Css {
 	 */
 	public function __construct() {
 
-		$this->plugin_name = 'rocket-async-css';
-		$this->version     = '0.1.2';
 		$this->load_dependencies();
-		$this->loader->add_action( 'plugins_loaded', $this, 'on_plugins_loaded' );
-		$this->define_public_hooks();
+		if ( $this->required_plugins_loaded() ) {
+			$this->define_public_hooks();
+			if ( is_admin() ) {
+				$this->define_admin_hooks();
+			}
+		}
+		$this->loader->run();
 
 	}
 
@@ -102,6 +89,38 @@ class Rocket_Async_Css {
 	}
 
 	/**
+	 * Hook to detect compatibility and only proceed on success
+	 *
+	 * @since 0.1.0
+	 */
+	public function required_plugins_loaded() {
+		if ( did_action( 'deactivate_' . plugin_basename( plugin_dir_path( plugin_dir_path( __FILE__ ) ) . ROCKET_ASYNC_CSS_SLUG . '.php' ) ) ) {
+			return false;
+		}
+		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		$error         = false;
+		$wprocket_name = 'wp-rocket/wp-rocket.php';
+		if ( validate_plugin( $wprocket_name ) ) {
+			$error = true;
+			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_wprocket' );
+		} else {
+			if ( ! function_exists( 'rocket_init' ) ) {
+				require_once( ABSPATH . 'wp-admin/includes/file.php' );
+				activate_plugins( $wprocket_name );
+			}
+		}
+		if ( ! class_exists( 'DOMDocument' ) ) {
+			$error = true;
+			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_domdocument' );
+		}
+		if ( $error ) {
+			deactivate_plugins( dirname( dirname( __FILE__ ) ) . '/rocket-async-css.php' );
+		}
+
+		return ! $error;
+	}
+
+	/**
 	 * Register all of the hooks related to the public-facing functionality
 	 * of the plugin.
 	 *
@@ -110,30 +129,42 @@ class Rocket_Async_Css {
 	 */
 	private function define_public_hooks() {
 
-		$plugin_public = new Rocket_Async_Css_Public( $this->get_plugin_name(), $this->get_version() );
+		$plugin_public = new Rocket_Async_Css_Public();
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts', PHP_INT_MAX );
-
+		if ( ! is_admin() ) {
+			$this->check_preloaders();
+			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
+			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
+			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
+		}
+		$this->loader->add_filter( 'pre_get_rocket_option_minify_google_fonts', __CLASS__, 'return_one' );
 	}
 
 	/**
-	 * The name of the plugin used to uniquely identify it within the context of
-	 * WordPress and to define internationalization functionality.
+	 * Support multiple preloaders to be extended in the future
 	 *
-	 * @since     0.1.0
-	 * @return    string    The name of the plugin.
+	 * @since 0.1.0
 	 */
-	public function get_plugin_name() {
-		return $this->plugin_name;
+	private function check_preloaders() {
+		foreach ( glob( plugin_dir_path( __FILE__ ) . 'preloaders/*.php' ) as $file ) {
+			$name = pathinfo( $file, PATHINFO_FILENAME );
+			$name = str_replace( '-', '_', str_replace( 'class-', '', $name ) );
+
+			call_user_func( array( $name, 'init' ), $this );
+		}
 	}
 
 	/**
-	 * Retrieve the version number of the plugin.
+	 * Register all of the hooks related to the admin area functionality
+	 * of the plugin.
 	 *
-	 * @since     0.1.0
-	 * @return    string    The version number of the plugin.
+	 * @since    0.2.0
+	 * @access   private
 	 */
-	public function get_version() {
-		return $this->version;
+	private function define_admin_hooks() {
+
+		$this->loader->add_filter( 'pre_get_rocket_option_minify_google_fonts', __CLASS__, 'return_one' );
+
 	}
 
 	/**
@@ -208,57 +239,6 @@ class Rocket_Async_Css {
 	 */
 	public function get_loader() {
 		return $this->loader;
-	}
-
-	/**
-	 * Hook to detect compatibility and only proceed on success
-	 *
-	 * @since 0.1.0
-	 */
-	public function on_plugins_loaded() {
-		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		$error         = false;
-		$wprocket_name = 'wp-rocket/wp-rocket.php';
-		if ( validate_plugin( $wprocket_name ) ) {
-			$error = true;
-			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_wprocket' );
-		} else {
-			if ( ! is_plugin_active( $wprocket_name ) ) {
-				activate_plugins( $wprocket_name );
-			}
-		}
-		if ( ! class_exists( 'DOMDocument' ) ) {
-			$error = true;
-			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_domdocument' );
-		}
-		if ( $error ) {
-			deactivate_plugins( dirname( dirname( __FILE__ ) ) . '/rocket-async-css.php' );
-		}
-		if ( ! $error && ! is_admin() ) {
-			$this->check_preloaders();
-			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
-			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
-			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
-		}
-		if ( is_admin() ) {
-			$this->loader->add_filter( 'pre_get_rocket_option_minify_google_fonts', __CLASS__, 'return_one' );
-		}
-
-		$this->loader->run();
-	}
-
-	/**
-	 * Support multiple preloaders to be extended in the future
-	 *
-	 * @since 0.1.0
-	 */
-	private function check_preloaders() {
-		foreach ( glob( plugin_dir_path( __FILE__ ) . 'preloaders/*.php' ) as $file ) {
-			$name = pathinfo( $file, PATHINFO_FILENAME );
-			$name = str_replace( '-', '_', str_replace( 'class-', '', $name ) );
-
-			call_user_func( array( $name, 'init' ), $this );
-		}
 	}
 
 	/**
