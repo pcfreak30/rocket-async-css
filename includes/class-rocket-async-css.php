@@ -137,7 +137,7 @@ class Rocket_Async_Css {
 			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 		}
-		$this->loader->add_filter( 'pre_get_rocket_option_minify_google_fonts', __CLASS__, 'return_one' );
+
 	}
 
 	/**
@@ -407,6 +407,10 @@ class Rocket_Async_Css {
 							$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 							$css .= $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
 						}
+					}
+					$css = trim( $css );
+					if ( empty( $css ) ) {
+						continue;
 					}
 					rocket_put_content( $filename, $css );
 					$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
