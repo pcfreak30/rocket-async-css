@@ -67,7 +67,6 @@ if ( ! function_exists( 'rocket_async_css_autoloader' ) ):
 	}
 
 	spl_autoload_register( 'rocket_async_css_autoloader' );
-	Rocket_Async_Css::get_instance()->run();
 endif;
 if ( ! function_exists( 'Rocket_async_css_init' ) ):
 
