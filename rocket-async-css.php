@@ -29,7 +29,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'ROCKET_ASYNC_CSS_VERSION', '0.2.1' );
+define( 'ROCKET_ASYNC_CSS_VERSION', '0.2.2' );
 define( 'ROCKET_ASYNC_CSS_SLUG', 'rocket-async-css' );
 
 /**
