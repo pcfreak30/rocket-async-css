@@ -314,22 +314,10 @@ class Rocket_Async_Css {
 				if ( 'style' == $name && has_filter( 'rocket_async_css_process_style' ) && ! apply_filters( 'rocket_async_css_process_style', true, $tag->textContent ) ) {
 					continue;
 				}
-				//Ensure it is an array
-				if ( ! isset( $tags[ $type ] ) || ! is_array( $tags[ $type ] ) ) {
-					$tags[ $type ] = array();
-				}
 				// Add it
-				$tags[ $type ] [] = $tag;
+				$tags[] = [ $type, $tag ];
 			}
-			// See if we actually have anything to do
-			$process = false;
-			foreach ( $tags as $tag_list ) {
-				if ( count( $tag_list ) > 1 ) {
-					$process = true;
-					break;
-				}
-			}
-			if ( $process ) {
+			if ( ! empty( $tags ) ) {
 				//Get inline minify option
 				$minify_inline_css = get_rocket_option( 'minify_html_inline_css', false );
 				// Remote fetch external scripts
@@ -347,71 +335,75 @@ class Rocket_Async_Css {
 				if ( ! is_dir( $cache_path ) ) {
 					rocket_mkdir_p( $cache_path );
 				}
-				/** @var DOMElement $tag */
-				foreach ( array_reverse( $tags, true ) as $type => $tag_list ) {
-					$css = '';
-					// If we have a user logged in, include user ID in filename to be unique as we may have user only JS content. Otherwise file will be a hash of (minify-global-UNIQUEID).js
-					if ( is_user_logged_in() ) {
-						$filename = $cache_path . md5( 'minify-' . get_current_user_id() . '-' . create_rocket_uniqid() ) . '.css';
-					} else {
-						$filename = $cache_path . md5( 'minify-global' . create_rocket_uniqid() ) . '.css';
-					}
-					foreach ( $tag_list as $tag ) {
-						//Remove tag
-						$tag->parentNode->removeChild( $tag );
-						//Get source url
-						$href = $tag->getAttribute( 'href' );
-						if ( 'link' == $tag->tagName && ! empty( $href ) ) {
-							//Prevent duplicates
-							if ( ! in_array( $href, $urls ) ) {
-								// Get host of tag source
-								$href_host = parse_url( $href, PHP_URL_HOST );
-								// Being remote is defined as not having our home url and not being in the CDN list
-								if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) {
-									$file = wp_remote_get( set_url_scheme( $href ), array(
-										'user-agent' => 'WP-Rocket',
-										'sslverify'  => false,
-									) );
-									$css .= $this->_minify_css( $file['body'] );
+				// If we have a user logged in, include user ID in filename to be unique as we may have user only JS content. Otherwise file will be a hash of (minify-global-UNIQUEID).js
+				if ( is_user_logged_in() ) {
+					$filename = $cache_path . md5( 'minify-' . get_current_user_id() . '-' . create_rocket_uniqid() ) . '.css';
+				} else {
+					$filename = $cache_path . md5( 'minify-global' . create_rocket_uniqid() ) . '.css';
+				}
+				$css = '';
+				/** @var array $tag */
+				foreach ( $tags as $item ) {
+					/** @var DOMEvent $tag */
+					list( $type, $tag ) = $item;
+					//Remove tag
+					$tag->parentNode->removeChild( $tag );
+					//Get source url
+					$href = $tag->getAttribute( 'href' );
+					if ( 'link' == $tag->tagName && ! empty( $href ) ) {
+						//Prevent duplicates
+						if ( ! in_array( $href, $urls ) ) {
+							// Get host of tag source
+							$href_host = parse_url( $href, PHP_URL_HOST );
+							// Being remote is defined as not having our home url and not being in the CDN list
+							if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) {
+								$file = wp_remote_get( set_url_scheme( $href ), array(
+									'user-agent' => 'WP-Rocket',
+									'sslverify'  => false,
+								) );
+								$css .= $this->_minify_css( $file['body'] );
+							} else {
+								$href = strtok( $href, '?' );
+								// Break up url
+								$url_parts         = parse_url( $href );
+								$url_parts['host'] = $domain;
+								/*
+								 * Check and see what version of php-http we have.
+								 * 1.x uses procedural functions.
+								 * 2.x uses OOP classes with a http namespace.
+								 * Convert the address to a path, minify, and add to buffer.
+								 */
+
+								if ( class_exists( 'http\Url' ) ) {
+									$url  = new \http\Url( $url_parts );
+									$url  = $url->toString();
+									$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
+									$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
 								} else {
-									$href = strtok( $href, '?' );
-									// Break up url
-									$url_parts         = parse_url( $href );
-									$url_parts['host'] = $domain;
-									/*
-									 * Check and see what version of php-http we have.
-									 * 1.x uses procedural functions.
-									 * 2.x uses OOP classes with a http namespace.
-									 * Convert the address to a path, minify, and add to buffer.
-									 */
-
-									if ( class_exists( 'http\Url' ) ) {
-										$url  = new \http\Url( $url_parts );
-										$url  = $url->toString();
-										$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
-										$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
-									} else {
-										if ( ! function_exists( 'http_build_url' ) ) {
-											require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
-										}
-
-										$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
-										$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
+									if ( ! function_exists( 'http_build_url' ) ) {
+										require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
 									}
-									//Add to array so we don't process again
-									$urls[] = $href;
+
+									$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
+
+									if ( ! empty( $type ) && 'all' != $type ) {
+										$data = '@media ' . $type . ' {' . $data . '}';
+									}
+
+									$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
 								}
+								//Add to array so we don't process again
+								$urls[] = $href;
 							}
-						} else {
-							// Remove any conditional comments for IE that somehow was put in the style tag
-							$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
-							$css .= $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
 						}
+					} else {
+						// Remove any conditional comments for IE that somehow was put in the style tag
+						$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
+						$css .= $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
 					}
-					$css = trim( $css );
-					if ( empty( $css ) ) {
-						continue;
-					}
+				}
+				$css = trim( $css );
+				if ( ! empty( $css ) ) {
 					rocket_put_content( $filename, $css );
 					$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
 					// Create link element
@@ -422,10 +414,12 @@ class Rocket_Async_Css {
 					$external_tag->setAttribute( 'data-minify', '1' );
 					$external_tag->setAttribute( 'media', $type );
 					$external_tag->setAttribute( 'onload', "this.rel='stylesheet'" );
-					// Add element at beginning of header
+					if ( get_rocket_option( 'cdn' ) ) {
+						$external_tag->setAttribute( 'crossorigin', "anonymous" );
+					}
 					$head->insertBefore( $external_tag, $head->firstChild );
+					$buffer = $document->saveHTML();
 				}
-				$buffer = $document->saveHTML();
 
 				$buffer = $this->_inject_ie_conditionals( $buffer, $conditionals );
 			}
