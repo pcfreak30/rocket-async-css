@@ -56,10 +56,14 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
-### 0.3.0 ###
+### 0.3.1 ###
 
 * New minify method to combine to 1 file by wrapping specific media selectors in a @media block
 * Set crossorigin attribute for CORS friendly css if on CDN
+
+### 0.3.0 ###
+
+* Revert to using loadCSS as a inline script and dump the external dependencies
 
 ### 0.2.2 ###
 
