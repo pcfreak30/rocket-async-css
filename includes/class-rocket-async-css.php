@@ -128,9 +128,6 @@ class Rocket_Async_Css {
 	 * @access   private
 	 */
 	private function define_public_hooks() {
-
-		$plugin_public = new Rocket_Async_Css_Public();
-		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts', PHP_INT_MAX );
 		if ( ! is_admin() ) {
 			$this->check_preloaders();
 			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
@@ -407,17 +404,13 @@ class Rocket_Async_Css {
 					rocket_put_content( $filename, $css );
 					$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
 					// Create link element
-					$external_tag = $document->createElement( 'link' );
-					$external_tag->setAttribute( 'rel', 'preload' );
-					$external_tag->setAttribute( 'href', $href );
-					$external_tag->setAttribute( 'as', 'style' );
-					$external_tag->setAttribute( 'data-minify', '1' );
-					$external_tag->setAttribute( 'media', $type );
-					$external_tag->setAttribute( 'onload', "this.rel='stylesheet'" );
-					if ( get_rocket_option( 'cdn' ) ) {
-						$external_tag->setAttribute( 'crossorigin', "anonymous" );
-					}
-					$head->insertBefore( $external_tag, $head->firstChild );
+					$external_tag = $document->createElement( 'script' );
+					$external_tag->setAttribute( 'data-no-minify', '1' );
+					$external_tag->textContent = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
+c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
+
+					$external_tag->textContent .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
+					$head->appendChild( $external_tag );
 					$buffer = $document->saveHTML();
 				}
 
