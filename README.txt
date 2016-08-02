@@ -14,13 +14,13 @@ This is NOT an official addon to WP-Rocket!
 
 == Description ==
 
-This plugin will combine all inline and external CSS in the order found on the page and save it to WP-Rocket's cache folder as a new file. Files are grouped by their media attribute, defaulting to "all" if they have none. Async is powered by [https://github.com/filamentgroup/loadCSS](https://github.com/filamentgroup/loadCSS).
+This plugin will combine all inline and external CSS in the order found on the page and save it to WP-Rocket's cache folder as a new file. Files with media attributes are wrapped in `@media` selectors during processing. Async is powered by [https://github.com/filamentgroup/loadCSS](https://github.com/filamentgroup/loadCSS).
 
 Filters `rocket_async_css_process_style` and `rocket_async_css_process_file` can be used to selectively exclude any inline CSS or external CSS from minify and async loading.
 
 Examples are:
 
-```php
+~~~
 function exclude_css($skip, $css){
     if ( false !== strpos( $css, 'something' ) ) {
 			return false;
@@ -29,12 +29,11 @@ function exclude_css($skip, $css){
 	return $skip;
 }
 add_filter('rocket_async_css_process_style','exclude_css', 10, 2);
-
-```
+~~~
 
 and
 
-```php
+~~~
 function exclude_file($skip, $url){
     if ( 'some url' == $url ) {
 			return false;
@@ -43,8 +42,7 @@ function exclude_file($skip, $url){
 	return $skip;
 }
 add_filter('rocket_async_css_process_style','exclude_file', 10, 2);
-
-```
+~~~
 
 == Installation ==
 
