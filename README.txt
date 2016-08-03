@@ -54,6 +54,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.3.3 ###
+
+* Missing filter to disable WP-Rockets css minify
+
 ### 0.3.2 ###
 
 * Search for stylesheets inside style tags due to possible malform from wprocket and add to tags list
