@@ -54,6 +54,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.3.2 ###
+
+* Search for stylesheets inside style tags due to possible malform from wprocket and add to tags list
+
 ### 0.3.1 ###
 
 * New minify method to combine to 1 file by wrapping specific media selectors in a @media block
