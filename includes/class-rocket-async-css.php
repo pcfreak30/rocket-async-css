@@ -307,10 +307,46 @@ class Rocket_Async_Css {
 						$type = $media;
 					}
 				}
-				// If not a syle tag, or rocket_async_css_process_style return false, move on
-				if ( 'style' == $name && has_filter( 'rocket_async_css_process_style' ) && ! apply_filters( 'rocket_async_css_process_style', true, $tag->textContent ) ) {
-					continue;
+				if ( 'style' == $name ) {
+					// Find any tags
+					if ( preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $tag->textContent ) ) {
+						$sub_document = new DOMDocument();
+						if ( ! @$sub_document->loadHTML( $tag->textContent ) ) {
+							return $buffer;
+						}
+						$sub_xpath = new DOMXpath( $sub_document );
+						$sub_type  = 'all';
+						//Search for link tags
+						foreach ( $sub_xpath->query( '((//link|//LINK)[@rel="stylesheet"])' ) as $sub_tag ) {
+							$sub_media = $tag->getAttribute( 'media' );
+							$sub_href  = $tag->getAttribute( 'href' );
+							// rocket_async_css_process_file return false, or exclude regex/file extension matches, move on
+							$sub_css_url = parse_url( set_url_scheme( $sub_href ) );
+							if ( ( has_filter( 'rocket_async_css_process_file' )
+							       && ! apply_filters( 'rocket_async_css_process_file', $href, true ) ) ||
+							     ( preg_match( '#^(' . $excluded_css . ')$#', $sub_css_url['path'] )
+							       && 'css' == pathinfo( $sub_css_url['path'], PATHINFO_EXTENSION ) )
+							) {
+								continue;
+							}
+							//If we have a media tag, set it to the for grouping
+							if ( 0 < strlen( $sub_media ) ) {
+								$sub_type = $sub_media;
+							}
+							//Import node to primary document
+							$sub_tag = $document->importNode( $sub_tag, true );
+							$head->appendChild( $sub_tag );
+							$tags[] = [ $sub_type, $sub_tag ];
+
+						}
+						$tag->textContent = strip_tags( $tag->textContent );
+					}
+					// If  rocket_async_css_process_style return false, move on
+					if ( has_filter( 'rocket_async_css_process_style' ) && ! apply_filters( 'rocket_async_css_process_style', true, $tag->textContent ) ) {
+						continue;
+					}
 				}
+
 				// Add it
 				$tags[] = [ $type, $tag ];
 			}
