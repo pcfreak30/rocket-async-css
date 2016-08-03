@@ -132,6 +132,7 @@ class Rocket_Async_Css {
 			$this->check_preloaders();
 			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
 			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
+			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 		}
 
