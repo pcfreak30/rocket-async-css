@@ -247,6 +247,7 @@ class Rocket_Async_Css {
 	 * @since 0.1.0
 	 */
 	public function process_css_buffer( $buffer ) {
+		global $rocket_async_css_file;
 		//Disable minify_css option override
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 		//Ensure we actually want to do anything
@@ -448,7 +449,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 					$external_tag->textContent .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
 					$head->appendChild( $external_tag );
-					$buffer = $document->saveHTML();
+					$buffer                = $document->saveHTML();
+					$rocket_async_css_file = $filename;
 				}
 
 				$buffer = $this->_inject_ie_conditionals( $buffer, $conditionals );

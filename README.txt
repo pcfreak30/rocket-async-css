@@ -54,6 +54,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.3.4 ###
+
+* Set generated filename to a global variable `$rocket_async_css_file`
+
 ### 0.3.3 ###
 
 * Missing filter to disable WP-Rockets css minify
