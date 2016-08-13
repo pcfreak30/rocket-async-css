@@ -309,6 +309,16 @@ class Rocket_Async_Css {
 						$type = $media;
 					}
 				}
+				foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
+					if ( in_array( $type_item, array(
+						'screen',
+						'projection'
+					) ) ) {
+						$type = 'all';
+					}
+					break;
+				}
+
 				if ( 'style' == $name ) {
 					// Find any tags
 					if ( preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $tag->textContent ) ) {
@@ -334,6 +344,15 @@ class Rocket_Async_Css {
 							//If we have a media tag, set it to the for grouping
 							if ( 0 < strlen( $sub_media ) ) {
 								$sub_type = $sub_media;
+							}
+							foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
+								if ( in_array( $type_item, array(
+									'screen',
+									'projection'
+								) ) ) {
+									$type = 'all';
+								}
+								break;
 							}
 							//Import node to primary document
 							$sub_tag = $document->importNode( $sub_tag, true );
