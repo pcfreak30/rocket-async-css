@@ -3,8 +3,8 @@ Contributors: pcfreak30
 Donate link: https://www.paypal.me/pcfreak30
 Tags: optimize, wp-rocket, async css
 Requires at least: 4.5
-Tested up to: 4.5.1
-Stable tag: 0.3.5.1
+Tested up to: 4.6
+Stable tag: 0.3.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,10 @@ This section describes how to install the plugin and get it working.
 4. View HTML source, and test it out!
 
 == Changelog ==
+
+### 0.3.6 ###
+
+* Fix argument order of rocket_async_css_process_file filter
 
 ### 0.3.5.1 ###
 
