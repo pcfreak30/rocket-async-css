@@ -293,7 +293,7 @@ class Rocket_Async_Css {
 					// If not a stylesheet, rocket_async_css_process_file return false, or exclude regex/file extension matches, move on
 					if ( 'stylesheet' != $rel
 					     || ( has_filter( 'rocket_async_css_process_file' )
-					          && ! apply_filters( 'rocket_async_css_process_file', $href, true ) ) ||
+					          && ! apply_filters( 'rocket_async_css_process_file', true, $href ) ) ||
 					     ( preg_match( '#^(' . $excluded_css . ')$#', $css_url['path'] )
 					       && 'css' == pathinfo( $css_url['path'], PATHINFO_EXTENSION ) )
 					) {
@@ -335,7 +335,7 @@ class Rocket_Async_Css {
 							// rocket_async_css_process_file return false, or exclude regex/file extension matches, move on
 							$sub_css_url = parse_url( set_url_scheme( $sub_href ) );
 							if ( ( has_filter( 'rocket_async_css_process_file' )
-							       && ! apply_filters( 'rocket_async_css_process_file', $href, true ) ) ||
+							       && ! apply_filters( 'rocket_async_css_process_file', true, $href ) ) ||
 							     ( preg_match( '#^(' . $excluded_css . ')$#', $sub_css_url['path'] )
 							       && 'css' == pathinfo( $sub_css_url['path'], PATHINFO_EXTENSION ) )
 							) {
