@@ -247,7 +247,7 @@ class Rocket_Async_Css {
 	 * @since 0.1.0
 	 */
 	public function process_css_buffer( $buffer ) {
-		global $rocket_async_css_file;
+		global $rocket_async_css_file, $wpml_url_filters;
 		//Disable minify_css option override
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 		//Ensure we actually want to do anything
@@ -265,6 +265,9 @@ class Rocket_Async_Css {
 			$tags  = array();
 			$urls  = array();
 			//Get home URL
+			if ( ! empty( $wpml_url_filters ) ) {
+				remove_filter( 'home_url', [ $wpml_url_filters, 'home_url_filter' ], - 10 );
+			}
 			$home = home_url();
 			// Get our domain
 			$domain = parse_url( $home, PHP_URL_HOST );
@@ -475,7 +478,9 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 				$buffer = $this->_inject_ie_conditionals( $buffer, $conditionals );
 			}
-
+			if ( ! empty( $wpml_url_filters ) ) {
+				add_filter( 'home_url', [ $wpml_url_filters, 'home_url_filter' ], - 10 );
+			}
 		}
 
 		return $buffer;
