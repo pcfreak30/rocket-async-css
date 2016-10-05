@@ -266,7 +266,7 @@ class Rocket_Async_Css {
 			$urls  = array();
 			//Get home URL
 			if ( ! empty( $wpml_url_filters ) ) {
-				remove_filter( 'home_url', [ $wpml_url_filters, 'home_url_filter' ], - 10 );
+				remove_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
 			}
 			$home = home_url();
 			// Get our domain
@@ -313,10 +313,10 @@ class Rocket_Async_Css {
 					}
 				}
 				foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
-					if ( in_array( $type_item, array(
+					if ( in_array( $type_item, [
 						'screen',
-						'projection'
-					) ) ) {
+						'projection',
+					] ) ) {
 						$type = 'all';
 					}
 					break;
@@ -349,10 +349,10 @@ class Rocket_Async_Css {
 								$sub_type = $sub_media;
 							}
 							foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
-								if ( in_array( $type_item, array(
+								if ( in_array( $type_item, [
 									'screen',
-									'projection'
-								) ) ) {
+									'projection',
+								] ) ) {
 									$type = 'all';
 								}
 								break;
@@ -360,7 +360,7 @@ class Rocket_Async_Css {
 							//Import node to primary document
 							$sub_tag = $document->importNode( $sub_tag, true );
 							$head->appendChild( $sub_tag );
-							$tags[] = [ $sub_type, $sub_tag ];
+							$tags[] = array( $sub_type, $sub_tag );
 
 						}
 						$tag->textContent = strip_tags( $tag->textContent );
@@ -372,7 +372,7 @@ class Rocket_Async_Css {
 				}
 
 				// Add it
-				$tags[] = [ $type, $tag ];
+				$tags[] = array( $type, $tag );
 			}
 			if ( ! empty( $tags ) ) {
 				//Get inline minify option
@@ -414,11 +414,11 @@ class Rocket_Async_Css {
 							$href_host = parse_url( $href, PHP_URL_HOST );
 							// Being remote is defined as not having our home url and not being in the CDN list
 							if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) {
-								$file = wp_remote_get( set_url_scheme( $href ), array(
+								$file = wp_remote_get( set_url_scheme( $href ), [
 									'user-agent' => 'WP-Rocket',
 									'sslverify'  => false,
-								) );
-								$css .= $this->_minify_css( $file['body'] );
+								] );
+								$css .= $this->_minify_css( $file['body'], array(), false );
 							} else {
 								$href = strtok( $href, '?' );
 								// Break up url
@@ -435,20 +435,21 @@ class Rocket_Async_Css {
 									$url  = new \http\Url( $url_parts );
 									$url  = $url->toString();
 									$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
-									$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
 								} else {
 									if ( ! function_exists( 'http_build_url' ) ) {
 										require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
 									}
 
 									$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
-
-									if ( ! empty( $type ) && 'all' != $type ) {
-										$data = '@media ' . $type . ' {' . $data . '}';
-									}
-
-									$css .= $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
 								}
+
+								if ( ! empty( $type ) && 'all' != $type ) {
+									$data = '@media ' . $type . ' {' . $data . '}';
+								}
+
+								$data = $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
+
+								$css .= $data;
 								//Add to array so we don't process again
 								$urls[] = $href;
 							}
@@ -479,7 +480,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 				$buffer = $this->_inject_ie_conditionals( $buffer, $conditionals );
 			}
 			if ( ! empty( $wpml_url_filters ) ) {
-				add_filter( 'home_url', [ $wpml_url_filters, 'home_url_filter' ], - 10 );
+				add_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
 			}
 		}
 
@@ -509,18 +510,60 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	/**
 	 * Wrapper method to ensure autoloader is registered, and use Minify_CSS class instead since it rewrites urls
 	 *
-	 * @param $css
+	 * @param       $css
 	 * @param array $options
+	 *
+	 * @param bool $local
 	 *
 	 * @return string
 	 */
-	private function _minify_css( $css, $options = array() ) {
+	private function _minify_css( $css, $options = array(), $local = true ) {
 		if ( ! class_exists( 'Minify_Loader' ) ) {
 			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
 			Minify_Loader::register();
 		}
+		$css = Minify_CSS::minify( $css, $options );
+		if ( $local ) {
+			$css = $this->_parse_css_imports( $css, $local );
+		}
 
-		return Minify_CSS::minify( $css, $options );
+		return $css;
+	}
+
+	/**
+	 * Process all css imports recursively wth regex
+	 *
+	 * @param $css
+	 *
+	 * @param $local
+	 *
+	 * @return mixed
+	 * @since 0.3.9
+	 */
+	private function _parse_css_imports( $css, $local ) {
+		$home = home_url();
+		preg_match_all( '/@import\s*(?:url\s*\()?["\'](.*?)["\']\)?\s*;/', $css, $matches );
+		//Ensure there are matches
+		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			foreach ( $matches[1] as $pos => $match ) {
+				// Ensure not an empty string
+				if ( ! empty( $match ) ) {
+					// Is this a URL? If so replace with ABSPATH since this only runs for local files
+					if ( parse_url( $match, PHP_URL_HOST ) ) {
+						$match = str_replace( $home, ABSPATH, $match[1] );
+					}
+					// Create path
+					$path          = untrailingslashit( ABSPATH ) . $match;
+					$imported_data = $this->_get_content( $path );
+					// Process css to minify it, passing the path of the found file
+					$imported_data = $this->_minify_css( $imported_data, array( 'prependRelativePath' => trailingslashit( dirname( $match ) ) ), $local );
+					// Replace match wth fetched css
+					$css = str_replace( $matches[0][ $pos ], $imported_data, $css );
+				}
+			}
+		}
+
+		return $css;
 	}
 
 	/**
@@ -535,7 +578,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	private function _get_content( $file ) {
 		require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php' );
 		require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php' );
-		$direct_filesystem = new WP_Filesystem_Direct( new StdClass() );
+		$direct_filesystem = new WP_Filesystem_Direct( null );
 
 		return $direct_filesystem->get_contents( $file );
 	}
