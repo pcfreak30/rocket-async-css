@@ -132,6 +132,12 @@ class Rocket_Async_Css {
 			$this->check_preloaders();
 			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
 			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
+
+			//A hack to get all revolution sliders to load on window load, not document load
+			if ( shortcode_exists( 'rev_slider' ) ) {
+				remove_shortcode( 'rev_slider' );
+				$this->loader->add_action( 'init', $this, 'rev_slider_compatibility' );
+			}
 			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 		}
@@ -604,7 +610,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	}
 
 	/**
-	 * Callbavk to prevent wp-admin bar from getting async loaded since the inline css is so small
+	 * Callback to prevent wp-admin bar from getting async loaded since the inline css is so small
 	 *
 	 * @param $skip
 	 * @param $css
@@ -640,5 +646,11 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	<div class="error notice">
 		<p>Opps! %s requires PHP XML extension! Please contact your web host or system administrator to get this installed.</p>
 	</div>', $info['Name'] ) );
+	}
+
+	public function rev_slider_compatibility() {
+		$output = str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', call_user_func_array( 'rev_slider_shortcode', func_get_args() ) );
+
+		return $output;
 	}
 }
