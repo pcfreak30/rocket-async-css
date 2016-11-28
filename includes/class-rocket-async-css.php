@@ -254,6 +254,10 @@ class Rocket_Async_Css {
 	 */
 	public function process_css_buffer( $buffer ) {
 		global $rocket_async_css_file, $wpml_url_filters;
+		//Get debug status
+		$display_errors = ini_get( 'display_errors' );
+		$display_errors = ! empty( $display_errors ) && 'off' !== $display_errors;
+		$debug          = ( defined( 'WP_DEBUG' ) && WP_DEBUG || $display_errors );
 		//Disable minify_css option override
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 		//Ensure we actually want to do anything
@@ -423,8 +427,19 @@ class Rocket_Async_Css {
 								$file = wp_remote_get( set_url_scheme( $href ), [
 									'user-agent' => 'WP-Rocket',
 									'sslverify'  => false,
-								] );
-								$css .= $this->_minify_css( $file['body'], array(), false );
+								] );                                    // Catch Error
+								if ( $file instanceof \WP_Error || ( is_array( $file ) && ( empty( $file['response']['code'] ) || ! in_array( $file['response']['code'], [
+												200,
+												304,
+											] ) ) )
+								) {
+									// Only log if debug mode is on
+									if ( $debug ) {
+										error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
+									}
+								} else {
+									$css .= $this->_minify_css( $file['body'], array(), false );
+								}
 							} else {
 								$href = strtok( $href, '?' );
 								// Break up url
