@@ -136,7 +136,7 @@ class Rocket_Async_Css {
 			//A hack to get all revolution sliders to load on window load, not document load
 			if ( shortcode_exists( 'rev_slider' ) ) {
 				remove_shortcode( 'rev_slider' );
-				$this->loader->add_action( 'init', $this, 'rev_slider_compatibility' );
+				add_shortcode( 'rev_slider', array( $this, 'rev_slider_compatibility' ) );
 			}
 			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
