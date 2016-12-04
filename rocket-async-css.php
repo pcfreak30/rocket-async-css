@@ -16,7 +16,7 @@
  * Plugin Name:       WP Rocket ASYNC CSS
  * Plugin URI:        https://github.com/pcfreak30/rocket-async-css
  * Description:       WordPress plugin to combine all CSS load async including inline scripts. Extends WP-Rocket
- * Version:           0.3.12
+ * Version:           0.4.0
  * Author:            Derrick Hammer
  * Author URI:        http://www.derrickhammer.com
  * License:           GPL-2.0+
@@ -29,14 +29,11 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'ROCKET_ASYNC_CSS_VERSION', '0.3.12' );
-define( 'ROCKET_ASYNC_CSS_SLUG', 'rocket-async-css' );
-
 /**
  * Activation hooks
  */
-register_activation_hook( __FILE__, array( 'Rocket_Async_Css_Activator', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'Rocket_Async_Css_Deactivator', 'deactivate' ) );
+register_activation_hook( __FILE__, array( 'Rocket_Async_Css', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'Rocket_Async_Css', 'deactivate' ) );
 
 /**
  * Autoloader function
@@ -68,18 +65,6 @@ if ( ! function_exists( 'rocket_async_css_autoloader' ) ):
 
 	spl_autoload_register( 'rocket_async_css_autoloader' );
 endif;
-if ( ! function_exists( 'Rocket_async_css_init' ) ):
-
-	/**
-	 * Function to initialize plugin
-	 */
-	function Rocket_async_css_init() {
-		rocket_async_css()->run();
-	}
-
-	add_action( 'plugins_loaded', 'rocket_async_css_init', 11 );
-
-endif;
 if ( ! function_exists( 'Rocket_async_css' ) ):
 
 	/**
@@ -88,7 +73,9 @@ if ( ! function_exists( 'Rocket_async_css' ) ):
 	 * @return Rocket_async_css
 	 */
 	function rocket_async_css() {
-		return Rocket_async_css::get_instance();
+		return Rocket_Async_Css::get_instance();
 	}
+
+	add_action( 'plugins_loaded', 'rocket_async_css', 11 );
 
 endif;

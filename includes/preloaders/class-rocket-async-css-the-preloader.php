@@ -25,8 +25,8 @@ class Rocket_Async_Css_The_Preloader {
 	 */
 	public static function init( Rocket_Async_Css $core ) {
 		if ( is_plugin_active( 'the-preloader/preloader.php' ) || function_exists( 'WPTime_plugin_preloader_script' ) ) {
-			$core->get_loader()->add_filter( 'rocket_async_css_process_style', __CLASS__, 'check_css', 10, 2 );
-			$core->get_loader()->add_action( 'rocket_buffer', __CLASS__, 'inject_div' );
+			add_filter( 'rocket_async_css_process_style', array( __CLASS__, 'check_css' ), 10, 2 );
+			add_action( 'rocket_buffer', array( __CLASS__, 'inject_div' ) );
 		}
 
 	}

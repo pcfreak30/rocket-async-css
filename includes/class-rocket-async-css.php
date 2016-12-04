@@ -30,6 +30,10 @@
 class Rocket_Async_Css {
 
 	/**
+	 * Plugin version
+	 */
+	const VERSION = '0.4.0';
+	/**
 	 * The current version of the plugin.
 	 *
 	 * @since    0.1.0
@@ -37,15 +41,6 @@ class Rocket_Async_Css {
 	 * @var      Rocket_Async_Css $_instance Instance singleton.
 	 */
 	protected static $_instance;
-	/**
-	 * The loader that's responsible for maintaining and registering all hooks that power
-	 * the plugin.
-	 *
-	 * @since    0.1.0
-	 * @access   protected
-	 * @var      Rocket_Async_Css_Loader $loader Maintains and registers all hooks for the plugin.
-	 */
-	protected $loader;
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -57,35 +52,12 @@ class Rocket_Async_Css {
 	 * @since    0.1.0
 	 */
 	public function __construct() {
-
-		$this->load_dependencies();
 		if ( $this->required_plugins_loaded() ) {
 			$this->define_public_hooks();
 			if ( is_admin() ) {
 				$this->define_admin_hooks();
 			}
 		}
-		$this->loader->run();
-
-	}
-
-	/**
-	 * Load the required dependencies for this plugin.
-	 *     *
-	 * Create an instance of the loader which will be used to register the hooks
-	 * with WordPress.
-	 *
-	 * @since    0.1.0
-	 * @access   private
-	 */
-	private function load_dependencies() {
-
-		/**
-		 * The class responsible for orchestrating the actions and filters of the
-		 * core plugin.
-		 */
-		$this->loader = new Rocket_Async_Css_Loader();
-
 	}
 
 	/**
@@ -94,7 +66,7 @@ class Rocket_Async_Css {
 	 * @since 0.1.0
 	 */
 	public function required_plugins_loaded() {
-		if ( did_action( 'deactivate_' . plugin_basename( plugin_dir_path( plugin_dir_path( __FILE__ ) ) . ROCKET_ASYNC_CSS_SLUG . '.php' ) ) ) {
+		if ( did_action( 'deactivate_' . plugin_basename( plugin_dir_path( plugin_dir_path( __FILE__ ) ) . 'rocket-async-css.php' ) ) ) {
 			return false;
 		}
 		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -102,7 +74,7 @@ class Rocket_Async_Css {
 		$wprocket_name = 'wp-rocket/wp-rocket.php';
 		if ( validate_plugin( $wprocket_name ) ) {
 			$error = true;
-			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_wprocket' );
+			add_action( 'admin_notices', array( $this, '_activate_error_no_wprocket' ) );
 		} else {
 			if ( ! function_exists( 'rocket_init' ) ) {
 				require_once( ABSPATH . 'wp-admin/includes/file.php' );
@@ -111,7 +83,7 @@ class Rocket_Async_Css {
 		}
 		if ( ! class_exists( 'DOMDocument' ) ) {
 			$error = true;
-			$this->loader->add_action( 'admin_notices', $this, '_activate_error_no_domdocument' );
+			add_action( 'admin_notices', array( $this, '_activate_error_no_domdocument' ) );
 		}
 		if ( $error ) {
 			deactivate_plugins( dirname( dirname( __FILE__ ) ) . '/rocket-async-css.php' );
@@ -130,8 +102,8 @@ class Rocket_Async_Css {
 	private function define_public_hooks() {
 		if ( ! is_admin() ) {
 			$this->check_preloaders();
-			$this->loader->add_filter( 'rocket_async_css_process_style', $this, 'exclude_wpadminbar', 10, 2 );
-			$this->loader->add_filter( 'rocket_buffer', $this, 'process_css_buffer', PHP_INT_MAX - 1 );
+			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
+			add_filter( 'rocket_buffer', array( $this, 'process_css_buffer' ), PHP_INT_MAX - 1 );
 
 			//A hack to get all revolution sliders to load on window load, not document load
 			if ( shortcode_exists( 'rev_slider' ) ) {
@@ -141,7 +113,8 @@ class Rocket_Async_Css {
 			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 		}
-
+		add_action( 'after_rocket_clean_domain', array( $this, 'prune_transients' ) );
+		add_action( 'after_rocket_clean_post', array( $this, 'prune_prune_post_transients' ) );
 	}
 
 	/**
@@ -167,19 +140,8 @@ class Rocket_Async_Css {
 	 */
 	private function define_admin_hooks() {
 
-		$this->loader->add_filter( 'pre_get_rocket_option_minify_google_fonts', __CLASS__, 'return_one' );
+		add_filter( 'pre_get_rocket_option_minify_google_fonts', array( __CLASS__, 'return_one' ) );
 
-	}
-
-	/**
-	 * @return Rocket_Async_Css
-	 */
-	public static function get_instance() {
-		if ( ! self::$_instance ) {
-			self::$_instance = new self;
-		}
-
-		return self::$_instance;
 	}
 
 	/**
@@ -227,12 +189,28 @@ class Rocket_Async_Css {
 	}
 
 	/**
-	 * Run the loader to execute all of the hooks with WordPress.
 	 *
-	 * @since    0.1.0
 	 */
-	public function run() {
-		$this->loader->run();
+	public static function activate() {
+		add_action( 'activated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
+	}
+
+	/**
+	 * @return Rocket_Async_Css
+	 */
+	public static function get_instance() {
+		if ( ! self::$_instance ) {
+			self::$_instance = new self;
+		}
+
+		return self::$_instance;
+	}
+
+	/**
+	 *
+	 */
+	public static function deactivate() {
+		add_action( 'activated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
 	}
 
 	/**
@@ -262,6 +240,7 @@ class Rocket_Async_Css {
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 		//Ensure we actually want to do anything
 		if ( get_rocket_option( 'minify_css' ) && ( ! defined( 'DONOTMINIFYCSS' ) || ! DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
+
 			//Custom extract method based on wp-rockets
 			list( $buffer, $conditionals ) = $this->_extract_ie_conditionals( $buffer );
 
@@ -316,6 +295,7 @@ class Rocket_Async_Css {
 					if ( 0 < strlen( $media ) ) {
 						$type = $media;
 					}
+					$urls[] = $href;
 				} else {
 					//If we have a media tag, set it to the for grouping
 					if ( 0 < strlen( $media ) ) {
@@ -371,6 +351,7 @@ class Rocket_Async_Css {
 							$sub_tag = $document->importNode( $sub_tag, true );
 							$head->appendChild( $sub_tag );
 							$tags[] = array( $sub_type, $sub_tag );
+							$urls[] = $sub_href;
 
 						}
 						$tag->textContent = strip_tags( $tag->textContent );
@@ -385,120 +366,191 @@ class Rocket_Async_Css {
 				$tags[] = array( $type, $tag );
 			}
 			if ( ! empty( $tags ) ) {
-				//Get inline minify option
-				$minify_inline_css = get_rocket_option( 'minify_html_inline_css', false );
-				// Remote fetch external scripts
-				$cdn_domains = get_rocket_cdn_cnames();
-				// Get the hostname for each CDN CNAME
-				foreach ( $cdn_domains as &$cdn_domain ) {
-					$cdn_domain_parts = parse_url( $cdn_domain );
-					$cdn_domain       = $cdn_domain_parts['host'];
-				}
-				// Cleanup
-				unset( $cdn_domain_parts, $cdn_domain );
-				// Get our cache path
-				$cache_path = WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . '/';
-				// Create cache dir if needed
-				if ( ! is_dir( $cache_path ) ) {
-					rocket_mkdir_p( $cache_path );
-				}
-				// If we have a user logged in, include user ID in filename to be unique as we may have user only JS content. Otherwise file will be a hash of (minify-global-UNIQUEID).js
-				if ( is_user_logged_in() ) {
-					$filename = $cache_path . md5( 'minify-' . get_current_user_id() . '-' . create_rocket_uniqid() ) . '.css';
+				// Check post cache
+				$post_cache_id_hash = md5( serialize( $urls ) );
+				$post_cache_id      = 'wp_rocket_footer_js_script_';
+				if ( is_singular() ) {
+					$post_cache_id .= 'post_' . get_the_ID();
+				} else if ( is_tag() || is_category() || is_tax() ) {
+					$post_cache_id .= 'tax_' . get_queried_object()->term_id;
+				} else if ( is_author() ) {
+					$post_cache_id .= 'author_' . get_the_author_meta( 'ID' );
 				} else {
-					$filename = $cache_path . md5( 'minify-global' . create_rocket_uniqid() ) . '.css';
+					$post_cache_id .= 'generic';
 				}
-				$css = '';
-				/** @var array $tag */
-				foreach ( $tags as $item ) {
-					/** @var DOMEvent $tag */
-					list( $type, $tag ) = $item;
-					//Remove tag
-					$tag->parentNode->removeChild( $tag );
-					//Get source url
-					$href = $tag->getAttribute( 'href' );
-					if ( 'link' == $tag->tagName && ! empty( $href ) ) {
-						//Prevent duplicates
-						if ( ! in_array( $href, $urls ) ) {
-							// Get host of tag source
-							$href_host = parse_url( $href, PHP_URL_HOST );
-							// Being remote is defined as not having our home url and not being in the CDN list
-							if ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) {
-								$file = wp_remote_get( set_url_scheme( $href ), [
-									'user-agent' => 'WP-Rocket',
-									'sslverify'  => false,
-								] );                                    // Catch Error
-								if ( $file instanceof \WP_Error || ( is_array( $file ) && ( empty( $file['response']['code'] ) || ! in_array( $file['response']['code'], [
-												200,
-												304,
-											] ) ) )
-								) {
-									// Only log if debug mode is on
-									if ( $debug ) {
-										error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
-									}
-								} else {
-									$css .= $this->_minify_css( $file['body'], array(), false );
-								}
-							} else {
-								$href = strtok( $href, '?' );
-								// Break up url
-								$url_parts         = parse_url( $href );
-								$url_parts['host'] = $domain;
-								/*
-								 * Check and see what version of php-http we have.
-								 * 1.x uses procedural functions.
-								 * 2.x uses OOP classes with a http namespace.
-								 * Convert the address to a path, minify, and add to buffer.
-								 */
-
-								if ( class_exists( 'http\Url' ) ) {
-									$url  = new \http\Url( $url_parts );
-									$url  = $url->toString();
-									$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
-								} else {
-									if ( ! function_exists( 'http_build_url' ) ) {
-										require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
-									}
-
-									$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
-								}
-
-								if ( ! empty( $type ) && 'all' != $type ) {
-									$data = '@media ' . $type . ' {' . $data . '}';
-								}
-
-								$data = $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
-
-								$css .= $data;
-								//Add to array so we don't process again
-								$urls[] = $href;
-							}
-						}
-					} else {
-						// Remove any conditional comments for IE that somehow was put in the style tag
-						$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
-						$css .= $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
+				$post_cache_id .= '_' . $post_cache_id_hash;
+				$post_cache = get_transient( $post_cache_id );
+				if ( ! empty( $post_cache ) ) {
+					// Cached file is gone, we dont have cache
+					if ( ! file_exists( $post_cache['filename'] ) ) {
+						$post_cache = false;
 					}
 				}
-				$css = trim( $css );
-				if ( ! empty( $css ) ) {
-					rocket_put_content( $filename, $css );
-					$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
-					// Create link element
-					$external_tag = $document->createElement( 'script' );
-					$external_tag->setAttribute( 'data-no-minify', '1' );
-					$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
+				if ( empty( $post_cache ) ) {
+					$urls = array();
+					//Get inline minify option
+					$minify_inline_css = get_rocket_option( 'minify_html_inline_css', false );
+					// Remote fetch external scripts
+					$cdn_domains = get_rocket_cdn_cnames();
+					// Get the hostname for each CDN CNAME
+					foreach ( $cdn_domains as &$cdn_domain ) {
+						$cdn_domain_parts = parse_url( $cdn_domain );
+						$cdn_domain       = $cdn_domain_parts['host'];
+					}
+					// Cleanup
+					unset( $cdn_domain_parts, $cdn_domain );
+					// Get our cache path
+					$cache_path = WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . '/';
+					// Create cache dir if needed
+					if ( ! is_dir( $cache_path ) ) {
+						rocket_mkdir_p( $cache_path );
+					}
+					// If we have a user logged in, include user ID in filename to be unique as we may have user only JS content. Otherwise file will be a hash of (minify-global-UNIQUEID).js
+					if ( is_user_logged_in() ) {
+						$filename = $cache_path . md5( 'minify-' . get_current_user_id() . '-' . create_rocket_uniqid() ) . '.css';
+					} else {
+						$filename = $cache_path . md5( 'minify-global' . create_rocket_uniqid() ) . '.css';
+					}
+					$css = '';
+					/** @var array $tag */
+					foreach ( $tags as $item ) {
+						/** @var DOMEvent $tag */
+						list( $type, $tag ) = $item;
+						//Remove tag
+						$tag->parentNode->removeChild( $tag );
+						//Get source url
+						$href = $tag->getAttribute( 'href' );
+						if ( 'link' == $tag->tagName && ! empty( $href ) ) {
+							if ( 0 === strpos( $href, '//' ) ) {
+								//Handle no protocol urls
+								$href = rocket_add_url_protocol( $href );
+							}
+							//Prevent duplicates
+							if ( ! in_array( $href, $urls ) ) {
+								// Get host of tag source
+								$href_host = parse_url( $href, PHP_URL_HOST );
+								// Being remote is defined as not having our home url, not being relative and not being in the CDN list
+								if ( 0 != strpos( $href, '/' ) && ( ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
+									// Check item cache
+									$item_cache_id = md5( $href );
+									$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
+									$item_cache    = get_transient( $item_cache_id );
+									$css_part      = '';
+									// Only run if there is no item cache
+									if ( empty( $item_cache ) ) {
+										$file = wp_remote_get( set_url_scheme( $href ), [
+											'user-agent' => 'WP-Rocket',
+											'sslverify'  => false,
+										] );                                    // Catch Error
+										if ( $file instanceof \WP_Error || ( is_array( $file ) && ( empty( $file['response']['code'] ) || ! in_array( $file['response']['code'], [
+														200,
+														304,
+													] ) ) )
+										) {
+											// Only log if debug mode is on
+											if ( $debug ) {
+												error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
+											}
+										} else {
+											$css_part = $this->_minify_css( $file['body'], array(), false );
+											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
+										}
+									} else {
+										$css_part = $item_cache;
+
+									}
+									if ( ! empty( $css_part ) ) {
+										$css .= $css_part;
+									}
+								} else {
+									if ( 0 == strpos( $href, '/' ) ) {
+										$href = $home . $href;
+									}
+									$item_cache_id = md5( $href );
+									$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
+									$item_cache    = get_transient( $item_cache_id );
+									// Only run if there is no item cache
+									if ( empty( $item_cache ) ) {
+										$href = strtok( $href, '?' );
+										// Break up url
+										$url_parts         = parse_url( $href );
+										$url_parts['host'] = $domain;
+										/*
+										 * Check and see what version of php-http we have.
+										 * 1.x uses procedural functions.
+										 * 2.x uses OOP classes with a http namespace.
+										 * Convert the address to a path, minify, and add to buffer.
+										 */
+
+										if ( class_exists( 'http\Url' ) ) {
+											$url  = new \http\Url( $url_parts );
+											$url  = $url->toString();
+											$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
+										} else {
+											if ( ! function_exists( 'http_build_url' ) ) {
+												require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
+											}
+
+											$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
+										}
+
+										if ( ! empty( $type ) && 'all' != $type ) {
+											$data = '@media ' . $type . ' {' . $data . '}';
+										}
+
+										$data = $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
+										set_transient( $item_cache_id, $data, get_rocket_purge_cron_interval() );
+									} else {
+										$data = $item_cache;
+									}
+									$css .= $data;
+									//Add to array so we don't process again
+									$urls[] = $href;
+								}
+							}
+						} else {
+							// Check item cache
+							$item_cache_id = md5( $tag->textContent );
+							$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
+							$item_cache    = get_transient( $item_cache_id );
+							// Only run if there is no item cache
+							if ( empty( $item_cache ) ) {
+								// Remove any conditional comments for IE that somehow was put in the style tag
+								$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
+								$css_part = $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
+								$css .= $css_part;
+								set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
+							} else {
+								$css .= $item_cache;
+							}
+
+						}
+					}
+				}
+				/** @var string $filename */
+				// Only run if there is no item cache
+				if ( empty( $post_cache ) ) {
+					$css = trim( $css );
+					if ( ! empty( $css ) ) {
+						rocket_put_content( $filename, $css );
+						$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
+						set_transient( $post_cache_id, compact( 'filename', 'href' ), get_rocket_purge_cron_interval() );
+					}
+				} else {
+					extract( $post_cache );
+				}
+				// Create link element
+				$external_tag = $document->createElement( 'script' );
+				$external_tag->setAttribute( 'data-no-minify', '1' );
+				$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
 c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
 
-					$js .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
-					$external_tag->appendChild( $document->createTextNode( $js ) );
-					$head->appendChild( $external_tag );
-					$buffer                = $document->saveHTML();
-					$rocket_async_css_file = $filename;
-				}
-
-				$buffer = $this->_inject_ie_conditionals( $buffer, $conditionals );
+				$js .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
+				$external_tag->appendChild( $document->createTextNode( $js ) );
+				$head->appendChild( $external_tag );
+				$buffer                = $document->saveHTML();
+				$rocket_async_css_file = $filename;
+				$buffer                = $this->_inject_ie_conditionals( $buffer, $conditionals );
 			}
 			if ( ! empty( $wpml_url_filters ) ) {
 				add_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
@@ -663,9 +715,24 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	</div>', $info['Name'] ) );
 	}
 
+	/**
+	 * @return mixed
+	 */
 	public function rev_slider_compatibility() {
 		$output = str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', call_user_func_array( 'rev_slider_shortcode', func_get_args() ) );
 
 		return $output;
+	}
+
+	public function prune_transients() {
+		global $wpdb;
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_wp_rocket_async_css_style_%', '_transient_timeout_wp_rocket_async_css_style_%' ) );
+		wp_cache_flush();
+	}
+
+	public function prune_prune_post_transients( $post ) {
+		global $wpdb;
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_{$post->ID}%" ) );
+		wp_cache_flush();
 	}
 }

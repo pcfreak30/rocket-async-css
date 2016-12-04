@@ -56,6 +56,27 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.0 ###
+
+* Near complete refactor of plugin structure to remove un-needed code
+* Add new minify cache system to reduce computation time required to minify a page
+
+**Notice: This new cache system could cause unknown issues. While it has been tested, not every situation can be accounted for. Contact me if you hit a problem.**
+
+**Notice: Cache is stored in transients, so only a normal wp-rocket purge will clear everything**
+
+### 0.3.12 ###
+
+* Bug fix revolution slider compatibility
+
+### 0.3.11 ###
+
+* Add compatibility support for revolution slider
+
+### 0.3.10 ###
+
+* Check for relative URL's
+
 ### 0.3.9 ###
 
 * Ensure normal array styles are used
