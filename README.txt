@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.1 ###
+
+* Inject javascript hack to trigger a window resize event on load to fix any layout issues due to the-preloader
+
 ### 0.4.0 ###
 
 * Near complete refactor of plugin structure to remove un-needed code

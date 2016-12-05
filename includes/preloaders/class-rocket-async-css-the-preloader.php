@@ -27,6 +27,7 @@ class Rocket_Async_Css_The_Preloader {
 		if ( is_plugin_active( 'the-preloader/preloader.php' ) || function_exists( 'WPTime_plugin_preloader_script' ) ) {
 			add_filter( 'rocket_async_css_process_style', array( __CLASS__, 'check_css' ), 10, 2 );
 			add_action( 'rocket_buffer', array( __CLASS__, 'inject_div' ) );
+			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'add_window_resize_js' ) );
 		}
 
 	}
@@ -62,5 +63,16 @@ class Rocket_Async_Css_The_Preloader {
 		$buffer = $document->saveHTML();
 
 		return $buffer;
+	}
+
+	public static function add_window_resize_js() {
+		wp_add_inline_script( 'jquery-core', <<<JS
+    (function($) {
+      $(window).load(function() {
+        $(window).trigger('resize');
+      })
+    })(jQuery)
+JS
+		);
 	}
 }
