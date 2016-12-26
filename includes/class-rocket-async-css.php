@@ -366,6 +366,10 @@ class Rocket_Async_Css {
 				$tags[] = array( $type, $tag );
 			}
 			if ( ! empty( $tags ) ) {
+				foreach ( $tags as $item ) {
+					//Remove tag
+					$tag->parentNode->removeChild( $item[1] );
+				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );
 				$post_cache_id      = 'wp_rocket_footer_js_script_';
@@ -416,8 +420,6 @@ class Rocket_Async_Css {
 					foreach ( $tags as $item ) {
 						/** @var DOMEvent $tag */
 						list( $type, $tag ) = $item;
-						//Remove tag
-						$tag->parentNode->removeChild( $tag );
 						//Get source url
 						$href = $tag->getAttribute( 'href' );
 						if ( 'link' == $tag->tagName && ! empty( $href ) ) {
