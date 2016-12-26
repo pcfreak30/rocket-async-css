@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.2 ###
+
+* Tags should always be removed, not just when the cache is empty
+
 ### 0.4.1 ###
 
 * Inject javascript hack to trigger a window resize event on load to fix any layout issues due to the-preloader
