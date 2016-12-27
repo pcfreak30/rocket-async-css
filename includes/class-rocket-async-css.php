@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.2';
+	const VERSION = '0.4.3';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -251,8 +251,11 @@ class Rocket_Async_Css {
 			}
 			$xpath = new DOMXpath( $document );
 			$head  = $document->getElementsByTagName( 'head' )->item( 0 );
-			$tags  = array();
-			$urls  = array();
+			if ( empty( $head ) ) {
+				return $buffer;
+			}
+			$tags = array();
+			$urls = array();
 			//Get home URL
 			if ( ! empty( $wpml_url_filters ) ) {
 				remove_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
