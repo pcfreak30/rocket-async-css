@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.3 ###
+
+* If we can't get the head element, just stop
+
 ### 0.4.2 ###
 
 * Tags should always be removed, not just when the cache is empty
