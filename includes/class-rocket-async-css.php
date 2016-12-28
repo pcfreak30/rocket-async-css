@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.3';
+	const VERSION = '0.4.4';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -371,7 +371,7 @@ class Rocket_Async_Css {
 			if ( ! empty( $tags ) ) {
 				foreach ( $tags as $item ) {
 					//Remove tag
-					$tag->parentNode->removeChild( $item[1] );
+					$item[1]->parentNode->removeChild( $item[1] );
 				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );

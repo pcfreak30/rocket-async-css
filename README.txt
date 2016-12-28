@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.4 ###
+
+* Fix bug caused in 0.4.2 due to wrong variable
+
 ### 0.4.3 ###
 
 * If we can't get the head element, just stop
