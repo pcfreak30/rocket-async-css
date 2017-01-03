@@ -478,9 +478,11 @@ class Rocket_Async_Css {
 									$item_cache    = get_transient( $item_cache_id );
 									// Only run if there is no item cache
 									if ( empty( $item_cache ) ) {
-										$href = strtok( $href, '?' );
 										// Break up url
 										$url_parts['host'] = $domain;
+										if ( isset( $url_parts['query'] ) ) {
+											unset( $url_parts['query'] );
+										}
 										/*
 										 * Check and see what version of php-http we have.
 										 * 1.x uses procedural functions.
