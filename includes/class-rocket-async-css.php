@@ -457,7 +457,7 @@ class Rocket_Async_Css {
 												error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
 											}
 										} else {
-											$css_part = $this->_minify_css( $file['body'], array( 'prependRelativePath' => trailingslashit( dirname( $href ) ) ), false );
+											$css_part = $this->_minify_css( $file['body'], array( 'prependRelativePath' => rocket_add_url_protocol( trailingslashit( dirname( $href ) ) ) ), false );
 											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
 										}
 									} else {
