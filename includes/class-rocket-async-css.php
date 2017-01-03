@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.4';
+	const VERSION = '0.4.5';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -433,9 +433,9 @@ class Rocket_Async_Css {
 							//Prevent duplicates
 							if ( ! in_array( $href, $urls ) ) {
 								// Get host of tag source
-								$href_host = parse_url( $href, PHP_URL_HOST );
+								$url_parts = parse_url( $href );
 								// Being remote is defined as not having our home url, not being relative and not being in the CDN list
-								if ( 0 != strpos( $href, '/' ) && ( ( $href_host != $domain && ! in_array( $href_host, $cdn_domains ) ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
+								if ( 0 != strpos( $href, '/' ) && ( ( $url_parts['host'] != $domain && ! in_array( $url_parts['host'], $cdn_domains ) ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
 									// Check item cache
 									$item_cache_id = md5( $href );
 									$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
@@ -457,7 +457,7 @@ class Rocket_Async_Css {
 												error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
 											}
 										} else {
-											$css_part = $this->_minify_css( $file['body'], array(), false );
+											$css_part = $this->_minify_css( $file['body'], array( 'prependRelativePath' => trailingslashit( dirname( $href ) ) ), false );
 											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
 										}
 									} else {
@@ -478,7 +478,6 @@ class Rocket_Async_Css {
 									if ( empty( $item_cache ) ) {
 										$href = strtok( $href, '?' );
 										// Break up url
-										$url_parts         = parse_url( $href );
 										$url_parts['host'] = $domain;
 										/*
 										 * Check and see what version of php-http we have.
@@ -493,7 +492,7 @@ class Rocket_Async_Css {
 											$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
 										} else {
 											if ( ! function_exists( 'http_build_url' ) ) {
-												require plugin_dir_path( __FILE__ ) . 'http_build_url.php';
+												require_once plugin_dir_path( __FILE__ ) . 'http_build_url.php';
 											}
 
 											$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );

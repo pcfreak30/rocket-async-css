@@ -56,6 +56,12 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.5 ###
+
+* Use require_once on http_build_url polyfill
+* Always create $url_parts and update $href_host to $url_parts['host']
+* Prepend the directory url to correct referenced assets for remote CSS
+
 ### 0.4.4 ###
 
 * Fix bug caused in 0.4.2 due to wrong variable
