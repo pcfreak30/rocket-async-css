@@ -693,8 +693,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 * @return bool
 	 */
 	public function exclude_wpadminbar( $skip, $css ) {
-		if ( false !== strpos( $css, '#wpadminbar' ) ) {
 
+		if ( 'b69140c3eb73819f6f3ea6139522efc9' == md5( $css ) ) {
 			return false;
 		}
 
