@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.7 ###
+
+* Prevent false positives on exclude_wpadminbar by using a md5 hash
+
 ### 0.4.6 ###
 
 * Use rocket_remove_url_protocol and rocket_add_url_protocol on prependRelativePath for remote css
