@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.8.1 ###
+
+* Missed non-PHP 5.3 code
+
 ### 0.4.8 ###
 
 * Ensure PHP 5.3 compatibility
