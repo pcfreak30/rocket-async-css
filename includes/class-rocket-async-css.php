@@ -342,10 +342,10 @@ class Rocket_Async_Css {
 								$sub_type = $sub_media;
 							}
 							foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
-								if ( in_array( $type_item, [
+								if ( in_array( $type_item, array(
 									'screen',
 									'projection',
-								] ) ) {
+								) ) ) {
 									$type = 'all';
 								}
 								break;
@@ -443,14 +443,14 @@ class Rocket_Async_Css {
 									$css_part      = '';
 									// Only run if there is no item cache
 									if ( empty( $item_cache ) ) {
-										$file = wp_remote_get( set_url_scheme( $href ), [
+										$file = wp_remote_get( set_url_scheme( $href ), array(
 											'user-agent' => 'WP-Rocket',
 											'sslverify'  => false,
-										] );                                    // Catch Error
-										if ( $file instanceof \WP_Error || ( is_array( $file ) && ( empty( $file['response']['code'] ) || ! in_array( $file['response']['code'], [
+										) );                                    // Catch Error
+										if ( $file instanceof \WP_Error || ( is_array( $file ) && ( empty( $file['response']['code'] ) || ! in_array( $file['response']['code'], array(
 														200,
 														304,
-													] ) ) )
+													) ) ) )
 										) {
 											// Only log if debug mode is on
 											if ( $debug ) {
