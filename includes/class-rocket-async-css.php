@@ -306,10 +306,10 @@ class Rocket_Async_Css {
 					}
 				}
 				foreach ( array_map( 'trim', array_filter( explode( ',', $type ) ) ) as $type_item ) {
-					if ( in_array( $type_item, [
+					if ( in_array( $type_item, array(
 						'screen',
 						'projection',
-					] ) ) {
+					) ) ) {
 						$type = 'all';
 					}
 					break;
