@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.9 ###
+
+* Disable minify on AMP pages
+* Move preloader init to new wp_action method
+
 ### 0.4.8.1 ###
 
 * Missed non-PHP 5.3 code

@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.8.1';
+	const VERSION = '0.4.9';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -101,7 +101,6 @@ class Rocket_Async_Css {
 	 */
 	private function define_public_hooks() {
 		if ( ! is_admin() ) {
-			$this->check_preloaders();
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
 			add_filter( 'rocket_buffer', array( $this, 'process_css_buffer' ), PHP_INT_MAX - 1 );
 
@@ -112,23 +111,10 @@ class Rocket_Async_Css {
 			}
 			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
+			add_filter( 'wp', array( $this, 'wp_action' ) );
 		}
 		add_action( 'after_rocket_clean_domain', array( $this, 'prune_transients' ) );
 		add_action( 'after_rocket_clean_post', array( $this, 'prune_prune_post_transients' ) );
-	}
-
-	/**
-	 * Support multiple preloaders to be extended in the future
-	 *
-	 * @since 0.1.0
-	 */
-	private function check_preloaders() {
-		foreach ( glob( plugin_dir_path( __FILE__ ) . 'preloaders/*.php' ) as $file ) {
-			$name = pathinfo( $file, PATHINFO_FILENAME );
-			$name = str_replace( '-', '_', str_replace( 'class-', '', $name ) );
-
-			call_user_func( array( $name, 'init' ), $this );
-		}
 	}
 
 	/**
@@ -724,6 +710,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	}
 
 	/**
+	 * A hack to ensure rev slider runs on winsow load
 	 * @return mixed
 	 */
 	public function rev_slider_compatibility() {
@@ -732,15 +719,46 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return $output;
 	}
 
+	/**
+	 * Prune all css transients
+	 */
 	public function prune_transients() {
 		global $wpdb;
 		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_wp_rocket_async_css_style_%', '_transient_timeout_wp_rocket_async_css_style_%' ) );
 		wp_cache_flush();
 	}
 
+	/**
+	 * Prune all css transients for a given post
+	 */
 	public function prune_prune_post_transients( $post ) {
 		global $wpdb;
 		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_{$post->ID}%" ) );
 		wp_cache_flush();
+	}
+
+	/**
+	 * Disable minify on AMP pages
+	 */
+	public function wp_action() {
+		if ( defined( 'AMP_QUERY_VAR' ) && function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) {
+			remove_filter( 'rocket_buffer', array( $this, 'process_css_buffer' ), PHP_INT_MAX - 1 );
+		} else {
+			$this->check_preloaders();
+		}
+	}
+
+	/**
+	 * Support multiple preloaders to be extended in the future
+	 *
+	 * @since 0.1.0
+	 */
+	private function check_preloaders() {
+		foreach ( glob( plugin_dir_path( __FILE__ ) . 'preloaders/*.php' ) as $file ) {
+			$name = pathinfo( $file, PATHINFO_FILENAME );
+			$name = str_replace( '-', '_', str_replace( 'class-', '', $name ) );
+
+			call_user_func( array( $name, 'init' ), $this );
+		}
 	}
 }
