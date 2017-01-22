@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.9';
+	const VERSION = '0.4.10';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -466,6 +466,7 @@ class Rocket_Async_Css {
 									if ( empty( $item_cache ) ) {
 										// Break up url
 										$url_parts['host'] = $domain;
+										$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
 										if ( isset( $url_parts['query'] ) ) {
 											unset( $url_parts['query'] );
 										}
