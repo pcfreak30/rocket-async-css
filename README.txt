@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.12 ###
+
+* Bugfix purging post transients
+* Add purging for home, terms, and generic urls
+
 ### 0.4.11 ###
 
 * Make post_cache user specific
