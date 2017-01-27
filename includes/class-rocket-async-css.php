@@ -361,7 +361,7 @@ class Rocket_Async_Css {
 				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );
-				$post_cache_id      = 'wp_rocket_footer_js_script_';
+				$post_cache_id = 'wp_rocket_async_css_style_';
 				if ( is_singular() ) {
 					$post_cache_id .= 'post_' . get_the_ID();
 				} else if ( is_tag() || is_category() || is_tax() ) {
