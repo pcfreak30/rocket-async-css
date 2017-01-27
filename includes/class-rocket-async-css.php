@@ -114,7 +114,9 @@ class Rocket_Async_Css {
 			add_filter( 'wp', array( $this, 'wp_action' ) );
 		}
 		add_action( 'after_rocket_clean_domain', array( $this, 'prune_transients' ) );
-		add_action( 'after_rocket_clean_post', array( $this, 'prune_prune_post_transients' ) );
+		add_action( 'after_rocket_clean_post', array( $this, 'prune_post_transients' ) );
+		add_action( 'after_rocket_clean_home', array( $this, 'prune_home_transients' ) );
+		add_action( 'after_rocket_clean_files', array( $this, 'prune_url_transients' ) );
 	}
 
 	/**
@@ -217,7 +219,7 @@ class Rocket_Async_Css {
 	 * @since 0.1.0
 	 */
 	public function process_css_buffer( $buffer ) {
-		global $rocket_async_css_file, $wpml_url_filters;
+		global $rocket_async_css_file, $wpml_url_filters, $wp, $query_string;
 		//Get debug status
 		$display_errors = ini_get( 'display_errors' );
 		$display_errors = ! empty( $display_errors ) && 'off' !== $display_errors;
@@ -365,11 +367,17 @@ class Rocket_Async_Css {
 				if ( is_singular() ) {
 					$post_cache_id .= 'post_' . get_the_ID();
 				} else if ( is_tag() || is_category() || is_tax() ) {
-					$post_cache_id .= 'tax_' . get_queried_object()->term_id;
+					$post_cache_id .= 'term_' . get_queried_object()->term_id;
 				} else if ( is_author() ) {
 					$post_cache_id .= 'author_' . get_the_author_meta( 'ID' );
 				} else {
-					$post_cache_id .= 'generic';
+					$post_cache_id .= 'url_';
+					$this->disable_relative_plugin_filters();
+					$query = array();
+					wp_parse_str( $query_string, $query );
+					$url = add_query_arg( $query, site_url( $wp->request ) );
+					$this->enable_relative_plugin_filters();
+					$post_cache_id .= md5( $url );
 				}
 				$post_cache_id       .= "_{$post_cache_id_hash}_";
 				$post_cache_id       .= get_current_user_id();
@@ -576,6 +584,26 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return array( $buffer, $conditionals );
 	}
 
+	protected function disable_relative_plugin_filters() {
+		if ( class_exists( 'MP_WP_Root_Relative_URLS' ) ) {
+			remove_filter( 'post_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			remove_filter( 'page_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			remove_filter( 'attachment_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			remove_filter( 'post_type_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			remove_filter( 'get_the_author_url', array( 'MP_WP_Root_Relative_URLS', 'dynamic_rss_absolute_url' ), 1 );
+		}
+	}
+
+	private function enable_relative_plugin_filters() {
+		if ( class_exists( 'MP_WP_Root_Relative_URLS' ) ) {
+			add_filter( 'post_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			add_filter( 'page_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			add_filter( 'attachment_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			add_filter( 'post_type_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
+			add_filter( 'get_the_author_url', array( 'MP_WP_Root_Relative_URLS', 'dynamic_rss_absolute_url' ), 1, 2 );
+		}
+	}
+
 	/**
 	 * Wrapper method to ensure autoloader is registered, and use Minify_CSS class instead since it rewrites urls
 	 *
@@ -731,11 +759,53 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	}
 
 	/**
+	 * Prune all css transients for a given term
+	 */
+	public function prune_term_transients( $term ) {
+		global $wpdb;
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_term_{$term->term_id}%", "_transient_timeout_wp_rocket_async_css_style_{$term->term_id}%" ) );
+		wp_cache_flush();
+	}
+
+	/**
 	 * Prune all css transients for a given post
 	 */
-	public function prune_prune_post_transients( $post ) {
+	public function prune_home_transients() {
+		$post_id        = 0;
+		$page_for_posts = get_option( 'page_for_posts' );
+		if ( ! empty( $page_for_posts ) ) {
+			$post_id = $page_for_posts;
+			if ( home_url( '/' ) != get_permalink( $post_id ) ) {
+				$post_id = 0;
+			}
+		}
+		if ( empty( $post_id ) ) {
+			$page_on_front = get_option( 'page_on_front' );
+			if ( ! empty( $page_on_front ) ) {
+				$post_id = $page_on_front;
+				if ( home_url( '/' ) != get_permalink( $post_id ) ) {
+					$post_id = 0;
+				}
+			}
+		}
+		if ( ! empty( $post_id ) ) {
+			$this->prune_post_transients( get_post( $post_id ) );
+		}
+	}
+
+	/**
+	 * Prune all css transients for a given post
+	 */
+	public function prune_post_transients( $post ) {
 		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_{$post->ID}%" ) );
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_post_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_{$post->ID}%" ) );
+		wp_cache_flush();
+	}
+
+	public function prune_url_transients( $url ) {
+		global $wpdb;
+		$url = md5( $url );
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_url_{$url}%", "_transient_timeout_wp_rocket_async_css_style_url_{$url}%" ) );
 		wp_cache_flush();
 	}
 
