@@ -371,8 +371,9 @@ class Rocket_Async_Css {
 				} else {
 					$post_cache_id .= 'generic';
 				}
-				$post_cache_id .= '_' . $post_cache_id_hash;
-				$post_cache = get_transient( $post_cache_id );
+				$post_cache_id       .= "_{$post_cache_id_hash}_";
+				$post_cache_id       .= get_current_user_id();
+				$post_cache          = get_transient( $post_cache_id );
 				if ( ! empty( $post_cache ) ) {
 					// Cached file is gone, we dont have cache
 					if ( ! file_exists( $post_cache['filename'] ) ) {
@@ -465,7 +466,7 @@ class Rocket_Async_Css {
 									// Only run if there is no item cache
 									if ( empty( $item_cache ) ) {
 										// Break up url
-										$url_parts['host'] = $domain;
+										$url_parts['host']   = $domain;
 										$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
 										if ( isset( $url_parts['query'] ) ) {
 											unset( $url_parts['query'] );
