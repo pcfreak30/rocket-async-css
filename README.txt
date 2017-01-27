@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.11 ###
+
+* Make post_cache user specific
+* Used wrong post cache ID prefix
+
 ### 0.4.10 ###
 
 * Ensure url scheme is set correctly when converting from a CDN domain
