@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.13 ###
+
+* Fix transient timeout names in purge methods
+
 ### 0.4.12 ###
 
 * Bugfix purging post transients

@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.12';
+	const VERSION = '0.4.13';
 	/**
 	 * The current version of the plugin.
 	 *
