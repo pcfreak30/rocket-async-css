@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.12';
+	const VERSION = '0.4.13';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -763,7 +763,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	public function prune_term_transients( $term ) {
 		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_term_{$term->term_id}%", "_transient_timeout_wp_rocket_async_css_style_{$term->term_id}%" ) );
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_term_{$term->term_id}%", "_transient_timeout_wp_rocket_async_css_style_term_{$term->term_id}%" ) );
 		wp_cache_flush();
 	}
 
@@ -798,7 +798,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	public function prune_post_transients( $post ) {
 		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_post_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_{$post->ID}%" ) );
+		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_post_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_post_{$post->ID}%" ) );
 		wp_cache_flush();
 	}
 
