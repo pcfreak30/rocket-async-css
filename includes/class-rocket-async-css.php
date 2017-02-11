@@ -363,7 +363,7 @@ class Rocket_Async_Css {
 				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );
-				$post_cache_id = 'wp_rocket_async_css_style_';
+				$post_cache_id      = 'wp_rocket_async_css_style_';
 				if ( is_singular() ) {
 					$post_cache_id .= 'post_' . get_the_ID();
 				} else if ( is_tag() || is_category() || is_tax() ) {
@@ -379,9 +379,9 @@ class Rocket_Async_Css {
 					$this->enable_relative_plugin_filters();
 					$post_cache_id .= md5( $url );
 				}
-				$post_cache_id       .= "_{$post_cache_id_hash}_";
-				$post_cache_id       .= get_current_user_id();
-				$post_cache          = get_transient( $post_cache_id );
+				$post_cache_id .= "_{$post_cache_id_hash}_";
+				$post_cache_id .= get_current_user_id();
+				$post_cache    = get_transient( $post_cache_id );
 				if ( ! empty( $post_cache ) ) {
 					// Cached file is gone, we dont have cache
 					if ( ! file_exists( $post_cache['filename'] ) ) {
@@ -522,7 +522,7 @@ class Rocket_Async_Css {
 								// Remove any conditional comments for IE that somehow was put in the style tag
 								$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 								$css_part = $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
-								$css .= $css_part;
+								$css      .= $css_part;
 								set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
 							} else {
 								$css .= $item_cache;
@@ -832,5 +832,15 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 			call_user_func( array( $name, 'init' ), $this );
 		}
+	}
+}
+
+function avada_revslider( $name ) {
+	if ( function_exists( 'putRevSlider' ) ) {
+		ob_start();
+		putRevSlider( $name );
+		$slider = ob_get_clean();
+		echo str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', $slider );
+
 	}
 }
