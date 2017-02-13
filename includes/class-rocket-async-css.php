@@ -452,10 +452,8 @@ class Rocket_Async_Css {
 												error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
 											}
 										} else {
-											add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
-											$css_part = $this->_minify_css( $file['body'], array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $href ) ) ) ) ), false );
+											$css_part = $this->minify_remote_file( $href, $file['body'] );
 											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
-											remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
 										}
 									} else {
 										$css_part = $item_cache;
@@ -602,6 +600,14 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			add_filter( 'post_type_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
 			add_filter( 'get_the_author_url', array( 'MP_WP_Root_Relative_URLS', 'dynamic_rss_absolute_url' ), 1, 2 );
 		}
+	}
+
+	public function minify_remote_file( $url, $css ) {
+		add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
+		$css_part = $this->_minify_css( $css, array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $url ) ) ) ) ), false );
+		remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
+
+		return apply_filters( 'rocket_async_css_minify_remote_file', $css_part, $url );
 	}
 
 	/**
@@ -832,15 +838,5 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 			call_user_func( array( $name, 'init' ), $this );
 		}
-	}
-}
-
-function avada_revslider( $name ) {
-	if ( function_exists( 'putRevSlider' ) ) {
-		ob_start();
-		putRevSlider( $name );
-		$slider = ob_get_clean();
-		echo str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', $slider );
-
 	}
 }

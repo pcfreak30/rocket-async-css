@@ -79,3 +79,15 @@ if ( ! function_exists( 'Rocket_async_css' ) ):
 	add_action( 'plugins_loaded', 'rocket_async_css', 11 );
 
 endif;
+
+if ( ! function_exists( 'avada_revslider' ) ):
+	function avada_revslider( $name ) {
+		if ( function_exists( 'putRevSlider' ) ) {
+			ob_start();
+			putRevSlider( $name );
+			$slider = ob_get_clean();
+			echo str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', $slider );
+
+		}
+	}
+endif;
