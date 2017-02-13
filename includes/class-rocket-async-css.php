@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.13';
+	const VERSION = '0.4.14';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -363,7 +363,7 @@ class Rocket_Async_Css {
 				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );
-				$post_cache_id = 'wp_rocket_async_css_style_';
+				$post_cache_id      = 'wp_rocket_async_css_style_';
 				if ( is_singular() ) {
 					$post_cache_id .= 'post_' . get_the_ID();
 				} else if ( is_tag() || is_category() || is_tax() ) {
@@ -379,9 +379,9 @@ class Rocket_Async_Css {
 					$this->enable_relative_plugin_filters();
 					$post_cache_id .= md5( $url );
 				}
-				$post_cache_id       .= "_{$post_cache_id_hash}_";
-				$post_cache_id       .= get_current_user_id();
-				$post_cache          = get_transient( $post_cache_id );
+				$post_cache_id .= "_{$post_cache_id_hash}_";
+				$post_cache_id .= get_current_user_id();
+				$post_cache    = get_transient( $post_cache_id );
 				if ( ! empty( $post_cache ) ) {
 					// Cached file is gone, we dont have cache
 					if ( ! file_exists( $post_cache['filename'] ) ) {
@@ -452,10 +452,8 @@ class Rocket_Async_Css {
 												error_log( 'URL: ' . $href . ' Status:' . ( $file instanceof \WP_Error ? 'N/A' : $file['code'] ) . ' Error:' . ( $file instanceof \WP_Error ? $file->get_error_message() : 'N/A' ) );
 											}
 										} else {
-											add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
-											$css_part = $this->_minify_css( $file['body'], array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $href ) ) ) ) ), false );
+											$css_part = $this->minify_remote_file( $href, $file['body'] );
 											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
-											remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
 										}
 									} else {
 										$css_part = $item_cache;
@@ -522,7 +520,7 @@ class Rocket_Async_Css {
 								// Remove any conditional comments for IE that somehow was put in the style tag
 								$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 								$css_part = $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
-								$css .= $css_part;
+								$css      .= $css_part;
 								set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
 							} else {
 								$css .= $item_cache;
@@ -602,6 +600,14 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			add_filter( 'post_type_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
 			add_filter( 'get_the_author_url', array( 'MP_WP_Root_Relative_URLS', 'dynamic_rss_absolute_url' ), 1, 2 );
 		}
+	}
+
+	public function minify_remote_file( $url, $css ) {
+		add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
+		$css_part = $this->_minify_css( $css, array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $url ) ) ) ) ), false );
+		remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
+
+		return apply_filters( 'rocket_async_css_minify_remote_file', $css_part, $url );
 	}
 
 	/**

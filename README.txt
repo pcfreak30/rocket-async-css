@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.14 ###
+
+* Add compatibility with avada theme and revslider to act the same as the revslider shortcode hack
+* Split remote minification to a public function so that it can be called by other plugins and add filter rocket_async_css_minify_remote_file
+
 ### 0.4.13 ###
 
 * Fix transient timeout names in purge methods
