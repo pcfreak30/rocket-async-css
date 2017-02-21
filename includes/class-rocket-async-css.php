@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.14';
+	const VERSION = '0.4.15';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -550,6 +550,16 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 				$js .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
 				$external_tag->appendChild( $document->createTextNode( $js ) );
 				$head->appendChild( $external_tag );
+
+				// Hack to fix a bug with libxml versions earlier than 2.9.x
+				if ( 1 === version_compare( '2.9.0', LIBXML_DOTTED_VERSION ) ) {
+					$body       = $document->getElementsByTagName( 'body' )->item( 0 );
+					$body_class = $body->getAttribute( 'class' );
+					if ( empty( $body_class ) ) {
+						$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
+					}
+				}
+
 				$buffer                = $document->saveHTML();
 				$rocket_async_css_file = $filename;
 				$buffer                = $this->_inject_ie_conditionals( $buffer, $conditionals );

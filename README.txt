@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.15 ###
+
+* Add compatibility hack for older libxml
+
 ### 0.4.14 ###
 
 * Add compatibility with avada theme and revslider to act the same as the revslider shortcode hack
