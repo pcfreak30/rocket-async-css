@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.4.16 ###
+
+* Ensure home uses the active URL scheme
+
 ### 0.4.15 ###
 
 * Add compatibility hack for older libxml

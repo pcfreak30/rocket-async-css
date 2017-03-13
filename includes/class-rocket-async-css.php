@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.15';
+	const VERSION = '0.4.16';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -248,7 +248,7 @@ class Rocket_Async_Css {
 			if ( ! empty( $wpml_url_filters ) ) {
 				remove_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
 			}
-			$home = home_url();
+			$home = set_url_scheme( home_url() );
 			// Get our domain
 			$domain = parse_url( $home, PHP_URL_HOST );
 			//Prepare excluded CSS from options page

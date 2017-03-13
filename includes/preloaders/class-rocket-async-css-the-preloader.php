@@ -71,7 +71,7 @@ class Rocket_Async_Css_The_Preloader {
       $(window).load(function() {
         $(window).trigger('resize');
       })
-    })(jQuery)
+    })(jQuery);
 JS
 		);
 	}
