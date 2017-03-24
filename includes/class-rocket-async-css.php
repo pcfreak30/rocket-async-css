@@ -198,7 +198,7 @@ class Rocket_Async_Css {
 	 *
 	 */
 	public static function deactivate() {
-		add_action( 'activated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
+		add_action( 'deactivated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
 	}
 
 	/**
