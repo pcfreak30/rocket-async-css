@@ -32,7 +32,12 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.4.16';
+	const VERSION = '0.5.0';
+
+	/**
+	 * Plugin version
+	 */
+	const TRANSIENT_PREFIX = 'rocket_async_css_style_';
 	/**
 	 * The current version of the plugin.
 	 *
@@ -198,7 +203,7 @@ class Rocket_Async_Css {
 	 *
 	 */
 	public static function deactivate() {
-		add_action( 'activated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
+		add_action( 'deactivated_plugin', Rocket_Async_Css::get_instance(), 'purge_cache' );
 	}
 
 	/**
@@ -363,25 +368,34 @@ class Rocket_Async_Css {
 				}
 				// Check post cache
 				$post_cache_id_hash = md5( serialize( $urls ) );
-				$post_cache_id      = 'wp_rocket_async_css_style_';
+				$post_cache_id      = array();
 				if ( is_singular() ) {
-					$post_cache_id .= 'post_' . get_the_ID();
+					$post_cache_id [] = 'post_' . get_the_ID();
 				} else if ( is_tag() || is_category() || is_tax() ) {
-					$post_cache_id .= 'term_' . get_queried_object()->term_id;
+					$post_cache_id [] = 'term_' . get_queried_object()->term_id;
 				} else if ( is_author() ) {
-					$post_cache_id .= 'author_' . get_the_author_meta( 'ID' );
+					$post_cache_id [] = 'author_' . get_the_author_meta( 'ID' );
 				} else {
-					$post_cache_id .= 'url_';
+					$post_cache_id [] = 'url_';
 					$this->disable_relative_plugin_filters();
 					$query = array();
 					wp_parse_str( $query_string, $query );
 					$url = add_query_arg( $query, site_url( $wp->request ) );
 					$this->enable_relative_plugin_filters();
-					$post_cache_id .= md5( $url );
+					$post_cache_id [] = md5( $url );
 				}
-				$post_cache_id .= "_{$post_cache_id_hash}_";
-				$post_cache_id .= get_current_user_id();
-				$post_cache    = get_transient( $post_cache_id );
+				$post_cache_id [] = $post_cache_id_hash;
+				if ( is_user_logged_in() ) {
+					$post_cache_id []   = wp_get_current_user()->roles[0];
+					$post_cache_role_id = $post_cache_id;
+					$post_cache_role    = $this->get_cache_fragment( $post_cache_id );
+					if ( ! empty( $post_cache_role ) ) {
+						$post_cache = $post_cache_role;
+					} else {
+						$post_cache_id [] = get_current_user_id();
+						$post_cache       = $this->get_cache_fragment( $post_cache_id );
+					}
+				}
 				if ( ! empty( $post_cache ) ) {
 					// Cached file is gone, we dont have cache
 					if ( ! file_exists( $post_cache['filename'] ) ) {
@@ -432,9 +446,8 @@ class Rocket_Async_Css {
 								// Being remote is defined as not having our home url, not being relative and not being in the CDN list
 								if ( 0 != strpos( $href, '/' ) && ( ( $url_parts['host'] != $domain && ! in_array( $url_parts['host'], $cdn_domains ) ) || 'css' != pathinfo( parse_url( $href, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
 									// Check item cache
-									$item_cache_id = md5( $href );
-									$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
-									$item_cache    = get_transient( $item_cache_id );
+									$item_cache_id = array( md5( $href ) );
+									$item_cache    = $this->get_cache_fragment( $item_cache_id );
 									$css_part      = '';
 									// Only run if there is no item cache
 									if ( empty( $item_cache ) ) {
@@ -453,7 +466,7 @@ class Rocket_Async_Css {
 											}
 										} else {
 											$css_part = $this->minify_remote_file( $href, $file['body'] );
-											set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
+											$this->update_cache_fragment( $item_cache_id, $css_part );
 										}
 									} else {
 										$css_part = $item_cache;
@@ -466,9 +479,8 @@ class Rocket_Async_Css {
 									if ( 0 == strpos( $href, '/' ) ) {
 										$href = $home . $href;
 									}
-									$item_cache_id = md5( $href );
-									$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
-									$item_cache    = get_transient( $item_cache_id );
+									$item_cache_id = array( md5( $href ) );
+									$item_cache    = $this->get_cache_fragment( $item_cache_id );
 									// Only run if there is no item cache
 									if ( empty( $item_cache ) ) {
 										// Break up url
@@ -501,7 +513,7 @@ class Rocket_Async_Css {
 										}
 
 										$data = $this->_minify_css( $data, array( 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ) );
-										set_transient( $item_cache_id, $data, get_rocket_purge_cron_interval() );
+										$this->update_cache_fragment( $item_cache_id, $data );
 									} else {
 										$data = $item_cache;
 									}
@@ -512,16 +524,15 @@ class Rocket_Async_Css {
 							}
 						} else {
 							// Check item cache
-							$item_cache_id = md5( $tag->textContent );
-							$item_cache_id = 'wp_rocket_async_css_style_' . $item_cache_id;
-							$item_cache    = get_transient( $item_cache_id );
+							$item_cache_id = array( md5( $tag->textContent ) );
+							$item_cache    = $this->get_cache_fragment( $item_cache_id );
 							// Only run if there is no item cache
 							if ( empty( $item_cache ) ) {
 								// Remove any conditional comments for IE that somehow was put in the style tag
 								$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 								$css_part = $minify_inline_css ? $this->_minify_css( $css_part ) : $css_part;
 								$css      .= $css_part;
-								set_transient( $item_cache_id, $css_part, get_rocket_purge_cron_interval() );
+								$this->update_cache_fragment( $item_cache_id, $css_part );
 							} else {
 								$css .= $item_cache;
 							}
@@ -536,7 +547,10 @@ class Rocket_Async_Css {
 					if ( ! empty( $css ) ) {
 						rocket_put_content( $filename, $css );
 						$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
-						set_transient( $post_cache_id, compact( 'filename', 'href' ), get_rocket_purge_cron_interval() );
+						if ( empty( $post_cache_role ) ) {
+							$this->update_cache_fragment( $post_cache_role_id, compact( 'filename', 'href' ) );
+						}
+						$this->update_cache_fragment( $post_cache_id, compact( 'filename', 'href' ) );
 					}
 				} else {
 					extract( $post_cache );
@@ -610,6 +624,14 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			add_filter( 'post_type_link', array( 'MP_WP_Root_Relative_URLS', 'proper_root_relative_url' ), 1 );
 			add_filter( 'get_the_author_url', array( 'MP_WP_Root_Relative_URLS', 'dynamic_rss_absolute_url' ), 1, 2 );
 		}
+	}
+
+	protected function get_cache_fragment( $path ) {
+		if ( ! in_array( 'cache', $path ) ) {
+			array_unshift( $path, 'cache' );
+		}
+
+		return get_transient( self::TRANSIENT_PREFIX . implode( '_', $path ) );
 	}
 
 	public function minify_remote_file( $url, $css ) {
@@ -696,6 +718,79 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return $direct_filesystem->get_contents( $file );
 	}
 
+	protected function update_cache_fragment( $path, $value ) {
+		if ( ! in_array( 'cache', $path ) ) {
+			array_unshift( $path, 'cache' );
+		}
+		$this->build_cache_tree( array_slice( $path, 0, count( $path ) - 1 ) );
+		$this->update_tree_branch( $path, $value );
+	}
+
+	protected function build_cache_tree( $path ) {
+		$levels = count( $path );
+		$expire = get_rocket_purge_cron_interval();
+		for ( $i = 0; $i < $levels; $i ++ ) {
+			$transient_id       = self::TRANSIENT_PREFIX . implode( '_', array_slice( $path, 0, $i + 1 ) );
+			$transient_cache_id = $transient_id;
+			if ( 'cache' != $path[ $i ] ) {
+				$transient_cache_id .= '_cache';
+			}
+			$transient_cache_id .= '_1';
+			$cache              = get_transient( $transient_cache_id );
+			$transient_value    = array();
+			if ( $i + 1 < $levels ) {
+				$transient_value[] = self::TRANSIENT_PREFIX . implode( '_', array_slice( $path, 0, $i + 2 ) );
+			}
+			if ( ! is_null( $cache ) && false !== $cache ) {
+				$transient_value = array_unique( array_merge( $cache, $transient_value ) );
+			}
+			set_transient( $transient_cache_id, $transient_value, $expire );
+			$transient_counter_id = $transient_id;
+			if ( 'cache' != $path[ $i ] ) {
+				$transient_counter_id .= '_cache';
+			}
+			$transient_counter_id .= '_count';
+			$transient_counter    = get_transient( $transient_counter_id );
+			if ( is_null( $transient_counter ) || false === $transient_counter ) {
+				set_transient( $transient_counter_id, 1, $expire );
+			}
+		}
+	}
+
+	protected function update_tree_branch( $path, $value ) {
+		$branch            = self::TRANSIENT_PREFIX . implode( '_', $path );
+		$parent_path       = array_slice( $path, 0, count( $path ) - 1 );
+		$parent            = self::TRANSIENT_PREFIX . implode( '_', $parent_path );
+		$counter_transient = $parent;
+		$cache_transient   = $parent;
+		if ( 'cache' != end( $parent_path ) ) {
+			$counter_transient .= '_cache';
+			$cache_transient   .= '_cache';
+		}
+		$counter_transient .= '_count';
+		$counter           = (int) get_transient( $counter_transient );
+		$cache_transient   .= "_{$counter}";
+		$cache             = get_transient( $cache_transient );
+		$count             = count( $cache );
+		$cache_keys        = array_flip( $cache );
+		$expire            = get_rocket_purge_cron_interval();
+		if ( ! isset( $cache_keys[ $branch ] ) ) {
+			if ( $count >= apply_filters( 'rocket_async_css_max_branch_length', 50 ) ) {
+				$counter ++;
+				set_transient( $counter_transient, $counter, $expire );
+				$cache_transient = $parent;
+				if ( 'cache' != end( $parent_path ) ) {
+					$cache_transient .= '_cache';
+				}
+				$cache_transient .= "_{$counter}";
+				$cache           = array();
+			}
+			$cache[] = $branch;
+			set_transient( $cache_transient, $cache, $expire );
+		}
+		set_transient( $branch, $value, $expire );
+	}
+
 	/**
 	 * Add conditional comments back in
 	 *
@@ -757,6 +852,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 	/**
 	 * A hack to ensure rev slider runs on winsow load
+	 *
 	 * @return mixed
 	 */
 	public function rev_slider_compatibility() {
@@ -769,18 +865,43 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 * Prune all css transients
 	 */
 	public function prune_transients() {
-		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", '_transient_wp_rocket_async_css_style_%', '_transient_timeout_wp_rocket_async_css_style_%' ) );
-		wp_cache_flush();
+		$this->delete_cache_branch();
+	}
+
+	protected function delete_cache_branch( $path = array() ) {
+		if ( is_array( $path ) ) {
+			if ( ! empty( $path ) ) {
+				$path = self::TRANSIENT_PREFIX . implode( '_', $path ) . '_';
+			} else {
+				$path = self::TRANSIENT_PREFIX;
+			}
+		}
+		$counter_transient = "{$path}cache_count";
+		$counter           = get_transient( $counter_transient );
+
+		if ( is_null( $counter ) || false === $counter ) {
+			delete_transient( rtrim( $path, '_' ) );
+
+			return;
+		}
+		for ( $i = 1; $i <= $counter; $i ++ ) {
+			$transient_name = "{$path}cache_{$i}";
+			$cache          = get_transient( "{$path}cache_{$i}" );
+			if ( ! empty( $cache ) ) {
+				foreach ( $cache as $sub_branch ) {
+					$this->delete_cache_branch( "{$sub_branch}_" );
+				}
+				delete_transient( $transient_name );
+			}
+		}
+		delete_transient( $counter_transient );
 	}
 
 	/**
 	 * Prune all css transients for a given term
 	 */
 	public function prune_term_transients( $term ) {
-		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_term_{$term->term_id}%", "_transient_timeout_wp_rocket_async_css_style_term_{$term->term_id}%" ) );
-		wp_cache_flush();
+		$this->delete_cache_branch( array( 'cache', "term_{$term->term_id}" ) );
 	}
 
 	/**
@@ -813,16 +934,13 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 * Prune all css transients for a given post
 	 */
 	public function prune_post_transients( $post ) {
-		global $wpdb;
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_post_{$post->ID}%", "_transient_timeout_wp_rocket_async_css_style_post_{$post->ID}%" ) );
+		$this->delete_cache_branch( array( 'cache', "post_{$post->ID}" ) );
 		wp_cache_flush();
 	}
 
 	public function prune_url_transients( $url ) {
-		global $wpdb;
 		$url = md5( $url );
-		$wpdb->get_results( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", "_transient_wp_rocket_async_css_style_url_{$url}%", "_transient_timeout_wp_rocket_async_css_style_url_{$url}%" ) );
-		wp_cache_flush();
+		$this->delete_cache_branch( array( 'cache', "url_{$url}" ) );
 	}
 
 	/**

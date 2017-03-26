@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.5.0 ###
+
+* Use deactivated_plugin hook on deactivation
+* Rebuild cache system without using SQL
+
 ### 0.4.16 ###
 
 * Ensure home uses the active URL scheme
