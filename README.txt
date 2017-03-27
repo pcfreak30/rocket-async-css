@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.5.1 ###
+
+* Remove use of user id in cache tree
+
 ### 0.5.0 ###
 
 * Use deactivated_plugin hook on deactivation
