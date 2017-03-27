@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.5.0';
+	const VERSION = '0.5.1';
 
 	/**
 	 * Plugin version
@@ -386,15 +386,8 @@ class Rocket_Async_Css {
 				}
 				$post_cache_id [] = $post_cache_id_hash;
 				if ( is_user_logged_in() ) {
-					$post_cache_id []   = wp_get_current_user()->roles[0];
-					$post_cache_role_id = $post_cache_id;
-					$post_cache_role    = $this->get_cache_fragment( $post_cache_id );
-					if ( ! empty( $post_cache_role ) ) {
-						$post_cache = $post_cache_role;
-					} else {
-						$post_cache_id [] = get_current_user_id();
-						$post_cache       = $this->get_cache_fragment( $post_cache_id );
-					}
+					$post_cache_id [] = wp_get_current_user()->roles[0];
+					$post_cache       = $this->get_cache_fragment( $post_cache_id );
 				}
 				if ( ! empty( $post_cache ) ) {
 					// Cached file is gone, we dont have cache
@@ -547,9 +540,6 @@ class Rocket_Async_Css {
 					if ( ! empty( $css ) ) {
 						rocket_put_content( $filename, $css );
 						$href = get_rocket_cdn_url( set_url_scheme( str_replace( ABSPATH, trailingslashit( $home ), $filename ) ) );
-						if ( empty( $post_cache_role ) ) {
-							$this->update_cache_fragment( $post_cache_role_id, compact( 'filename', 'href' ) );
-						}
 						$this->update_cache_fragment( $post_cache_id, compact( 'filename', 'href' ) );
 					}
 				} else {
