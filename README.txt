@@ -58,6 +58,10 @@ This section describes how to install the plugin and get it working.
 
 ### 0.5.1 ###
 
+* Improve UTF-8 character handling
+
+### 0.5.1 ###
+
 * Remove use of user id in cache tree
 
 ### 0.5.0 ###
