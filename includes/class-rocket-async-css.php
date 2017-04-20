@@ -239,7 +239,7 @@ class Rocket_Async_Css {
 
 			// Import HTML
 			$document = new DOMDocument();
-			if ( ! @$document->loadHTML( $buffer ) ) {
+			if ( ! @$document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
 			$xpath = new DOMXpath( $document );
