@@ -56,7 +56,13 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
-### 0.5.1 ###
+### 0.5.3 ###
+
+* Improve UTF-8 character handling in the-preloader integration
+* Simulate a window resize after preloader div is gone as well as before in the-preloader integration
+* Remove stray wp_cache_flush
+
+### 0.5.2 ###
 
 * Improve UTF-8 character handling
 
