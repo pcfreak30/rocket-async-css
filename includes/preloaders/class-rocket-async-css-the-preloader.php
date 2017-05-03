@@ -53,7 +53,7 @@ class Rocket_Async_Css_The_Preloader {
 	 */
 	public static function inject_div( $buffer ) {
 		$document = new DOMDocument();
-		if ( ! @$document->loadHTML( $buffer ) ) {
+		if ( ! @$document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 			return $buffer;
 		}
 		$body = $document->getElementsByTagName( 'body' )->item( 0 );
@@ -67,11 +67,19 @@ class Rocket_Async_Css_The_Preloader {
 
 	public static function add_window_resize_js() {
 		wp_add_inline_script( 'jquery-core', <<<JS
-    (function($) {
-      $(window).load(function() {
+(function ($) {
+    $(window).load(function () {
         $(window).trigger('resize');
-      })
-    })(jQuery);
+        (function check() {
+            if (0 < $('#wptime-plugin-preloader').length) {
+                setTimeout(check, 1);
+            }
+            else {
+                $(window).trigger('resize');
+            }
+        })();
+    })
+})(jQuery);
 JS
 		);
 	}
