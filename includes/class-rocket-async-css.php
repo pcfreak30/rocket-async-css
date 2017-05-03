@@ -925,7 +925,6 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	public function prune_post_transients( $post ) {
 		$this->delete_cache_branch( array( 'cache', "post_{$post->ID}" ) );
-		wp_cache_flush();
 	}
 
 	public function prune_url_transients( $url ) {
