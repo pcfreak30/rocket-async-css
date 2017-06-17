@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.5.4 ###
+
+* Disable cache busting in wp-rocket
+
 ### 0.5.3 ###
 
 * Improve UTF-8 character handling in the-preloader integration
