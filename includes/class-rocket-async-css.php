@@ -32,7 +32,7 @@ class Rocket_Async_Css {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.5.3';
+	const VERSION = '0.5.4';
 
 	/**
 	 * Plugin version
@@ -117,6 +117,9 @@ class Rocket_Async_Css {
 			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 			add_filter( 'wp', array( $this, 'wp_action' ) );
+
+			remove_filter( 'style_loader_src', 'rocket_cache_dynamic_resource', 16 );
+			remove_filter( 'style_loader_src', 'rocket_browser_cache_busting', PHP_INT_MAX );
 		}
 		add_action( 'after_rocket_clean_domain', array( $this, 'prune_transients' ) );
 		add_action( 'after_rocket_clean_post', array( $this, 'prune_post_transients' ) );
