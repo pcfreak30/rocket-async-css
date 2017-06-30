@@ -495,13 +495,13 @@ class Rocket_Async_Css {
 										if ( class_exists( 'http\Url' ) ) {
 											$url  = new \http\Url( $url_parts );
 											$url  = $url->toString();
-											$data = $this->_get_content( str_replace( $home, ABSPATH, $url ) );
+											$data = $this->_get_content( urldecode( str_replace( $home, ABSPATH, $url ) ) );
 										} else {
 											if ( ! function_exists( 'http_build_url' ) ) {
 												require_once plugin_dir_path( __FILE__ ) . 'http_build_url.php';
 											}
 
-											$data = $this->_get_content( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) );
+											$data = $this->_get_content( urldecode( str_replace( $home, ABSPATH, http_build_url( $url_parts ) ) ) );
 										}
 
 										if ( ! empty( $type ) && 'all' != $type ) {
