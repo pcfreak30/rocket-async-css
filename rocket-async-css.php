@@ -65,18 +65,18 @@ if ( ! function_exists( 'rocket_async_css_autoloader' ) ):
 
 	spl_autoload_register( 'rocket_async_css_autoloader' );
 endif;
-if ( ! function_exists( 'Rocket_async_css' ) ):
+if ( ! function_exists( 'get_rocket_async_css' ) ):
 
 	/**
 	 * Function wrapper to get instance of plugin
 	 *
 	 * @return Rocket_async_css
 	 */
-	function rocket_async_css() {
+	function get_rocket_async_css() {
 		return Rocket_Async_Css::get_instance();
 	}
 
-	add_action( 'plugins_loaded', 'rocket_async_css', 11 );
+	add_action( 'plugins_loaded', 'get_rocket_async_css', 11 );
 
 endif;
 
