@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.5.5 ###
+
+* Rename instance function wrapper to not conflict with wp-rocket async css
+* Ensure local files are not url encoded
+
 ### 0.5.4 ###
 
 * Disable cache busting in wp-rocket
