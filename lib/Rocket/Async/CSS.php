@@ -76,6 +76,9 @@ class CSS {
 	 * @var string
 	 */
 	private $file;
+	/**
+	 * @var \SplObjectStorage
+	 */
 	private $node_map;
 
 	/**
@@ -197,6 +200,9 @@ class CSS {
 		return $buffer;
 	}
 
+	/**
+	 *
+	 */
 	protected function disable_minify_overrides() {
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );/**/
 	}
