@@ -10,8 +10,12 @@ class Request extends ComponentAbstract {
 		if ( ! is_admin() ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
 			add_filter( 'rocket_buffer', [ $this->app, 'process_buffer' ], PHP_INT_MAX - 1 );
-			add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', array( $this, 'return_one' ) );
+			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
+				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
+			} else {
+				add_filter( 'pre_get_rocket_option_minify_js', '__return_zero' );
+			}
 		}
 
 	}
