@@ -575,6 +575,9 @@ class CSS {
 				if ( empty( $match ) ) {
 					$match = $matches[1][ $index ];
 				}
+				if ( 0 === strpos( $match, 'data:' ) ) {
+					continue;
+				}
 				$url_parts = parse_url( $match );
 				if ( empty( $url_parts['host'] ) ) {
 					$match     = \phpUri::parse( $url )->join( $match );
