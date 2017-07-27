@@ -550,7 +550,7 @@ class CSS {
 					if ( $host != $this->domain && ! in_array( $host, $this->cdn_domains ) ) {
 						$imported_data = $this->remote_fetch( $match );
 					} else {
-						$match = $this->strip_cdn( $match[1] );
+						$match = $this->strip_cdn( $match );
 						// Is this a URL? If so replace with ABSPATH
 						$match         = str_replace( $this->home, ABSPATH, $match );
 						$path          = untrailingslashit( ABSPATH ) . $match;
