@@ -109,6 +109,8 @@ class CSS {
 			$web_composer->set_install_target( dirname( $this->plugin_file ) );
 			$web_composer->run();
 		}
+		$this->init();
+		do_action( 'rocket_async_css_activate' );
 	}
 
 	public function deactivate() {
