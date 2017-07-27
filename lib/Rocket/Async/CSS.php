@@ -592,10 +592,10 @@ class CSS {
 					$hash      = md5( $info['dirname'] . '/' . $info['filename'] );
 					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
 					$final_url = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+					$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
+					$css       = str_replace( $matches[0][ $index ], $css_part, $css );
 					if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
 						$this->put_content( $filename, $data );
-						$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
-						$css      = str_replace( $matches[0][ $index ], $css_part, $css );
 					}
 				}
 
