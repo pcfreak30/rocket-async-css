@@ -655,7 +655,7 @@ class CSS {
 			if ( ! empty( $media ) && 'all' !== $media ) {
 				$css_part = '@media ' . $media . ' {' . $css_part . '}';
 			}
-			$css_part  = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ] );
+			$css_part  = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $url );
 			$this->css .= $css_part;
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
