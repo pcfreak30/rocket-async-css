@@ -762,7 +762,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		// Hack to fix a bug with libxml versions earlier than 2.9.x
 		$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
 		if ( 1 === version_compare( '2.9.0', LIBXML_DOTTED_VERSION ) ) {
-			$body_class = $$body->getAttribute( 'class' );
+			$body_class = $body->getAttribute( 'class' );
 			if ( empty( $body_class ) ) {
 				$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
 			}
