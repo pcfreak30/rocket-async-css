@@ -11,6 +11,7 @@ class Manager extends ManagerAbstract {
 		'RevolutionSlider',
 		'ThePreloader',
 		'LayerSlider',
+		'JuipterTheme',
 	];
 
 }
