@@ -229,8 +229,8 @@ class CSS {
 	 * @param DOMElement $nested_tag
 	 */
 	protected function build_style_list( $nested_tag = null ) {
-		/** @noinspection NotOptimalRegularExpressionsInspection */
 		if ( null !== $nested_tag ) {
+			/** @noinspection NotOptimalRegularExpressionsInspection */
 			if ( ! preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $nested_tag->textContent ) ) {
 				return;
 			}
@@ -374,7 +374,7 @@ class CSS {
 	 * @return string
 	 */
 	protected function get_cache_path() {
-		return WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . '/';
+		return WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . DIRECTORY_SEPARATOR;
 	}
 
 	/**
@@ -491,7 +491,7 @@ class CSS {
 	 */
 	public function minify_remote_file( $url, $css ) {
 		add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
-		$css_part = $this->minify_css( $css, array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $url ) ) ) ) ), false );
+		$css_part = $this->minify_css( $css, array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $url ) ) ) ) ), $url );
 		remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
 
 		return apply_filters( 'rocket_async_css_minify_remote_file', $css_part, $url );
@@ -504,15 +504,14 @@ class CSS {
 	 *
 	 * @return mixed|string
 	 */
-	public function minify_css( $css, $options = array(), $local = true ) {
+	public function minify_css( $css, $options = array(), $url ) {
 		if ( ! class_exists( 'Minify_Loader' ) ) {
 			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
 			\Minify_Loader::register();
 		}
 		$css = \Minify_CSS::minify( $css, $options );
-		if ( $local ) {
-			$css = $this->parse_css_imports( $css, $local );
-		}
+		$css = $this->parse_css_imports( $css, $url );
+		$css = $this->parse_fonts( $css, $url );
 
 		return $css;
 	}
@@ -523,26 +522,66 @@ class CSS {
 	 *
 	 * @return mixed
 	 */
-	protected function parse_css_imports( $css, $local ) {
-		$home = home_url();
+	protected function parse_css_imports( $css, $url ) {
 		preg_match_all( '/@import\s*(?:url\s*\()?["\'](.*?)["\']\)?\s*;/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[1] as $pos => $match ) {
 				// Ensure not an empty string
 				if ( ! empty( $match ) ) {
-					// Is this a URL? If so replace with ABSPATH since this only runs for local files
-					if ( parse_url( $match, PHP_URL_HOST ) ) {
-						$match = str_replace( $home, ABSPATH, $match[1] );
+					$host = parse_url( $match, PHP_URL_HOST );
+					if ( empty( $host ) ) {
+						$match = \phpUri::parse( $url )->join( $match );
 					}
-					// Create path
-					$path          = untrailingslashit( ABSPATH ) . $match;
-					$imported_data = $this->get_content( $path );
+					if ( $host != $this->domain && ! in_array( $host, $this->cdn_domains ) ) {
+						$imported_data = $this->remote_fetch( $match );
+					} else {
+						$match = $this->strip_cdn( $match[1] );
+						// Is this a URL? If so replace with ABSPATH
+						$match         = str_replace( $this->home, ABSPATH, $match );
+						$path          = untrailingslashit( ABSPATH ) . $match;
+						$imported_data = $this->get_content( $path );
+					}
 					// Process css to minify it, passing the path of the found file
-					$imported_data = $this->minify_css( $imported_data, array( 'prependRelativePath' => trailingslashit( dirname( $match ) ) ), $local );
+					$imported_data = $this->minify_css( $imported_data, array( 'prependRelativePath' => trailingslashit( dirname( $match ) ) ), $match );
 					// Replace match wth fetched css
 					$css = str_replace( $matches[0][ $pos ], $imported_data, $css );
 				}
+			}
+		}
+
+		return $css;
+	}
+
+	protected function parse_fonts( $css, $url ) {
+		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		//Ensure there are matches
+		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			foreach ( $matches[2] as $index => $match ) {
+				if ( empty( $match ) ) {
+					$match = $matches[1][ $index ];
+				}
+				$url_parts = parse_url( $match );
+				if ( empty( $url_parts['host'] ) ) {
+					$match     = \phpUri::parse( $url )->join( $match );
+					$url_parts = parse_url( $match );
+				}
+				if ( ! ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
+					continue;
+				}
+				$data = $this->remote_fetch( $match );
+				if ( ! empty( $data ) ) {
+					$info      = pathinfo( $match );
+					$hash      = md5( $info['dirname'] . '/' . $info['filename'] );
+					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
+					$final_url = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+					if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
+						$this->put_content( $filename, $data );
+						$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
+						$css      = str_replace( $matches[0][ $index ], $css_part, $css );
+					}
+				}
+
 			}
 		}
 
@@ -554,15 +593,10 @@ class CSS {
 	 *
 	 * @return bool|mixed
 	 */
-	public function get_content( $file ) {
-		/** @var \WP_Filesystem_Base $wp_filesystem */
-		global $wp_filesystem;
-		if ( is_null( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-
-		return $wp_filesystem->get_contents( $file );
+	public function get_content(
+		$file
+	) {
+		return $this->get_wp_filesystem()->get_contents( $file );
 	}
 
 	/**
@@ -572,7 +606,9 @@ class CSS {
 	 *
 	 * @internal param DOMElement $tag
 	 */
-	protected function process_local_style( $href, $media ) {
+	protected function process_local_style(
+		$href, $media
+	) {
 		if ( 0 == strpos( $href, '/' ) ) {
 			$href = $this->home . $href;
 		}
@@ -582,21 +618,9 @@ class CSS {
 			$src_file = substr( $href, 0, strpos( $href, strrchr( $href, '?' ) ) );
 		}
 		// Break up url
-		$url_parts           = parse_url( $src_file );
-		$url_parts['host']   = $this->domain;
-		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
-		/*
-		 * Check and see what version of php-http we have.
-		 * 1.x uses procedural functions.
-		 * 2.x uses OOP classes with a http namespace.
-		 * Convert the address to a path, minify, and add to buffer.
-		 */
-		if ( class_exists( 'http\Url' ) ) {
-			$url = new \http\Url( $url_parts );
-			$url = $url->toString();
-		} else {
-			$url = http_build_url( $url_parts );
-		}
+		$url       = $this->strip_cdn( $src_file );
+		$url_parts = parse_url( $url );
+
 		foreach ( array_map( 'trim', array_filter( explode( ',', $media ) ) ) as $type_item ) {
 			if ( in_array( $type_item, array(
 				'screen',
@@ -628,7 +652,9 @@ class CSS {
 	/**
 	 * @param $tag
 	 */
-	protected function process_inline_style( $tag ) {
+	protected function process_inline_style(
+		$tag
+	) {
 		// Check item cache
 		$item_cache_id = [ md5( $tag->textContent ) ];
 		$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
@@ -638,7 +664,7 @@ class CSS {
 			$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 			//Minify ?
 			if ( get_rocket_option( 'minify_html_inline_css', false ) ) {
-				$css_part = $this->minify_css( $css_part );
+				$css_part = $this->minify_css( $css_part, [], $_SERVER['REQUEST_URI'] );
 			}
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
@@ -653,7 +679,9 @@ class CSS {
 	 *
 	 * @return array
 	 */
-	protected function write_cache( $filename ) {
+	protected function write_cache(
+		$filename
+	) {
 		if ( empty( $this->cache ) ) {
 			$data = [ 'filename' => $filename ];
 			$this->put_content( $filename, $this->css );
@@ -672,7 +700,16 @@ class CSS {
 	 *
 	 * @return bool
 	 */
-	public function put_content( $file, $data ) {
+	public function put_content(
+		$file, $data
+	) {
+		return $this->get_wp_filesystem()->put_contents( $file, $data );
+	}
+
+	/**
+	 * @return \WP_Filesystem_Base
+	 */
+	protected function get_wp_filesystem() {
 		/** @var \WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
 		if ( is_null( $wp_filesystem ) ) {
@@ -680,13 +717,15 @@ class CSS {
 			WP_Filesystem();
 		}
 
-		return $wp_filesystem->put_contents( $file, $data );
+		return $wp_filesystem;
 	}
 
 	/**
 	 * @param $href
 	 */
-	protected function add_main_style( $href ) {
+	protected function add_main_style(
+		$href
+	) {
 		$external_tag = $this->document->createElement( 'script' );
 		$external_tag->setAttribute( 'data-no-minify', '1' );
 		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
@@ -711,6 +750,26 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 	}
 
+	protected function strip_cdn( $url ) {
+		$url_parts           = parse_url( $url );
+		$url_parts['host']   = $this->domain;
+		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
+		/*
+		 * Check and see what version of php-http we have.
+		 * 1.x uses procedural functions.
+		 * 2.x uses OOP classes with a http namespace.
+		 * Convert the address to a path, minify, and add to buffer.
+		 */
+		if ( class_exists( 'http\Url' ) ) {
+			$url = new \http\Url( $url_parts );
+			$url = $url->toString();
+		} else {
+			$url = http_build_url( $url_parts );
+		}
+
+		return $url;
+	}
+
 	/**
 	 * Add conditional comments back in
 	 *
@@ -719,7 +778,9 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 *
 	 * @return mixed
 	 */
-	protected function inject_ie_conditionals( $buffer, $conditionals ) {
+	protected function inject_ie_conditionals(
+		$buffer, $conditionals
+	) {
 		foreach ( $conditionals as $conditional ) {
 			if ( false !== strpos( $buffer, '<WP_ROCKET_CONDITIONAL />' ) ) {
 				$buffer = preg_replace( '/<WP_ROCKET_CONDITIONAL \/>/', $conditional, $buffer, 1 );
