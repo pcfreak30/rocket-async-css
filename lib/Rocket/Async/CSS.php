@@ -101,6 +101,20 @@ class CSS {
 		$this->plugin_file         = dirname( dirname( dirname( __DIR__ ) ) ) . '/rocket-async-css.php';
 	}
 
+	public function activate() {
+		if ( ! ( defined( 'ROCKET_ASYNC_CSS_COMPOSER_RAN' ) && ROCKET_ASYNC_CSS_COMPOSER_RAN ) ) {
+			/** @noinspection PhpIncludeInspection */
+			include_once dirname( $this->plugin_file ) . '/wordpress-web-composer/class-wordpress-web-composer.php';
+			$web_composer = new \WordPress_Web_Composer( 'rocket_async_css' );
+			$web_composer->set_install_target( dirname( $this->plugin_file ) );
+			$web_composer->run();
+		}
+	}
+
+	public function deactivate() {
+		$this->cache_manager->get_store()->delete_cache_branch();
+	}
+
 	/**
 	 *
 	 */
