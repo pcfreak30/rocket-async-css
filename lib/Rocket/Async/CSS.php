@@ -527,7 +527,7 @@ class CSS {
 		}
 		$css = \Minify_CSS::minify( $css, $options );
 		$css = $this->parse_css_imports( $css, $url );
-		$css = $this->parse_fonts( $css, $url );
+		$css = $this->download_remote_files( $css, $url );
 
 		return $css;
 	}
@@ -569,7 +569,7 @@ class CSS {
 		return $css;
 	}
 
-	protected function parse_fonts( $css, $url ) {
+	protected function download_remote_files( $css, $url ) {
 		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
