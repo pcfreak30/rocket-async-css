@@ -771,7 +771,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 	}
 
-	protected function strip_cdn( $url ) {
+	public function strip_cdn( $url ) {
 		$url_parts           = parse_url( $url );
 		$url_parts['host']   = $this->domain;
 		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
