@@ -11,7 +11,8 @@ class Request extends ComponentAbstract {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
 			add_filter( 'rocket_buffer', [ $this->app, 'process_buffer' ], PHP_INT_MAX - 1 );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', array( $this, 'return_one' ) );
-			add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
+			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );
 			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
 				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
 			} else {
