@@ -861,5 +861,12 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return $this->node_map;
 	}
 
+	/**
+	 * @return string
+	 */
+	public function get_plugin_file() {
+		return $this->plugin_file;
+	}
+
 
 }
