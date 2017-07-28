@@ -14,7 +14,7 @@ class Request extends ComponentAbstract {
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );
 			add_filter( 'widget_text', 'wp_make_content_images_responsive', PHP_INT_MAX );
-			add_action( 'init', 'ob_start' );
+			add_action( 'init', 'ob_start', 10, 0 );
 			add_action( 'shutdown', [ $this, 'process_buffer' ], 0 );
 			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
 				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
