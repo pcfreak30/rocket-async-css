@@ -8,7 +8,8 @@ class ResponsiveImages implements IntegrationInterface {
 
 	public function init() {
 		add_filter( 'the_content', [ $this, 'process' ], 11 );
-		add_filter( 'widget_text', [ $this, 'process' ] );
+		add_filter( 'widget_text', [ $this, 'process' ], PHP_INT_MAX );
+		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ] );
 	}
 
 	public function process( $content ) {
