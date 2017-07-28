@@ -7,7 +7,8 @@ namespace Rocket\Async\CSS\Integration;
 class ResponsiveImages implements IntegrationInterface {
 
 	public function init() {
-		add_filter( 'the_content', [ $this, 'process' ] );
+		add_filter( 'the_content', [ $this, 'process' ], 11 );
+		add_filter( 'widget_text', [ $this, 'process' ] );
 	}
 
 	public function process( $content ) {
