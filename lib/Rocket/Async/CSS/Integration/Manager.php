@@ -12,6 +12,7 @@ class Manager extends ManagerAbstract {
 		'ThePreloader',
 		'LayerSlider',
 		'JuipterTheme',
+		'MetaSlider',
 	];
 
 }
