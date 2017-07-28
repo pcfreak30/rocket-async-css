@@ -25,7 +25,7 @@ class ResponsiveImages implements IntegrationInterface {
 					$size = end( $size );
 					$src  = str_replace( "-{$size}", '', $src );
 				}
-				$attachment_id = attachment_url_to_postid( rocket_async_css_instance()->strip_cdn( $image ) );
+				$attachment_id = attachment_url_to_postid( rocket_async_css_instance()->strip_cdn( $src ) );
 				if ( empty( $attachment_id ) ) {
 					continue;
 				}
