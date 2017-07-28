@@ -30,7 +30,7 @@ class ResponsiveImages implements IntegrationInterface {
 					continue;
 				}
 				$original_class = '';
-				if ( preg_match( '/src=[\'"](.+)[\'"]/U', $image, $class ) ) {
+				if ( preg_match( '/class=[\'"](.+)[\'"]/U', $image, $class ) ) {
 					$original_class = end( $class );
 				}
 				$class     = trim( "{$original_class} wp-image-{$attachment_id}" );
