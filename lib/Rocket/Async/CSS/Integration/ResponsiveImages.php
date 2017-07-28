@@ -17,7 +17,7 @@ class ResponsiveImages implements IntegrationInterface {
 			return $content;
 		}
 		foreach ( $matches[0] as $image ) {
-			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image ) && preg_match( '/src=[\'"].+[\'"]/U', $image, $src ) ) {
+			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image ) && preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) ) {
 				$src  = end( $src );
 				$path = parse_url( $src, PHP_URL_PATH );
 
