@@ -10,10 +10,12 @@ class Request extends ComponentAbstract {
 		if ( ! is_admin() ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
 			add_filter( 'rocket_buffer', [ $this->app, 'process_buffer' ], PHP_INT_MAX - 1 );
-			add_filter( 'pre_get_rocket_option_minify_google_fonts', array( $this, 'return_one' ) );
+			add_filter( 'pre_get_rocket_option_minify_google_fonts', [ $this, 'return_one' ] );
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );
 			add_filter( 'widget_text', 'wp_make_content_images_responsive', PHP_INT_MAX );
+			add_action( 'init', 'ob_start' );
+			add_action( 'shutdown', [ $this, 'process_buffer' ], 0 );
 			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
 				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
 			} else {
@@ -52,5 +54,7 @@ class Request extends ComponentAbstract {
 		wp_enqueue_script( 'picturefill', plugins_url( 'assets/js/picturefill.min.js', $this->app->get_plugin_file() ), '3.0.3' );
 	}
 
-
+	public function process_buffer() {
+		echo apply_filters( 'rocket_async_css_request_buffer', ob_get_clean() );
+	}
 }
