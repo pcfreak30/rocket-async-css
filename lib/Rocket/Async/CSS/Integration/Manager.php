@@ -13,6 +13,7 @@ class Manager extends ManagerAbstract {
 		'LayerSlider',
 		'JuipterTheme',
 		'MetaSlider',
+		'ResponsiveImages',
 	];
 
 }
