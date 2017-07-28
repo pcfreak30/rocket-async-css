@@ -416,6 +416,8 @@ class CSS {
 		$href = $tag->getAttribute( 'href' );
 		//Decode html entities
 		$href = html_entity_decode( preg_replace( '/((?<!&)#.*;)/', '&$1', $href ) );
+		// Decode url % encoding
+		$href = urldecode( $href );
 		if ( 'link' === $tag->tagName && ! empty( $href ) ) {
 			$media = $tag->getAttribute( 'media' );
 			$this->process_external_style( $href, $media );
