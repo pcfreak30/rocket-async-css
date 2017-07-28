@@ -10,6 +10,7 @@ class ResponsiveImages implements IntegrationInterface {
 		add_filter( 'the_content', [ $this, 'process' ], 11 );
 		add_filter( 'widget_text', [ $this, 'process' ], PHP_INT_MAX );
 		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ] );
+		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive', PHP_INT_MAX );
 	}
 
 	public function process( $content ) {
