@@ -13,6 +13,7 @@ class Request extends ComponentAbstract {
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', array( $this, 'return_one' ) );
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );
+			add_filter( 'widget_text', 'wp_make_content_images_responsive', PHP_INT_MAX );
 			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
 				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
 			} else {
