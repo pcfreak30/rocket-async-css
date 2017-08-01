@@ -358,14 +358,14 @@ class CSS {
 		// Remote fetch external scripts
 		$this->cdn_domains = get_rocket_cdn_cnames();
 		// Get the hostname for each CDN CNAME
-		foreach ( (array) $this->cdn_domains as &$cdn_domain ) {
+		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
+			$cdn_domain       = &$this->cdn_domains[ $index ];
 			$cdn_domain_parts = parse_url( $cdn_domain );
 			$cdn_domain       = $cdn_domain_parts['host'];
 		}
 		// Cleanup
 		unset( $cdn_domain_parts, $cdn_domain );
 	}
-
 	/**
 	 * @return string
 	 */
