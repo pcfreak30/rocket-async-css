@@ -372,9 +372,9 @@ class CSS {
 	protected function get_cache_filename() {
 		$js_key     = get_rocket_option( 'minify_css_key' );
 		$cache_path = $this->get_cache_path();
-		// If we have a user logged in, include user ID in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
+		// If we have a user logged in, include user role in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
 		if ( is_user_logged_in() ) {
-			$filename = $cache_path . md5( 'minify-' . get_current_user_id() . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
+			$filename = $cache_path . md5( 'minify-' . wp_get_current_user()->roles[0] . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
 		} else {
 			$filename = $cache_path . md5( 'minify-global' . '-' . $js_key ) . '.css';
 		}
