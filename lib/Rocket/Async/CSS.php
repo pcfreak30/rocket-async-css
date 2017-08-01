@@ -183,6 +183,7 @@ class CSS {
 			if ( null === $head ) {
 				return $buffer;
 			}
+			$this->normalize_cdn_domains();
 			$this->build_style_list();
 			$this->cleanup_nodes();
 
@@ -194,7 +195,6 @@ class CSS {
 
 			$filename = '';
 			if ( empty( $this->cache ) ) {
-				$this->normalize_cdn_domains();
 				$filename = $this->get_cache_filename();
 			}
 			$this->process_styles();
