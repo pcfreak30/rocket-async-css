@@ -510,7 +510,7 @@ class CSS {
 	 */
 	public function minify_remote_file( $url, $css ) {
 		add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
-		$css_part = $this->minify_css( $css, array( 'prependRelativePath' => trailingslashit( dirname( rocket_add_url_protocol( rocket_remove_url_protocol( $url ) ) ) ) ), $url );
+		$css_part = $this->minify_css( $css, [], $url );
 		remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
 
 		return apply_filters( 'rocket_async_css_minify_remote_file', $css_part, $url );
@@ -528,9 +528,9 @@ class CSS {
 			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
 			\Minify_Loader::register();
 		}
-		$css = \Minify_CSS::minify( $css, $options );
 		$css = $this->parse_css_imports( $css, $url );
 		$css = $this->download_remote_files( $css, $url );
+		$css = \Minify_CSS::minify( $css, $options );
 
 		return $css;
 	}
@@ -562,7 +562,7 @@ class CSS {
 						$imported_data = $this->get_content( $path );
 					}
 					// Process css to minify it, passing the path of the found file
-					$imported_data = $this->minify_css( $imported_data, array( 'prependRelativePath' => trailingslashit( dirname( $match ) ) ), $match );
+					$imported_data = $this->minify_css( $imported_data, [], $match );
 					// Replace match wth fetched css
 					$css = str_replace( $matches[0][ $pos ], $imported_data, $css );
 				}
