@@ -510,7 +510,7 @@ class CSS {
 	 */
 	public function minify_remote_file( $url, $css ) {
 		add_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
-		$css_part = $this->minify_css( $css, array( 'prependRelativePath' => rocket_add_url_protocol( rocket_remove_url_protocol( trailingslashit( dirname( $url ) ) ) ) ), $url );
+		$css_part = $this->minify_css( $css, array( 'prependRelativePath' => trailingslashit( dirname( rocket_add_url_protocol( rocket_remove_url_protocol( $url ) ) ) ) ), $url );
 		remove_filter( 'rocket_url_no_dots', '__return_false', PHP_INT_MAX );
 
 		return apply_filters( 'rocket_async_css_minify_remote_file', $css_part, $url );
