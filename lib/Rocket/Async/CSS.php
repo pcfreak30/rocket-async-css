@@ -366,6 +366,7 @@ class CSS {
 		// Cleanup
 		unset( $cdn_domain_parts, $cdn_domain );
 	}
+
 	/**
 	 * @return string
 	 */
@@ -582,6 +583,7 @@ class CSS {
 				if ( 0 === strpos( $match, 'data:' ) ) {
 					continue;
 				}
+				$match     = trim( $match, '"' . "'" );
 				$url_parts = parse_url( $match );
 				if ( empty( $url_parts['host'] ) ) {
 					$match     = \phpUri::parse( $url )->join( $match );
