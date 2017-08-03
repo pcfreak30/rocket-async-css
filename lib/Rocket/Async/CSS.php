@@ -101,6 +101,27 @@ class CSS {
 		$this->plugin_file         = dirname( dirname( dirname( __DIR__ ) ) ) . '/rocket-async-css.php';
 	}
 
+	/**
+	 * @return Manager
+	 */
+	public function get_cache_manager() {
+		return $this->cache_manager;
+	}
+
+	/**
+	 * @return IntegrationManager
+	 */
+	public function get_integration_manager() {
+		return $this->integration_manager;
+	}
+
+	/**
+	 * @return Request
+	 */
+	public function get_request() {
+		return $this->request;
+	}
+
 	public function activate() {
 		if ( ! ( defined( 'ROCKET_ASYNC_CSS_COMPOSER_RAN' ) && ROCKET_ASYNC_CSS_COMPOSER_RAN ) ) {
 			/** @noinspection PhpIncludeInspection */
@@ -111,10 +132,6 @@ class CSS {
 		}
 		$this->init();
 		do_action( 'rocket_async_css_activate' );
-	}
-
-	public function deactivate() {
-		$this->cache_manager->get_store()->delete_cache_branch();
 	}
 
 	/**
@@ -162,6 +179,10 @@ class CSS {
 		}
 
 		return ! $error;
+	}
+
+	public function deactivate() {
+		$this->cache_manager->get_store()->delete_cache_branch();
 	}
 
 	/**
@@ -239,6 +260,22 @@ class CSS {
 		}
 
 		return array( $buffer, $conditionals );
+	}
+
+	/**
+	 *
+	 */
+	protected function normalize_cdn_domains() {
+		// Remote fetch external scripts
+		$this->cdn_domains = get_rocket_cdn_cnames();
+		// Get the hostname for each CDN CNAME
+		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
+			$cdn_domain       = &$this->cdn_domains[ $index ];
+			$cdn_domain_parts = parse_url( $cdn_domain );
+			$cdn_domain       = $cdn_domain_parts['host'];
+		}
+		// Cleanup
+		unset( $cdn_domain_parts, $cdn_domain );
 	}
 
 	/**
@@ -349,22 +386,6 @@ class CSS {
 		}
 
 		return $post_cache_id;
-	}
-
-	/**
-	 *
-	 */
-	protected function normalize_cdn_domains() {
-		// Remote fetch external scripts
-		$this->cdn_domains = get_rocket_cdn_cnames();
-		// Get the hostname for each CDN CNAME
-		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
-			$cdn_domain       = &$this->cdn_domains[ $index ];
-			$cdn_domain_parts = parse_url( $cdn_domain );
-			$cdn_domain       = $cdn_domain_parts['host'];
-		}
-		// Cleanup
-		unset( $cdn_domain_parts, $cdn_domain );
 	}
 
 	/**
@@ -572,6 +593,51 @@ class CSS {
 		return $css;
 	}
 
+	public function strip_cdn( $url ) {
+		$url_parts           = parse_url( $url );
+		$url_parts['host']   = $this->domain;
+		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
+		/*
+		 * Check and see what version of php-http we have.
+		 * 1.x uses procedural functions.
+		 * 2.x uses OOP classes with a http namespace.
+		 * Convert the address to a path, minify, and add to buffer.
+		 */
+		if ( class_exists( 'http\Url' ) ) {
+			$url = new \http\Url( $url_parts );
+			$url = $url->toString();
+		} else {
+			$url = http_build_url( $url_parts );
+		}
+
+		return $url;
+	}
+
+	/**
+	 * @param $file
+	 *
+	 * @return bool|mixed
+	 */
+	public function get_content(
+		$file
+	) {
+		return $this->get_wp_filesystem()->get_contents( $file );
+	}
+
+	/**
+	 * @return \WP_Filesystem_Base
+	 */
+	protected function get_wp_filesystem() {
+		/** @var \WP_Filesystem_Base $wp_filesystem */
+		global $wp_filesystem;
+		if ( is_null( $wp_filesystem ) ) {
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		return $wp_filesystem;
+	}
+
 	protected function download_remote_files( $css, $url ) {
 		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
@@ -613,13 +679,14 @@ class CSS {
 
 	/**
 	 * @param $file
+	 * @param $data
 	 *
-	 * @return bool|mixed
+	 * @return bool
 	 */
-	public function get_content(
-		$file
+	public function put_content(
+		$file, $data
 	) {
-		return $this->get_wp_filesystem()->get_contents( $file );
+		return $this->get_wp_filesystem()->put_contents( $file, $data );
 	}
 
 	/**
@@ -718,32 +785,6 @@ class CSS {
 	}
 
 	/**
-	 * @param $file
-	 * @param $data
-	 *
-	 * @return bool
-	 */
-	public function put_content(
-		$file, $data
-	) {
-		return $this->get_wp_filesystem()->put_contents( $file, $data );
-	}
-
-	/**
-	 * @return \WP_Filesystem_Base
-	 */
-	protected function get_wp_filesystem() {
-		/** @var \WP_Filesystem_Base $wp_filesystem */
-		global $wp_filesystem;
-		if ( is_null( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-
-		return $wp_filesystem;
-	}
-
-	/**
 	 * @param $href
 	 */
 	protected function add_main_style(
@@ -771,26 +812,6 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 				$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
 			}
 		}
-	}
-
-	public function strip_cdn( $url ) {
-		$url_parts           = parse_url( $url );
-		$url_parts['host']   = $this->domain;
-		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
-		/*
-		 * Check and see what version of php-http we have.
-		 * 1.x uses procedural functions.
-		 * 2.x uses OOP classes with a http namespace.
-		 * Convert the address to a path, minify, and add to buffer.
-		 */
-		if ( class_exists( 'http\Url' ) ) {
-			$url = new \http\Url( $url_parts );
-			$url = $url->toString();
-		} else {
-			$url = http_build_url( $url_parts );
-		}
-
-		return $url;
 	}
 
 	/**
