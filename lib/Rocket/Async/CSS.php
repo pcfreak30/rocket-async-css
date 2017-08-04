@@ -757,7 +757,7 @@ class CSS {
 			$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 			//Minify ?
 			if ( get_rocket_option( 'minify_html_inline_css', false ) ) {
-				$css_part = $this->minify_css( $css_part, [], $_SERVER['REQUEST_URI'] );
+				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 			}
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
