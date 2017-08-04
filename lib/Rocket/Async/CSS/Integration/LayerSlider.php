@@ -28,8 +28,9 @@ class LayerSlider implements IntegrationInterface {
 	 */
 	public function init() {
 		if ( class_exists( 'LS_Sliders' ) ) {
-			add_filter( 'ls_use_cache', '__return_false' );
+			add_filter( 'option_ls_use_cache', '__return_false' );
 			add_filter( 'layerslider_pre_parse_defaults', [ $this, 'set_default_skin' ], PHP_INT_MAX );
+			add_filter( 'layerslider_post_parse_defaults', [ $this, 'set_skin_path_url' ], PHP_INT_MAX );
 			add_filter( 'ls_parse_defaults', [ $this, 'enqueue_skin' ], PHP_INT_MAX );
 			add_filter( 'wp_footer', [ $this, 'print_skins' ] );
 		}
@@ -45,6 +46,12 @@ class LayerSlider implements IntegrationInterface {
 		$defaults['properties']['skin'] = null;
 
 		return $defaults;
+	}
+
+	public function set_skin_path_url( $options ) {
+		$options['properties']['skinsPath'] = get_rocket_cdn_url( \LS_Sources::urlForSkin( end( $this->skins_queue ) ) );
+
+		return $options;
 	}
 
 	/**
@@ -70,10 +77,11 @@ class LayerSlider implements IntegrationInterface {
 	 *
 	 */
 	public function print_skins() {
-		foreach ( $this->skins_queue as $skin ) :
+		foreach ( array_unique( $this->skins_queue ) as $skin ) :
 			?>
             <link href="<?php echo \LS_Sources::urlForSkin( $skin ) . 'skin.css' ?>"/>
 			<?php
 		endforeach;
+		$this->skins_queue = [];
 	}
 }
