@@ -13,6 +13,7 @@ class LayerSlider implements IntegrationInterface {
 			add_filter( 'layerslider_pre_parse_defaults', [ $this, 'set_default_skin' ], PHP_INT_MAX );
 			add_filter( 'ls_parse_defaults', [ $this, 'enqueue_skin' ], PHP_INT_MAX );
 			add_action( 'rocket_async_css_activate', [ $this, 'purge_slider_cache' ] );
+			add_action( 'activate_LayerSlider/layerslider.php', [ $this, 'purge_slider_cache' ] );
 		}
 	}
 
