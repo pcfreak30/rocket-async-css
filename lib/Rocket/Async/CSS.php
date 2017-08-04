@@ -398,7 +398,7 @@ class CSS {
 		if ( is_user_logged_in() ) {
 			$filename = $cache_path . md5( 'minify-' . wp_get_current_user()->roles[0] . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
 		} else {
-			$filename = $cache_path . md5( 'minify-global' . '-' . $js_key ) . '.css';
+			$filename = $cache_path . md5( 'minify-global' . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
 		}
 		// Create post_cache dir if needed
 		if ( ! is_dir( $cache_path ) ) {
