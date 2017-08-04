@@ -641,7 +641,7 @@ class CSS {
 		return $wp_filesystem;
 	}
 
-	protected function download_remote_files( $css, $url ) {
+	public function download_remote_files( $css, $url ) {
 		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
