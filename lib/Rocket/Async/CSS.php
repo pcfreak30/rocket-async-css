@@ -204,6 +204,9 @@ class CSS {
 			if ( null === $head ) {
 				return $buffer;
 			}
+
+			do_action( 'rocket_async_css_do_rewrites' );
+
 			$this->normalize_cdn_domains();
 			$this->build_style_list();
 			$this->cleanup_nodes();
@@ -834,6 +837,13 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 
 		return $buffer;
+	}
+
+	/**
+	 * @return DOMDocument
+	 */
+	public function get_document() {
+		return $this->document;
 	}
 
 	/**
