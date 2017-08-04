@@ -14,6 +14,7 @@ class Manager extends ManagerAbstract {
 		'JuipterTheme',
 		'MetaSlider',
 		'ResponsiveImages',
+		'WPCriticalCSS',
 	];
 
 }
