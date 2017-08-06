@@ -21,7 +21,7 @@ class LayerSlider implements IntegrationInterface {
 	/**
 	 * @var array
 	 */
-	private $skins_queue;
+	private $skins_queue = [];
 
 	/**
 	 *
