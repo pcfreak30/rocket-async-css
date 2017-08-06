@@ -52,13 +52,17 @@ class CSS {
 	 */
 	private $cache_list;
 	/**
-	 * @var DOMDocument
+	 * @var DOMDocument[]
 	 */
-	private $style_document;
+	private $media_documents;
+	/**
+	 * @var DOMDocument[]
+	 */
+	private $starter_document;
 	/**
 	 * @var string
 	 */
-	private $css = '';
+	private $css = [];
 
 	/**
 	 * @var array
@@ -75,7 +79,7 @@ class CSS {
 	/**
 	 * @var string
 	 */
-	private $file;
+	private $files;
 	/**
 	 * @var \SplObjectStorage
 	 */
@@ -90,12 +94,12 @@ class CSS {
 	 * @param DOMDocument $document
 	 * @param DOMDocument $style_document
 	 */
-	public function __construct( IntegrationManager $integration_manager, Request $request, Manager $cache_manager, DOMDocument $document, DOMDocument $style_document ) {
+	public function __construct( IntegrationManager $integration_manager, Request $request, Manager $cache_manager, DOMDocument $document, DOMDocument $starter_document ) {
 		$this->integration_manager = $integration_manager;
 		$this->request             = $request;
 		$this->cache_manager       = $cache_manager;
 		$this->document            = $document;
-		$this->style_document      = $style_document;
+		$this->starter_document    = $starter_document;
 		$this->node_queue          = new \SplQueue();
 		$this->node_map            = new \SplObjectStorage();
 		$this->plugin_file         = dirname( dirname( dirname( __DIR__ ) ) ) . '/rocket-async-css.php';
@@ -217,24 +221,24 @@ class CSS {
 
 			$this->fetch_cache();
 
-			$filename = '';
+			$filename = [];
 			if ( empty( $this->cache ) ) {
-				$filename = $this->get_cache_filename();
+				$filename = $this->get_cache_filenames();
 			}
 			$this->process_styles();
 
 			extract( $this->write_cache( $filename ), EXTR_OVERWRITE );
 
 			/** @var string $href */
-			$this->add_main_style( $href );
+			$this->add_main_styles( $href );
 
 			$this->fix_old_libxml();
 
 			//Get HTML
 			$buffer = $this->document->saveHTML();
 
-			$buffer     = $this->inject_ie_conditionals( $buffer, $conditionals );
-			$this->file = $filename;
+			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
+			$this->files = $filename;
 		}
 
 		return $buffer;
@@ -306,7 +310,18 @@ class CSS {
 			$rel   = $tag->getAttribute( 'rel' );
 			$media = $tag->getAttribute( 'media' );
 			$href  = $tag->getAttribute( 'href' );
-			$type  = 'all';
+			foreach ( array_map( 'trim', array_filter( explode( ',', $media ) ) ) as $type_item ) {
+				if ( in_array( $type_item, array(
+					'screen',
+					'projection',
+				) ) ) {
+					$media = 'all';
+				}
+				break;
+			}
+			if ( empty( $media ) ) {
+				$media = 'all';
+			}
 			//Skip if data-no-minify if found
 			if ( 0 < strlen( trim( $tag->getAttribute( 'data-no-minify' ) ) ) ) {
 				continue;
@@ -339,7 +354,7 @@ class CSS {
 			} else {
 				$this->cache_list['inline'][] = $tag->textContent;
 			}
-			$this->style_document->appendChild( $tag );
+			$this->get_media_document( $media )->appendChild( $tag );
 		}
 	}
 
@@ -349,10 +364,13 @@ class CSS {
 	protected function cleanup_nodes() {
 		/** @var DOMElement $tag */
 		// Remove all elements from DOM
-		foreach ( iterator_to_array( $this->style_document->childNodes ) as $tag ) {
-			$this->node_queue->enqueue( $tag );
-			$this->node_map[ $tag ]->remove();
+		foreach ( $this->media_documents as $document ) {
+			foreach ( iterator_to_array( $document->childNodes ) as $tag ) {
+				$this->node_queue->enqueue( $tag );
+				$this->node_map[ $tag ]->remove();
+			}
 		}
+
 	}
 
 	/**
@@ -362,9 +380,13 @@ class CSS {
 		$this->cache = $this->cache_manager->get_store()->get_cache_fragment( $this->get_cache_id() );
 		if ( ! empty( $this->cache ) ) {
 			// Cached file is gone, we dont have cache
-			if ( ! file_exists( $this->cache  ['filename'] ) ) {
-				$this->cache = false;
+			foreach ( (array) $this->cache  ['filename'] as $filename ) {
+				if ( ! file_exists( $filename ) ) {
+					$this->cache = false;
+					break;
+				}
 			}
+
 		}
 	}
 
@@ -392,23 +414,27 @@ class CSS {
 	}
 
 	/**
-	 * @return string
+	 * @return array
 	 */
-	protected function get_cache_filename() {
+	protected function get_cache_filenames() {
 		$js_key     = get_rocket_option( 'minify_css_key' );
 		$cache_path = $this->get_cache_path();
-		// If we have a user logged in, include user role in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
-		if ( is_user_logged_in() ) {
-			$filename = $cache_path . md5( 'minify-' . wp_get_current_user()->roles[0] . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
-		} else {
-			$filename = $cache_path . md5( 'minify-global' . '-' . $js_key . '-' . $this->get_cache_hash() ) . '.css';
-		}
 		// Create post_cache dir if needed
 		if ( ! is_dir( $cache_path ) ) {
 			rocket_mkdir_p( $cache_path );
 		}
+		$filenames = [];
+		foreach ( array_keys( $this->media_documents ) as $media ) {
+			// If we have a user logged in, include user role in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
+			if ( is_user_logged_in() ) {
+				$filename = $cache_path . md5( 'minify-' . wp_get_current_user()->roles[0] . '-' . $js_key . '-' . $this->get_cache_hash() . '-' . $media ) . '.css';
+			} else {
+				$filename = $cache_path . md5( 'minify-global' . '-' . $js_key . '-' . $this->get_cache_hash() . '-' . $media ) . '.css';
+			}
+			$filenames[ $media ] = $filename;
+		}
 
-		return $filename;
+		return $filenames;
 	}
 
 	/**
@@ -429,27 +455,36 @@ class CSS {
 	 *
 	 */
 	protected function process_styles() {
+		/** @var DOMElement $tag */
 		foreach ( $this->node_queue as $tag ) {
-			$this->process_style( $tag );
+			$media = false;
+			foreach ( $this->media_documents as $the_media => $document ) {
+				if ( $tag->ownerDocument->isSameNode( $document ) ) {
+					$media = $the_media;
+					break;
+				}
+			}
+			if ( $media ) {
+				$this->process_style( $tag, $media );
+			}
 		}
 	}
 
 	/**
 	 * @param $tag
 	 */
-	protected function process_style( $tag ) {
+	protected function process_style( $tag, $media ) {
 		$href = $tag->getAttribute( 'href' );
 		//Decode html entities
 		$href = html_entity_decode( preg_replace( '/((?<!&)#.*;)/', '&$1', $href ) );
 		// Decode url % encoding
 		$href = urldecode( $href );
 		if ( 'link' === $tag->tagName && ! empty( $href ) ) {
-			$media = $tag->getAttribute( 'media' );
 			$this->process_external_style( $href, $media );
 
 			return;
 		}
-		$this->process_inline_style( $tag );
+		$this->process_inline_style( $tag, $media );
 	}
 
 	/**
@@ -468,7 +503,7 @@ class CSS {
 				$src_host = parse_url( $src, PHP_URL_HOST );
 				// Being remote is defined as not having our home url and not being in the CDN list. However if the file does not have a CSS extension, assume its a dynamic script generating CSS, so we need to web fetch it.
 				if ( 0 != strpos( $src, '/' ) && ( ( $src_host != $this->domain && ! in_array( $src_host, $this->cdn_domains ) ) || 'css' !== pathinfo( parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION ) ) ) {
-					$this->process_remote_style( $src );
+					$this->process_remote_style( $src, $media );
 					$this->urls[] = $src;
 
 					return;
@@ -483,9 +518,9 @@ class CSS {
 	/**
 	 * @param string $src
 	 *
-	 * @internal param DOMElement $tag
+	 * @param $media
 	 */
-	protected function process_remote_style( $src ) {
+	protected function process_remote_style( $src, $media ) {
 		// Check item cache
 		$item_cache_id = [ md5( $src ) ];
 		$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
@@ -496,10 +531,10 @@ class CSS {
 			if ( ! empty( $file ) ) {
 				$css_part = $this->minify_remote_file( $src, $file );
 				$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
-				$this->css .= $css_part;
+				$this->css[ $media ] .= $css_part;
 			}
 		} else {
-			$this->css .= apply_filters( 'rocket_footer_js_process_remote_script', $item_cache, $src );
+			$this->css[ $media ] .= apply_filters( 'rocket_footer_js_process_remote_script', $item_cache, $src, $media );
 		}
 	}
 
@@ -714,31 +749,18 @@ class CSS {
 		$url       = $this->strip_cdn( $src_file );
 		$url_parts = parse_url( $url );
 
-		foreach ( array_map( 'trim', array_filter( explode( ',', $media ) ) ) as $type_item ) {
-			if ( in_array( $type_item, array(
-				'screen',
-				'projection',
-			) ) ) {
-				$media = 'all';
-			}
-			break;
-		}
-
 		// Check item cache
 		$item_cache_id = [ md5( $href ) ];
 		$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
 		// Only run if there is no item cache
 		if ( empty( $item_cache ) ) {
-			$file     = $this->get_content( str_replace( $this->home, ABSPATH, $url ) );
-			$css_part = $file;
-			if ( ! empty( $media ) && 'all' !== $media ) {
-				$css_part = '@media ' . $media . ' {' . $css_part . '}';
-			}
-			$css_part  = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $url );
-			$this->css .= $css_part;
+			$file                = $this->get_content( str_replace( $this->home, ABSPATH, $url ) );
+			$css_part            = $file;
+			$css_part            = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $url );
+			$this->css[ $media ] .= $css_part;
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
-			$this->css .= $item_cache;
+			$this->css[ $media ] .= $item_cache;
 		}
 	}
 
@@ -746,7 +768,7 @@ class CSS {
 	 * @param $tag
 	 */
 	protected function process_inline_style(
-		$tag
+		$tag, $media
 	) {
 		// Check item cache
 		$item_cache_id = [ md5( $tag->textContent ) ];
@@ -764,7 +786,7 @@ class CSS {
 			$css_part = $item_cache;
 		}
 		//Add inline CSS to buffer
-		$this->css .= $css_part;
+		$this->css[ $media ] .= $css_part;
 	}
 
 	/**
@@ -773,12 +795,15 @@ class CSS {
 	 * @return array
 	 */
 	protected function write_cache(
-		$filename
+		$filenames
 	) {
 		if ( empty( $this->cache ) ) {
-			$data = [ 'filename' => $filename ];
-			$this->put_content( $filename, $this->css );
-			$data['href'] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+			$data = [ 'filename' => $filenames ];
+			foreach ( $filenames as $media => $filename ) {
+				$this->put_content( $filename, $this->css[ $media ] );
+				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+			}
+
 			$this->cache_manager->get_store()->update_cache_fragment( $this->get_cache_id(), $data );
 
 			return $data;
@@ -788,19 +813,35 @@ class CSS {
 	}
 
 	/**
-	 * @param $href
+	 * @param $hrefs
 	 */
-	protected function add_main_style(
-		$href
+	protected function add_main_styles(
+		$hrefs
 	) {
+		// loadCSS
 		$external_tag = $this->document->createElement( 'script' );
 		$external_tag->setAttribute( 'data-no-minify', '1' );
 		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
 c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
-
-		$js .= "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);';
 		$external_tag->appendChild( $this->document->createTextNode( $js ) );
 		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+
+		// modernizr
+		$external_tag = $this->document->createElement( 'script' );
+		$external_tag->setAttribute( 'data-no-minify', '1' );
+		$js = '!function(e,n,t){function o(e,n){return typeof e===n}function a(){var e,n,t,a,s,i,r;for(var l in d)if(d.hasOwnProperty(l)){if(e=[],n=d[l],n.name&&(e.push(n.name.toLowerCase()),n.options&&n.options.aliases&&n.options.aliases.length))for(t=0;t<n.options.aliases.length;t++)e.push(n.options.aliases[t].toLowerCase());for(a=o(n.fn,"function")?n.fn():n.fn,s=0;s<e.length;s++)i=e[s],r=i.split("."),1===r.length?Modernizr[r[0]]=a:(!Modernizr[r[0]]||Modernizr[r[0]]instanceof Boolean||(Modernizr[r[0]]=new Boolean(Modernizr[r[0]])),Modernizr[r[0]][r[1]]=a),f.push((a?"":"no-")+r.join("-"))}}function s(e){var n=u.className,t=Modernizr._config.classPrefix||"";if(p&&(n=n.baseVal),Modernizr._config.enableJSClass){var o=new RegExp("(^|\\s)"+t+"no-js(\\s|$)");n=n.replace(o,"$1"+t+"js$2")}Modernizr._config.enableClasses&&(n+=" "+t+e.join(" "+t),p?u.className.baseVal=n:u.className=n)}function i(){return"function"!=typeof n.createElement?n.createElement(arguments[0]):p?n.createElementNS.call(n,"http://www.w3.org/2000/svg",arguments[0]):n.createElement.apply(n,arguments)}function r(){var e=n.body;return e||(e=i(p?"svg":"body"),e.fake=!0),e}function l(e,t,o,a){var s,l,f,d,c="modernizr",p=i("div"),m=r();if(parseInt(o,10))for(;o--;)f=i("div"),f.id=a?a[o]:c+(o+1),p.appendChild(f);return s=i("style"),s.type="text/css",s.id="s"+c,(m.fake?m:p).appendChild(s),m.appendChild(p),s.styleSheet?s.styleSheet.cssText=e:s.appendChild(n.createTextNode(e)),p.id=c,m.fake&&(m.style.background="",m.style.overflow="hidden",d=u.style.overflow,u.style.overflow="hidden",u.appendChild(m)),l=t(p,e),m.fake?(m.parentNode.removeChild(m),u.style.overflow=d,u.offsetHeight):p.parentNode.removeChild(p),!!l}var f=[],d=[],c={_version:"3.5.0",_config:{classPrefix:"",enableClasses:!0,enableJSClass:!0,usePrefixes:!0},_q:[],on:function(e,n){var t=this;setTimeout(function(){n(t[e])},0)},addTest:function(e,n,t){d.push({name:e,fn:n,options:t})},addAsyncTest:function(e){d.push({name:null,fn:e})}},Modernizr=function(){};Modernizr.prototype=c,Modernizr=new Modernizr;var u=n.documentElement,p="svg"===u.nodeName.toLowerCase(),m=function(){var n=e.matchMedia||e.msMatchMedia;return n?function(e){var t=n(e);return t&&t.matches||!1}:function(n){var t=!1;return l("@media "+n+" { #modernizr { position: absolute; } }",function(n){t="absolute"==(e.getComputedStyle?e.getComputedStyle(n,null):n.currentStyle).position}),t}}();c.mq=m,a(),s(f),delete c.addTest,delete c.addAsyncTest;for(var h=0;h<Modernizr._q.length;h++)Modernizr._q[h]();e.Modernizr=Modernizr}(window,document);';
+		$external_tag->appendChild( $this->document->createTextNode( $js ) );
+		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+
+		foreach ( $hrefs as $media => $href ) {
+			$js           = "if(Modernizr.mq('{$media}')){loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1]);}';
+			$external_tag = $this->document->createElement( 'script' );
+			$external_tag->appendChild( $this->document->createTextNode( $js ) );
+			$external_tag->setAttribute( 'data-no-minify', '1' );
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+		}
+
+
 	}
 
 	/**
@@ -883,8 +924,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	/**
 	 * @return mixed
 	 */
-	public function get_file() {
-		return $this->file;
+	public function get_files() {
+		return $this->files;
 	}
 
 	/**
@@ -899,6 +940,14 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	public function get_plugin_file() {
 		return $this->plugin_file;
+	}
+
+	private function get_media_document( $media ) {
+		if ( ! isset( $this->media_documents[ $media ] ) ) {
+			$this->media_documents[ $media ] = clone $this->starter_document;
+		}
+
+		return $this->media_documents[ $media ];
 	}
 
 
