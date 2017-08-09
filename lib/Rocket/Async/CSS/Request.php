@@ -14,8 +14,7 @@ class Request extends ComponentAbstract {
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );
 			add_filter( 'widget_text', 'wp_make_content_images_responsive', PHP_INT_MAX );
-			add_action( 'init', 'ob_start', 10, 0 );
-			add_action( 'shutdown', [ $this, 'process_buffer' ], 0 );
+			add_action( 'init', 'start_buffer', 10, 0 );
 			remove_action( 'wp_print_styles', 'rocket_extract_excluded_css_files' );
 			if ( is_plugin_active( 'rocket-footer-js/rocket-footer-js.php' ) ) {
 				remove_filter( 'rocket_buffer', 'rocket_minify_process', 13 );
@@ -24,6 +23,10 @@ class Request extends ComponentAbstract {
 			}
 		}
 
+	}
+
+	public function start_buffer() {
+		ob_start( [ $this, 'process_buffer' ] );
 	}
 
 	public function init_action() {
@@ -55,7 +58,7 @@ class Request extends ComponentAbstract {
 		wp_enqueue_script( 'picturefill', plugins_url( 'assets/js/picturefill.min.js', $this->app->get_plugin_file() ), '3.0.3' );
 	}
 
-	public function process_buffer() {
-		echo apply_filters( 'rocket_async_css_request_buffer', ob_get_clean() );
+	public function process_buffer( $buffer ) {
+		return apply_filters( 'rocket_async_css_request_buffer', $buffer );
 	}
 }
