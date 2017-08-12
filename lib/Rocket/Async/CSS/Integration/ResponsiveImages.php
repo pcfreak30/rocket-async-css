@@ -39,7 +39,7 @@ class ResponsiveImages implements IntegrationInterface {
 				$new_src_attr = $src_attr;
 				$url          = parse_url( $src );
 				if ( empty( $url['host'] ) ) {
-					$new_src_attr = str_replace( $src, home_url( $src ), $src_attr );
+					$new_src_attr = str_replace( $src, get_rocket_cdn_url( home_url( $src ) ), $src_attr );
 					$new_image    = str_replace( $src_attr, $new_src_attr, $new_image );
 				}
 
