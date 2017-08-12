@@ -182,6 +182,10 @@ class CSS {
 			$error = true;
 			add_action( 'admin_notices', [ $this, 'activate_error_no_domdocument' ] );
 		}
+		if ( ! did_action( 'wp_rocket_loaded' ) ) {
+			$error = true;
+		}
+
 
 		return ! $error;
 	}
