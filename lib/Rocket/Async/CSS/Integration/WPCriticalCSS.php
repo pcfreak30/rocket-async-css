@@ -11,6 +11,6 @@ class WPCriticalCSS implements IntegrationInterface {
 	}
 
 	public function process_css( $css ) {
-		return rocket_async_css_instance()->download_remote_files( $css, $_SERVER['REQUEST_URI'] );
+		return rocket_async_css_instance()->download_remote_files( $css, home_url( $_SERVER['REQUEST_URI'] ) );
 	}
 }
