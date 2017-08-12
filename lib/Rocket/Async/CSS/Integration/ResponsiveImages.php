@@ -18,7 +18,7 @@ class ResponsiveImages implements IntegrationInterface {
 			return $content;
 		}
 		foreach ( $matches[0] as $image ) {
-			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image ) && preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) ) {
+			if ( ! preg_match( '/wp-image-([0-9]+)/i', $image ) && ( preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src ) || preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) ) ) {
 				$src  = end( $src );
 				$path = parse_url( $src, PHP_URL_PATH );
 
@@ -34,8 +34,14 @@ class ResponsiveImages implements IntegrationInterface {
 				if ( preg_match( '/class=[\'"](.+)[\'"]/U', $image, $class ) ) {
 					$original_class = end( $class );
 				}
+				$new_image = $image;
+				if ( false !== strpos( $image, 'data-src' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image, $srcset ) && false !== strpos( $srcset[0], 'data-' ) ) {
+					$new_srcset = str_replace( 'srcset', 'data-srcset', $srcset[0] );
+					$new_image  = str_replace( $srcset[0], $new_srcset, $image );
+				}
+
 				$class     = trim( "{$original_class} wp-image-{$attachment_id}" );
-				$new_image = str_replace( $original_class, $class, $image );
+				$new_image = str_replace( $original_class, $class, $new_image );
 				$content   = str_replace( $image, $new_image, $content );
 			}
 		}
