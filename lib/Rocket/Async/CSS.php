@@ -153,6 +153,7 @@ class CSS {
 		$this->home = set_url_scheme( home_url() );
 		// Get our domain
 		$this->domain = parse_url( $this->home, PHP_URL_HOST );
+		$this->normalize_cdn_domains();
 		if ( ! empty( $wpml_url_filters ) ) {
 			add_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
 		}
@@ -211,7 +212,6 @@ class CSS {
 
 			do_action( 'rocket_async_css_do_rewrites' );
 
-			$this->normalize_cdn_domains();
 			$this->build_style_list();
 			$this->cleanup_nodes();
 
