@@ -36,7 +36,7 @@ class ResponsiveImages implements IntegrationInterface {
 					$original_class = end( $class );
 				}
 				$new_image = $image;
-				if ( false !== strpos( $image, 'data-src' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image, $srcset ) && false !== strpos( $srcset[0], 'data-' ) ) {
+				if ( false !== strpos( $new_image, 'data-src' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $new_image, $srcset ) && false !== strpos( $srcset[0], 'data-' ) ) {
 					$new_srcset = str_replace( 'srcset', 'data-srcset', $srcset[0] );
 					$new_image  = str_replace( $srcset[0], $new_srcset, $image );
 				}
@@ -49,7 +49,26 @@ class ResponsiveImages implements IntegrationInterface {
 				$content   = str_replace( $image, $new_image, $content );
 			}
 		}
+		if ( $this->is_lazyload_enabled() ) {
+			$content = apply_filters( 'a3_lazy_load_html', $content );
+			if ( function_exists( 'get_lazyloadxt_html' ) ) {
+				$content = get_lazyloadxt_html( $content );
+			}
+		}
 
 		return $content;
+	}
+
+	private function is_lazyload_enabled() {
+		global $a3_lazy_load_global_settings;
+		$lazy_load = false;
+		if ( class_exists( 'A3_Lazy_Load' ) ) {
+			$lazy_load = (bool) $a3_lazy_load_global_settings['a3l_apply_lazyloadxt'];
+		}
+		if ( class_exists( 'LazyLoadXT' ) ) {
+			$lazy_load = true;
+		}
+
+		return $lazy_load;
 	}
 }
