@@ -5,16 +5,30 @@ namespace Rocket\Async\CSS\Integration;
 
 
 use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use Rocket\Async\CSS;
 
+/**
+ * Class WPCriticalCSS
+ * @package Rocket\Async\CSS\Integration
+ * @property CSS $plugin
+ */
 class WPCriticalCSS extends ComponentAbstract {
 
+	/**
+	 *
+	 */
 	public function init() {
-		if ( function_exists( 'WPCCSS' ) ) {
+		if ( function_exists( 'wp_criticalcss' ) ) {
 			add_filter( 'wp_criticalcss_print_styles_cache', [ $this, 'process_css' ] );
 		}
 	}
 
+	/**
+	 * @param $css
+	 *
+	 * @return mixed
+	 */
 	public function process_css( $css ) {
-		return rocket_async_css_instance()->download_remote_files( $css, home_url( $_SERVER['REQUEST_URI'] ) );
+		return $this->plugin->download_remote_files( $css, home_url( $_SERVER['REQUEST_URI'] ) );
 	}
 }
