@@ -36,6 +36,11 @@ function rocket_async_css_instance() {
 	return rocket_async_css_container()->create( '\\Rocket\\Async\\CSS' );
 }
 
+/**
+ * @param string $env
+ *
+ * @return Dice
+ */
 function rocket_async_css_container( $env = 'prod' ) {
 	static $container;
 	if ( empty( $container ) ) {
@@ -47,20 +52,29 @@ function rocket_async_css_container( $env = 'prod' ) {
 }
 
 /**
- *
+ * Init function shortcut
  */
 function rocket_async_css_init() {
 	rocket_async_css_instance()->init();
 }
 
+/**
+ * Activate function shortcut
+ */
 function rocket_async_css_activate() {
 	rocket_async_css_instance()->activate();
 }
 
+/**
+ * Deactivate function shortcut
+ */
 function rocket_async_css_deactivate() {
 	rocket_async_css_instance()->deactivate();
 }
 
+/**
+ * Error for older php
+ */
 function rocket_async_css_php_upgrade_notice() {
 	$info = get_plugin_data( __FILE__ );
 	_e(
@@ -69,6 +83,21 @@ function rocket_async_css_php_upgrade_notice() {
 	<div class="error notice">
 		<p>Opps! %s requires a minimum PHP version of 5.4.0. Your current version is: %s. Please contact your host to upgrade.</p>
 	</div>', $info['Name'], PHP_VERSION
+		)
+	);
+}
+
+/**
+ * Error if vendors autoload is missing
+ */
+function rocket_async_css_php_vendor_missing() {
+	$info = get_plugin_data( __FILE__ );
+	_e(
+		sprintf(
+			'
+	<div class="error notice">
+		<p>Opps! %s is corrupted it seems, please re-install the plugin.</p>
+	</div>', $info['Name']
 		)
 	);
 }
@@ -82,14 +111,6 @@ if ( version_compare( PHP_VERSION, '5.4.0' ) < 0 ) {
 		register_activation_hook( __FILE__, 'rocket_async_css_activate' );
 		register_deactivation_hook( __FILE__, 'rocket_async_css_deactivate' );
 	} else {
-		include_once __DIR__ . '/wordpress-web-composer/class-wordpress-web-composer.php';
-		$web_composer = new \WordPress_Web_Composer( 'rocket_async_css' );
-		$web_composer->set_install_target( __DIR__ );
-		if ( $web_composer->run() ) {
-			include_once __DIR__ . '/vendor/autoload.php';
-			register_deactivation_hook( __FILE__, 'rocket_async_css_activate' );
-			register_deactivation_hook( __FILE__, 'rocket_async_css_deactivate' );
-			define( 'ROCKET_ASYNC_CSS_COMPOSER_RAN', true );
-		}
+		add_action( 'admin_notices', 'rocket_async_css_php_vendor_missing' );
 	}
 }

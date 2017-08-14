@@ -3,13 +3,13 @@
 
 namespace Rocket\Async\CSS;
 
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
 
 class Request extends ComponentAbstract {
 	public function init() {
-		parent::init();
 		if ( ! is_admin() ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
-			add_filter( 'rocket_buffer', [ $this->app, 'process_buffer' ], PHP_INT_MAX - 1 );
+			add_filter( 'rocket_buffer', [ $this->plugin, 'process_buffer' ], PHP_INT_MAX - 1 );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', [ $this, 'return_one' ] );
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 12 );

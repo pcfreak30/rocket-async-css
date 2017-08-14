@@ -3,7 +3,7 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use Rocket\Async\CSS\ManagerAbstract;
+use pcfreak30\WordPress\Plugin\Framework\ManagerAbstract;
 
 class Manager extends ManagerAbstract {
 	protected $modules = [

@@ -8,11 +8,14 @@ namespace Rocket\Async\CSS\Integration;
  * Class LayerSlider
  * @package Rocket\Async\CSS\Integration
  */
+
+use Rocket\Async\CSS\ComponentAbstract;
+
 /**
  * Class LayerSlider
  * @package Rocket\Async\CSS\Integration
  */
-class LayerSlider implements IntegrationInterface {
+class LayerSlider extends ComponentAbstract {
 
 	/**
 	 * @var string

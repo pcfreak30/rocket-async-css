@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class WPCriticalCSS implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class WPCriticalCSS extends ComponentAbstract {
 
 	public function init() {
 		if ( function_exists( 'WPCCSS' ) ) {

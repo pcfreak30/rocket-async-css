@@ -3,8 +3,8 @@
 namespace Rocket\Async\CSS\Cache;
 
 use pcfreak30\WordPress\Cache\Store;
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
 use Rocket\Async\CSS;
-use Rocket\Async\CSS\ComponentAbstract;
 
 class Manager extends ComponentAbstract {
 	/**
@@ -29,7 +29,6 @@ class Manager extends ComponentAbstract {
 	}
 
 	public function init() {
-		parent::init();
 		add_action( 'after_rocket_clean_domain', [ $this, 'purge_cache' ], 10, 0 );
 		add_action( 'after_rocket_clean_post', [ $this, 'purge_post' ] );
 		add_action( 'after_rocket_clean_term', [ $this, 'purge_term' ] );
@@ -48,7 +47,7 @@ class Manager extends ComponentAbstract {
 	 */
 	public function purge_cache() {
 		$this->store->delete_cache_branch();
-		rocket_rrmdir( $this->app->get_cache_path() );
+		rocket_rrmdir( $this->plugin->get_cache_path() );
 	}
 
 	/**

@@ -2,8 +2,8 @@
 
 namespace Rocket\Async;
 
+use pcfreak30\WordPress\Plugin\Framework\PluginAbstract;
 use Rocket\Async\CSS\Cache\Manager;
-use Rocket\Async\CSS\ComponentAbstract;
 use Rocket\Async\CSS\DOMDocument;
 use Rocket\Async\CSS\DOMElement;
 use Rocket\Async\CSS\Integration\Manager as IntegrationManager;
@@ -13,21 +13,21 @@ use Rocket\Async\CSS\Request;
  * Class CSS
  * @package Rocket\Async
  */
-class CSS {
+class CSS extends PluginAbstract {
 	/**
 	 * Plugin version
 	 */
 	const VERSION = '0.5.5';
 
 	/**
-	 * Plugin version
+	 *  Transient Prefix
 	 */
 	const TRANSIENT_PREFIX = 'rocket_async_css_style_';
 
 	/**
-	 * @var string
+	 *
 	 */
-	private $plugin_file;
+	const PLUGIN_SLUG = 'rocket-async-css';
 	/**
 	 * @var DOMDocument
 	 */
@@ -86,6 +86,21 @@ class CSS {
 	private $node_map;
 
 	/**
+	 * @var Request
+	 */
+	private $request;
+
+	/**
+	 * @var IntegrationManager
+	 */
+	private $integration_manager;
+
+	/**
+	 * @var Manager
+	 */
+	private $cache_manager;
+
+	/**
 	 * CSS constructor.
 	 *
 	 * @param IntegrationManager $integration_manager
@@ -102,7 +117,7 @@ class CSS {
 		$this->starter_document    = $starter_document;
 		$this->node_queue          = new \SplQueue();
 		$this->node_map            = new \SplObjectStorage();
-		$this->plugin_file         = dirname( dirname( dirname( __DIR__ ) ) ) . '/rocket-async-css.php';
+		parent::__construct();
 	}
 
 	/**
@@ -126,6 +141,9 @@ class CSS {
 		return $this->request;
 	}
 
+	/**
+	 *
+	 */
 	public function activate() {
 		if ( ! ( defined( 'ROCKET_ASYNC_CSS_COMPOSER_RAN' ) && ROCKET_ASYNC_CSS_COMPOSER_RAN ) ) {
 			/** @noinspection PhpIncludeInspection */
@@ -142,26 +160,20 @@ class CSS {
 	 *
 	 */
 	public function init() {
-		global $wpml_url_filters;
+		parent::init();
 		if ( ! $this->get_dependancies_exist() ) {
 			return;
 		}
-		if ( ! empty( $wpml_url_filters ) ) {
-			remove_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
+		if ( isset( $this->wpml_url_filters ) ) {
+			remove_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10 );
 		}
 		//Get home URL
 		$this->home = set_url_scheme( home_url() );
 		// Get our domain
 		$this->domain = parse_url( $this->home, PHP_URL_HOST );
 		$this->normalize_cdn_domains();
-		if ( ! empty( $wpml_url_filters ) ) {
-			add_filter( 'home_url', array( $wpml_url_filters, 'home_url_filter' ), - 10 );
-		}
-		foreach ( get_object_vars( $this ) as &$property ) {
-			if ( $property instanceof ComponentAbstract ) {
-				$property->set_app( $this );
-				$property->init();
-			}
+		if ( isset( $this->wpml_url_filters ) ) {
+			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10 );
 		}
 	}
 
@@ -190,6 +202,25 @@ class CSS {
 		return ! $error;
 	}
 
+	/**
+	 *
+	 */
+	protected function normalize_cdn_domains() {
+		// Remote fetch external scripts
+		$this->cdn_domains = get_rocket_cdn_cnames();
+		// Get the hostname for each CDN CNAME
+		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
+			$cdn_domain       = &$this->cdn_domains[ $index ];
+			$cdn_domain_parts = parse_url( $cdn_domain );
+			$cdn_domain       = $cdn_domain_parts['host'];
+		}
+		// Cleanup
+		unset( $cdn_domain_parts, $cdn_domain );
+	}
+
+	/**
+	 *
+	 */
 	public function deactivate() {
 		$this->cache_manager->get_store()->delete_cache_branch();
 	}
@@ -274,22 +305,6 @@ class CSS {
 	}
 
 	/**
-	 *
-	 */
-	protected function normalize_cdn_domains() {
-		// Remote fetch external scripts
-		$this->cdn_domains = get_rocket_cdn_cnames();
-		// Get the hostname for each CDN CNAME
-		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
-			$cdn_domain       = &$this->cdn_domains[ $index ];
-			$cdn_domain_parts = parse_url( $cdn_domain );
-			$cdn_domain       = $cdn_domain_parts['host'];
-		}
-		// Cleanup
-		unset( $cdn_domain_parts, $cdn_domain );
-	}
-
-	/**
 	 * @param DOMElement $nested_tag
 	 */
 	protected function build_style_list( $nested_tag = null ) {
@@ -360,6 +375,19 @@ class CSS {
 			}
 			$this->get_media_document( $media )->appendChild( $tag );
 		}
+	}
+
+	/**
+	 * @param $media
+	 *
+	 * @return DOMDocument
+	 */
+	private function get_media_document( $media ) {
+		if ( ! isset( $this->media_documents[ $media ] ) ) {
+			$this->media_documents[ $media ] = clone $this->starter_document;
+		}
+
+		return $this->media_documents[ $media ];
 	}
 
 	/**
@@ -635,6 +663,11 @@ class CSS {
 		return $css;
 	}
 
+	/**
+	 * @param $url
+	 *
+	 * @return \http\Url|string
+	 */
 	public function strip_cdn( $url ) {
 		$url_parts           = parse_url( $url );
 		$url_parts['host']   = $this->domain;
@@ -680,6 +713,12 @@ class CSS {
 		return $wp_filesystem;
 	}
 
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
 	public function download_remote_files( $css, $url ) {
 		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
@@ -939,13 +978,10 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return $this->plugin_file;
 	}
 
-	private function get_media_document( $media ) {
-		if ( ! isset( $this->media_documents[ $media ] ) ) {
-			$this->media_documents[ $media ] = clone $this->starter_document;
-		}
-
-		return $this->media_documents[ $media ];
+	/**
+	 * @return void
+	 */
+	public function uninstall() {
+		// noop
 	}
-
-
 }

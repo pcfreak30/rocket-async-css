@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class MetaSlider implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class MetaSlider extends ComponentAbstract {
 
 	public function init() {
 		if ( class_exists( 'MetaSliderPlugin' ) ) {

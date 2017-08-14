@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class Amp implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class Amp extends ComponentAbstract {
 
 	public function init() {
 		add_action( 'wp', [ $this, 'wp_action' ] );
@@ -12,7 +14,7 @@ class Amp implements IntegrationInterface {
 
 	public function wp_action() {
 		if ( defined( 'AMP_QUERY_VAR' ) && function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) {
-			remove_filter( 'rocket_buffer', [ rocket_async_css_instance(), 'process_buffer' ], PHP_INT_MAX - 1 );
+			remove_filter( 'rocket_buffer', [ $this->plugin, 'process_buffer' ], PHP_INT_MAX - 1 );
 		}
 	}
 }

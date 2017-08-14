@@ -4,9 +4,10 @@
 namespace Rocket\Async\CSS\Integration;
 
 
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
 use Rocket\Async\CSS\DOMDocument;
 
-class ThePreloader implements IntegrationInterface {
+class ThePreloader extends ComponentAbstract {
 	private $document;
 
 	public function __construct( DOMDocument $document ) {

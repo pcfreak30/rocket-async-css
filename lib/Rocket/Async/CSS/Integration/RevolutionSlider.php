@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class RevolutionSlider implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class RevolutionSlider extends ComponentAbstract {
 
 	public function init() {
 		if ( shortcode_exists( 'rev_slider' ) ) {

@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class JuipterTheme implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class JuipterTheme extends ComponentAbstract {
 
 	public function init() {
 		if ( 'juipter' === wp_get_theme()->get_template() ) {

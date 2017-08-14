@@ -4,7 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-class ResponsiveImages implements IntegrationInterface {
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
+class ResponsiveImages extends ComponentAbstract {
 
 	public function init() {
 		add_filter( 'the_content', [ $this, 'process' ], 11 );
