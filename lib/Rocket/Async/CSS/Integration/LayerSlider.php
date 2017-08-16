@@ -9,7 +9,8 @@ namespace Rocket\Async\CSS\Integration;
  * @package Rocket\Async\CSS\Integration
  */
 
-use Rocket\Async\CSS\ComponentAbstract;
+use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+
 
 /**
  * Class LayerSlider
