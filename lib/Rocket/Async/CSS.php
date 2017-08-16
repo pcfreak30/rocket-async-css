@@ -145,13 +145,6 @@ class CSS extends PluginAbstract {
 	 *
 	 */
 	public function activate() {
-		if ( ! ( defined( 'ROCKET_ASYNC_CSS_COMPOSER_RAN' ) && ROCKET_ASYNC_CSS_COMPOSER_RAN ) ) {
-			/** @noinspection PhpIncludeInspection */
-			include_once dirname( $this->plugin_file ) . '/wordpress-web-composer/class-wordpress-web-composer.php';
-			$web_composer = new \WordPress_Web_Composer( 'rocket_async_css' );
-			$web_composer->set_install_target( dirname( $this->plugin_file ) );
-			$web_composer->run();
-		}
 		$this->init();
 		do_action( 'rocket_async_css_activate' );
 	}
