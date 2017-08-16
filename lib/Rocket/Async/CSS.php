@@ -984,4 +984,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	public function uninstall() {
 		// noop
 	}
+
+	public function get_transient_prefix() {
+		return static::TRANSIENT_PREFIX;
+	}
 }
