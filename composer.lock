@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3957061fd471aca59f7ee780deb8770",
+    "content-hash": "0f00bfcb539a1e1ebb3c6535ae8296c1",
     "packages": [
         {
             "name": "jakeasmith/http_build_url",
@@ -117,16 +117,16 @@
         },
         {
             "name": "pcfreak30/wordpress-plugin-framework",
-            "version": "dev-master",
+            "version": "0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pcfreak30/wordpress-plugin-framework.git",
-                "reference": "e84ba586c550011cb1f42050f3eab4a0d2b5986f"
+                "reference": "7a927dd5d6ef15a006d84056c1ca78918327caf3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pcfreak30/wordpress-plugin-framework/zipball/e84ba586c550011cb1f42050f3eab4a0d2b5986f",
-                "reference": "e84ba586c550011cb1f42050f3eab4a0d2b5986f",
+                "url": "https://api.github.com/repos/pcfreak30/wordpress-plugin-framework/zipball/7a927dd5d6ef15a006d84056c1ca78918327caf3",
+                "reference": "7a927dd5d6ef15a006d84056c1ca78918327caf3",
                 "shasum": ""
             },
             "type": "library",
@@ -146,7 +146,7 @@
                 }
             ],
             "description": "A simple PSR-4 and composer ready plugin framework for the modern wordpress age",
-            "time": "2017-08-14T01:55:38+00:00"
+            "time": "2017-08-16T05:56:27+00:00"
         },
         {
             "name": "pguardiario/phpuri",
@@ -1685,7 +1685,6 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "level-2/dice": 20,
-        "pcfreak30/wordpress-plugin-framework": 20,
         "10up/wp_mock": 20
     },
     "prefer-stable": false,
