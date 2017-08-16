@@ -55,7 +55,7 @@ class Request extends ComponentAbstract {
 	}
 
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'picturefill', plugins_url( 'assets/js/picturefill.min.js', $this->app->get_plugin_file() ), '3.0.3' );
+		wp_enqueue_script( 'picturefill', plugins_url( 'assets/js/picturefill.min.js', $this->plugin->get_plugin_file() ), '3.0.3' );
 	}
 
 	public function process_buffer( $buffer ) {
