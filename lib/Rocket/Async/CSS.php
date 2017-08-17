@@ -17,7 +17,7 @@ class CSS extends PluginAbstract {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.5.5';
+	const VERSION = '0.6.0';
 
 	/**
 	 *  Transient Prefix
