@@ -734,8 +734,11 @@ class CSS extends PluginAbstract {
 				}
 				$data = $this->remote_fetch( $match );
 				if ( ! empty( $data ) ) {
-					$info      = pathinfo( $url_parts['path'] );
-					$hash      = md5( $url_parts['scheme'] . '://' . ( ( ( empty( $url_parts['port'] ) || 80 === (int) $url_parts['port'] ) ) ? ':' . $url_parts['port'] : '' ) . $info['dirname'] . '/' . $info['filename'] );
+					$info = pathinfo( $url_parts['path'] );
+					if ( empty( $url_parts['port'] ) ) {
+						$url_parts['port'] = '';
+					}
+					$hash      = md5( $url_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $url_parts['port'] ) ? ":{$url_parts['port']}" : '' ) . '/' . $info['filename'] );
 					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
 					$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) ), PHP_URL_PATH );
 					$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
