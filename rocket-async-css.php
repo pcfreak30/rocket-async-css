@@ -114,3 +114,14 @@ if ( version_compare( PHP_VERSION, '5.4.0' ) < 0 ) {
 		add_action( 'admin_notices', 'rocket_async_css_php_vendor_missing' );
 	}
 }
+if ( ! function_exists( 'avada_revslider' ) ):
+	function avada_revslider( $name ) {
+		if ( function_exists( 'putRevSlider' ) ) {
+			ob_start();
+			putRevSlider( $name );
+			$slider = ob_get_clean();
+			echo str_replace( 'tpj(document).ready(function() {', 'tpj(window).load(function() {', $slider );
+
+		}
+	}
+endif;
