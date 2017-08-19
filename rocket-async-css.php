@@ -16,7 +16,7 @@
  * Plugin Name:       WP Rocket ASYNC CSS
  * Plugin URI:        https://github.com/pcfreak30/rocket-async-css
  * Description:       WordPress plugin to combine all CSS load async including inline scripts. Extends WP-Rocket
- * Version:           0.5.5
+ * Version:           0.6.0
  * Author:            Derrick Hammer
  * Author URI:        http://www.derrickhammer.com
  * License:           GPL-2.0+
@@ -24,62 +24,96 @@
  * Text Domain:       rocket-async-css
  */
 
-// If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die;
+
+use Dice\Dice;
+
+
+/**
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ * @return \Rocket\Async\CSS
+ */
+function rocket_async_css_instance() {
+	return rocket_async_css_container()->create( '\\Rocket\\Async\\CSS' );
 }
 
 /**
- * Activation hooks
+ * @param string $env
+ *
+ * @return Dice
  */
-register_activation_hook( __FILE__, array( 'Rocket_Async_Css', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'Rocket_Async_Css', 'deactivate' ) );
+function rocket_async_css_container( $env = 'prod' ) {
+	static $container;
+	if ( empty( $container ) ) {
+		$container = new Dice();
+		include __DIR__ . "/config_{$env}.php";
+	}
+
+	return $container;
+}
 
 /**
- * Autoloader function
- *
- * Will search both plugin root and includes folder for class
- *
- * @param $class_name
+ * Init function shortcut
  */
-if ( ! function_exists( 'rocket_async_css_autoloader' ) ):
-	function rocket_async_css_autoloader( $class_name ) {
-		$file      = 'class-' . str_replace( '_', '-', strtolower( $class_name ) ) . '.php';
-		$base_path = plugin_dir_path( __FILE__ );
+function rocket_async_css_init() {
+	rocket_async_css_instance()->init();
+}
 
-		$paths = apply_filters( 'rocket_async_css_autoloader_paths', array(
-			$base_path . $file,
-			$base_path . 'includes/' . $file,
-			$base_path . 'public/' . $file,
-			$base_path . 'includes/preloaders/' . $file
-		) );
-		foreach ( $paths as $path ) {
+/**
+ * Activate function shortcut
+ */
+function rocket_async_css_activate() {
+	rocket_async_css_instance()->activate();
+}
 
-			if ( is_readable( $path ) ) {
-				include_once( $path );
+/**
+ * Deactivate function shortcut
+ */
+function rocket_async_css_deactivate() {
+	rocket_async_css_instance()->deactivate();
+}
 
-				return;
-			}
-		}
+/**
+ * Error for older php
+ */
+function rocket_async_css_php_upgrade_notice() {
+	$info = get_plugin_data( __FILE__ );
+	_e(
+		sprintf(
+			'
+	<div class="error notice">
+		<p>Opps! %s requires a minimum PHP version of 5.4.0. Your current version is: %s. Please contact your host to upgrade.</p>
+	</div>', $info['Name'], PHP_VERSION
+		)
+	);
+}
+
+/**
+ * Error if vendors autoload is missing
+ */
+function rocket_async_css_php_vendor_missing() {
+	$info = get_plugin_data( __FILE__ );
+	_e(
+		sprintf(
+			'
+	<div class="error notice">
+		<p>Opps! %s is corrupted it seems, please re-install the plugin.</p>
+	</div>', $info['Name']
+		)
+	);
+}
+
+if ( version_compare( PHP_VERSION, '5.4.0' ) < 0 ) {
+	add_action( 'admin_notices', 'rocket_async_css_php_upgrade_notice' );
+} else {
+	if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+		include_once __DIR__ . '/vendor/autoload.php';
+		add_action( 'plugins_loaded', 'rocket_async_css_init', 11 );
+		register_activation_hook( __FILE__, 'rocket_async_css_activate' );
+		register_deactivation_hook( __FILE__, 'rocket_async_css_deactivate' );
+	} else {
+		add_action( 'admin_notices', 'rocket_async_css_php_vendor_missing' );
 	}
-
-	spl_autoload_register( 'rocket_async_css_autoloader' );
-endif;
-if ( ! function_exists( 'get_rocket_async_css' ) ):
-
-	/**
-	 * Function wrapper to get instance of plugin
-	 *
-	 * @return Rocket_async_css
-	 */
-	function get_rocket_async_css() {
-		return Rocket_Async_Css::get_instance();
-	}
-
-	add_action( 'plugins_loaded', 'get_rocket_async_css', 11 );
-
-endif;
-
+}
 if ( ! function_exists( 'avada_revslider' ) ):
 	function avada_revslider( $name ) {
 		if ( function_exists( 'putRevSlider' ) ) {
