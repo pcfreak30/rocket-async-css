@@ -729,15 +729,20 @@ class CSS extends PluginAbstract {
 					continue;
 				}
 				$match     = trim( $match, '"' . "'" );
+				$fixed_match = $match;
+				if ( 0 === strpos( $fixed_match, '//' ) ) {
+					//Handle no protocol urls
+					$fixed_match = rocket_add_url_protocol( $fixed_match );
+				}
 				$url_parts = parse_url( $match );
 				if ( empty( $url_parts['host'] ) ) {
-					$match     = \phpUri::parse( $url )->join( $match );
-					$url_parts = parse_url( $match );
+					$fixed_match     = \phpUri::parse( $url )->join( $fixed_match );
+					$url_parts = parse_url( $fixed_match );
 				}
 				if ( ! ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
 					continue;
 				}
-				$data = $this->remote_fetch( $match );
+				$data = $this->remote_fetch( $fixed_match );
 				if ( ! empty( $data ) ) {
 					$info = pathinfo( $url_parts['path'] );
 					if ( empty( $url_parts['port'] ) ) {
