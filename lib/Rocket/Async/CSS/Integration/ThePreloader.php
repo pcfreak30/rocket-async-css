@@ -45,11 +45,14 @@ class ThePreloader extends ComponentAbstract {
 		if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 			return $buffer;
 		}
-		$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
-		$div  = $this->document->createElement( 'div' );
-		$div->setAttribute( 'id', 'wptime-plugin-preloader' );
-		$body->insertBefore( $div, $body->firstChild );
-		$buffer = $this->document->saveHTML();
+		if ( null === $this->document->getElementById( 'wptime-plugin-preloader' ) ) {
+			$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
+			$div  = $this->document->createElement( 'div' );
+			$div->setAttribute( 'id', 'wptime-plugin-preloader' );
+			$body->insertBefore( $div, $body->firstChild );
+			$buffer = $this->document->saveHTML();
+
+		}
 
 		return $buffer;
 	}
