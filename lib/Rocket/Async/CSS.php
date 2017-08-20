@@ -504,6 +504,11 @@ class CSS extends PluginAbstract {
 		$href = html_entity_decode( preg_replace( '/((?<!&)#.*;)/', '&$1', $href ) );
 		// Decode url % encoding
 		$href = urldecode( $href );
+
+		if ( ! isset( $this->css[ $media ] ) ) {
+			$this->css[ $media ] = '';
+		}
+
 		if ( 'link' === $tag->tagName && ! empty( $href ) ) {
 			$this->process_external_style( $href, $media );
 
