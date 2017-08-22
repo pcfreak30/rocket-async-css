@@ -15,6 +15,7 @@ class Manager extends ManagerAbstract {
 		'MetaSlider',
 		'ResponsiveImages',
 		'WPCriticalCSS',
+		'AvadaTheme',
 	];
 
 }
