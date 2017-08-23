@@ -227,12 +227,13 @@ class CSS extends PluginAbstract {
 		$this->disable_minify_overrides();
 		if ( get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
 			//Custom extract method based on wp-rockets
-			list( $buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
-			$buffer = $this->pre_process_scripts( $buffer );
+			list( $pre_buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
+			$pre_buffer = $this->pre_process_scripts( $pre_buffer );
 			// Import HTML
-			if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+			if ( ! @$this->document->loadHTML( mb_convert_encoding( $pre_buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
+			$buffer = $pre_buffer;
 
 			$this->decode_inline_scripts();
 
@@ -1001,14 +1002,14 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return static::TRANSIENT_PREFIX;
 	}
 
-	protected function pre_process_scripts( $buffer ) {
+	public function pre_process_scripts( $buffer ) {
 		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
 			$this,
 			'pre_process_scripts_callback',
 		], $buffer );
 	}
 
-	protected function pre_process_scripts_callback( $match ) {
+	public function pre_process_scripts_callback( $match ) {
 		if ( 0 === strlen( trim( $match[2] ) ) || $match[2] === strip_tags( $match[2] ) ) {
 			return $match[0];
 		}
@@ -1016,7 +1017,10 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return "{$match[1]}" . htmlentities( $match[2] ) . "{$match[3]}";
 	}
 
-	protected function decode_inline_scripts() {
+	public function decode_inline_scripts( $document = null ) {
+		if ( null === $document ) {
+			$document = $this->document;
+		}
 		/** @var DOMElement $tag */
 		foreach ( ( new \DOMXPath( $this->document ) )->query( '//script[not(@src)]' ) as $tag ) {
 			$decoded = html_entity_decode( $tag->textContent );
