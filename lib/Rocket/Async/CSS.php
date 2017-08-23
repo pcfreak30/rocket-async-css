@@ -228,11 +228,14 @@ class CSS extends PluginAbstract {
 		if ( get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
 			//Custom extract method based on wp-rockets
 			list( $buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
-
+			$buffer = $this->pre_process_scripts( $buffer );
 			// Import HTML
 			if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
+
+			$this->decode_inline_scripts();
+
 			$head = $this->document->getElementsByTagName( 'head' )->item( 0 );
 			if ( null === $head ) {
 				return $buffer;
@@ -728,7 +731,7 @@ class CSS extends PluginAbstract {
 				if ( 0 === strpos( $match, 'data:' ) ) {
 					continue;
 				}
-				$match     = trim( $match, '"' . "'" );
+				$match       = trim( $match, '"' . "'" );
 				$fixed_match = $match;
 				if ( 0 === strpos( $fixed_match, '//' ) ) {
 					//Handle no protocol urls
@@ -736,8 +739,8 @@ class CSS extends PluginAbstract {
 				}
 				$url_parts = parse_url( $match );
 				if ( empty( $url_parts['host'] ) ) {
-					$fixed_match     = \phpUri::parse( $url )->join( $fixed_match );
-					$url_parts = parse_url( $fixed_match );
+					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
+					$url_parts   = parse_url( $fixed_match );
 				}
 				if ( ! ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
 					continue;
@@ -996,5 +999,36 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 	public function get_transient_prefix() {
 		return static::TRANSIENT_PREFIX;
+	}
+
+	protected function pre_process_scripts( $buffer ) {
+		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
+			$this,
+			'pre_process_scripts_callback',
+		], $buffer );
+	}
+
+	protected function pre_process_scripts_callback( $match ) {
+		if ( 0 === strlen( trim( $match[2] ) ) || $match[2] === strip_tags( $match[2] ) ) {
+			return $match[0];
+		}
+
+		return "{$match[1]}" . htmlentities( $match[2] ) . "{$match[3]}";
+	}
+
+	protected function decode_inline_scripts() {
+		/** @var DOMElement $tag */
+		foreach ( ( new \DOMXPath( $this->document ) )->query( '//script[not(@src)]' ) as $tag ) {
+			$decoded = html_entity_decode( $tag->textContent );
+			if ( $tag->textContent !== $decoded ) {
+				$new_script = $this->document->createElement( 'script', $decoded );
+				if ( $tag->hasAttributes() ) {
+					foreach ( $tag->attributes as $attr ) {
+						$new_script->setAttribute( $attr->nodeName, $attr->nodeValue );
+					}
+				}
+				$tag->parentNode->replaceChild( $new_script, $tag );
+			}
+		}
 	}
 }
