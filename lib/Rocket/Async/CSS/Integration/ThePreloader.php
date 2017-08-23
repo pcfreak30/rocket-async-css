@@ -42,9 +42,13 @@ class ThePreloader extends ComponentAbstract {
 	 * @return string
 	 */
 	public function inject_div( $buffer ) {
-		if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+		$pre_buffer = $this->plugin->pre_process_scripts( $buffer );
+		// Import HTML
+		if ( ! @$this->document->loadHTML( mb_convert_encoding( $pre_buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 			return $buffer;
 		}
+		$buffer = $pre_buffer;
+		$this->plugin->decode_inline_scripts( $this->document );
 		if ( null === $this->document->getElementById( 'wptime-plugin-preloader' ) ) {
 			$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
 			$div  = $this->document->createElement( 'div' );
