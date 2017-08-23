@@ -59,15 +59,16 @@ class ResponsiveImages extends ComponentAbstract {
 					$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
 				}
 				$new_image = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $new_image );
-				$content   = str_replace( $image, $new_image, $content );
+				if ( $lazyload_enabled ) {
+					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
+					if ( function_exists( 'get_lazyloadxt_html' ) ) {
+						$new_image = get_lazyloadxt_html( $new_image );
+					}
+				}
+				$content = str_replace( $image, $new_image, $content );
 			}
 		}
-		if ( $lazyload_enabled ) {
-			$content = apply_filters( 'a3_lazy_load_html', $content );
-			if ( function_exists( 'get_lazyloadxt_html' ) ) {
-				$content = get_lazyloadxt_html( $content );
-			}
-		}
+
 
 		return $content;
 	}
