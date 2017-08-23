@@ -17,7 +17,7 @@ class ResponsiveImages extends ComponentAbstract {
 	}
 
 	public function process( $content ) {
-		if ( ! preg_match_all( '/<img [^>]+>/', $content, $matches ) ) {
+		if ( ! preg_match_all( '/(?![\'"])\s*<img [^>]+>\s*(?![\'"])/', $content, $matches ) ) {
 			return $content;
 		}
 		$lazyload_enabled = $this->is_lazyload_enabled();
