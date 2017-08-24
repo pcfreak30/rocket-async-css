@@ -244,12 +244,10 @@ class CSS extends PluginAbstract {
 		if ( get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
 			//Custom extract method based on wp-rockets
 			list( $pre_buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
-			$pre_buffer = $this->pre_process_scripts( $pre_buffer );
 			// Import HTML
 			if ( ! @$this->document->loadHTML( mb_convert_encoding( $pre_buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
-			$buffer = $pre_buffer;
 
 			$head = $this->document->getElementsByTagName( 'head' )->item( 0 );
 			if ( null === $head ) {
@@ -282,8 +280,6 @@ class CSS extends PluginAbstract {
 
 			//Get HTML
 			$buffer = $this->document->saveHTML();
-			$buffer = $this->post_process_scripts( $buffer );
-
 			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
 			$this->files = $filename;
 		}
