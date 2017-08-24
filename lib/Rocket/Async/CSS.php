@@ -8,6 +8,7 @@ use Rocket\Async\CSS\DOMDocument;
 use Rocket\Async\CSS\DOMElement;
 use Rocket\Async\CSS\Integration\Manager as IntegrationManager;
 use Rocket\Async\CSS\Request;
+use Rocket\Async\CSS\Util;
 
 /**
  * Class CSS
@@ -99,6 +100,10 @@ class CSS extends PluginAbstract {
 	 * @var Manager
 	 */
 	private $cache_manager;
+	/**
+	 * @var Util
+	 */
+	private $util;
 
 	/**
 	 * CSS constructor.
@@ -107,9 +112,19 @@ class CSS extends PluginAbstract {
 	 * @param Request $request
 	 * @param Manager $cache_manager
 	 * @param DOMDocument $document
-	 * @param DOMDocument $style_document
+	 * @param DOMDocument $starter_document
+	 * @param Util $util
+	 *
+	 * @internal param DOMDocument $style_document
 	 */
-	public function __construct( IntegrationManager $integration_manager, Request $request, Manager $cache_manager, DOMDocument $document, DOMDocument $starter_document ) {
+	public function __construct(
+		IntegrationManager $integration_manager,
+		Request $request,
+		Manager $cache_manager,
+		DOMDocument $document,
+		DOMDocument $starter_document,
+		Util $util
+	) {
 		$this->integration_manager = $integration_manager;
 		$this->request             = $request;
 		$this->cache_manager       = $cache_manager;
@@ -117,6 +132,7 @@ class CSS extends PluginAbstract {
 		$this->starter_document    = $starter_document;
 		$this->node_queue          = new \SplQueue();
 		$this->node_map            = new \SplObjectStorage();
+		$this->util                = $util;
 		parent::__construct();
 	}
 
@@ -235,8 +251,6 @@ class CSS extends PluginAbstract {
 			}
 			$buffer = $pre_buffer;
 
-			$this->decode_inline_scripts();
-
 			$head = $this->document->getElementsByTagName( 'head' )->item( 0 );
 			if ( null === $head ) {
 				return $buffer;
@@ -268,6 +282,7 @@ class CSS extends PluginAbstract {
 
 			//Get HTML
 			$buffer = $this->document->saveHTML();
+			$buffer = $this->post_process_scripts( $buffer );
 
 			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
 			$this->files = $filename;
@@ -300,7 +315,6 @@ class CSS extends PluginAbstract {
 
 		return array( $buffer, $conditionals );
 	}
-
 	/**
 	 * @param DOMElement $nested_tag
 	 */
@@ -992,6 +1006,13 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	}
 
 	/**
+	 * @return Util
+	 */
+	public function get_util() {
+		return $this->util;
+	}
+
+	/**
 	 * @return void
 	 */
 	public function uninstall() {
@@ -1002,37 +1023,4 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		return static::TRANSIENT_PREFIX;
 	}
 
-	public function pre_process_scripts( $buffer ) {
-		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
-			$this,
-			'pre_process_scripts_callback',
-		], $buffer );
-	}
-
-	public function pre_process_scripts_callback( $match ) {
-		if ( 0 === strlen( trim( $match[2] ) ) || $match[2] === strip_tags( $match[2] ) ) {
-			return $match[0];
-		}
-
-		return "{$match[1]}" . htmlentities( $match[2] ) . "{$match[3]}";
-	}
-
-	public function decode_inline_scripts( $document = null ) {
-		if ( null === $document ) {
-			$document = $this->document;
-		}
-		/** @var DOMElement $tag */
-		foreach ( ( new \DOMXPath( $this->document ) )->query( '//script[not(@src)]' ) as $tag ) {
-			$decoded = html_entity_decode( $tag->textContent );
-			if ( $tag->textContent !== $decoded ) {
-				$new_script = $this->document->createElement( 'script', $decoded );
-				if ( $tag->hasAttributes() ) {
-					foreach ( $tag->attributes as $attr ) {
-						$new_script->setAttribute( $attr->nodeName, $attr->nodeValue );
-					}
-				}
-				$tag->parentNode->replaceChild( $new_script, $tag );
-			}
-		}
-	}
 }
