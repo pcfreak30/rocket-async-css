@@ -187,7 +187,7 @@ class CSS extends PluginAbstract {
 		$this->domain = parse_url( $this->home, PHP_URL_HOST );
 		$this->normalize_cdn_domains();
 		if ( isset( $this->wpml_url_filters ) ) {
-			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10 );
+			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10, 4 );
 		}
 	}
 
