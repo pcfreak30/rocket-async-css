@@ -284,7 +284,7 @@ class CSS extends PluginAbstract {
 			$this->fix_old_libxml();
 
 			//Get HTML
-			$buffer = $this->document->saveHTML();
+			$buffer      = $this->document->saveHTML();
 			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
 			$this->files = $filename;
 		}
@@ -316,6 +316,7 @@ class CSS extends PluginAbstract {
 
 		return array( $buffer, $conditionals );
 	}
+
 	/**
 	 * @param DOMElement $nested_tag
 	 */
@@ -640,12 +641,16 @@ class CSS extends PluginAbstract {
 			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
 			\Minify_Loader::register();
 		}
+		if ( ! apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
+			$options['compress'] = false;
+		}
 		$css = $this->parse_css_imports( $css, $url );
 		$css = $this->download_remote_files( $css, $url );
 		$css = \Minify_CSS::minify( $css, $options );
 
 		return $css;
 	}
+
 
 	/**
 	 * @param $css
