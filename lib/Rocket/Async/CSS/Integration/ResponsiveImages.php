@@ -7,6 +7,7 @@ namespace Rocket\Async\CSS\Integration;
 use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
 
 class ResponsiveImages extends ComponentAbstract {
+	private $current_guid;
 
 	public function init() {
 		add_filter( 'the_content', [ $this, 'process' ], 11 );
@@ -31,7 +32,16 @@ class ResponsiveImages extends ComponentAbstract {
 					$size = end( $size );
 					$src  = str_replace( "-{$size}", '', $src );
 				}
-				$attachment_id = attachment_url_to_postid( rocket_async_css_instance()->strip_cdn( $src ) );
+				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+				$this->current_guid = rocket_async_css_instance()->strip_cdn( $src );
+				$attachments        = get_posts( [
+					'post_type' => 'attachment'
+				] );
+				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+				$attachment_id = 0;
+				if ( ! empty( $attachments ) ) {
+					$attachment_id = get_the_ID( end( $attachments ) );
+				}
 				if ( empty( $attachment_id ) ) {
 					continue;
 				}
@@ -84,5 +94,11 @@ class ResponsiveImages extends ComponentAbstract {
 		}
 
 		return $lazy_load;
+	}
+
+	public function filter_where( $where ) {
+		$where .= $this->wpdb->prepare( " AND guid = %s", $this->current_guid );
+
+		return $where;
 	}
 }
