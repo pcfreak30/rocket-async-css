@@ -16,6 +16,7 @@ class Manager extends ManagerAbstract {
 		'ResponsiveImages',
 		'WPCriticalCSS',
 		'AvadaTheme',
+		'GoogleWebFonts',
 	];
 
 }
