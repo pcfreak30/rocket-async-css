@@ -7,6 +7,7 @@ namespace Rocket\Async\CSS\Integration;
 use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
 use Rocket\Async\CSS\DOMCollection;
 use Rocket\Async\CSS\DOMDocument;
+use Rocket\Async\CSS\JSON;
 
 /**
  * Class GoogleWebFonts
@@ -63,16 +64,16 @@ class GoogleWebFonts extends ComponentAbstract {
 
 	private function process_tag( $content ) {
 		if ( preg_match( '~(?:WebFontConfig\s*=\s{.*families\s*:\s*(\[.*\]).*};)?\s*\(\s*function\s*\(\s*\)\s*{\s*var\s*wf\s*=\s*document\s*\.\s*createElement\s*\(\s*\'script\'\s*\)\s*;.*s\s*.\s*parentNode\s*.insertBefore\s*\(\s*wf\s*,\s*s\)\s*;\s*}\s*\)\s*\(\s*\);~s', $content, $matches ) ) {
-			
-			$fonts = json_decode( $matches[1] );
+
+			$fonts = JSON::decode( $matches[1] );
 
 			foreach ( $fonts as $index => $font ) {
-				if ( false === strpos( $font, ':' ) ) {
+				$subset = explode( ':', $font );
+				if ( 3 > count( $subset ) ) {
 					continue;
 				}
-				$subset = explode( ':', $font );
-				$style  = $this->create_tag( 'link' );
-				$style->setAttribute( 'rel', 'text/css' );
+				$style = $this->create_tag( 'link' );
+				$style->setAttribute( 'rel', 'stylesheet' );
 				$style->setAttribute( 'href', add_query_arg( [
 					'family' => $fonts,
 					'subset' => $subset
@@ -82,7 +83,7 @@ class GoogleWebFonts extends ComponentAbstract {
 			}
 
 			$style = $this->create_tag( 'link' );
-			$style->setAttribute( 'rel', 'text/css' );
+			$style->setAttribute( 'rel', 'stylesheet' );
 
 			$fonts = implode( '|', $fonts );
 
