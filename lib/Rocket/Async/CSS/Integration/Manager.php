@@ -17,6 +17,7 @@ class Manager extends ManagerAbstract {
 		'WPCriticalCSS',
 		'AvadaTheme',
 		'GoogleWebFonts',
+		'Woocommerce',
 	];
 
 }
