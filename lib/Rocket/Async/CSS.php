@@ -659,7 +659,7 @@ class CSS extends PluginAbstract {
 	 * @return mixed
 	 */
 	protected function parse_css_imports( $css, $url ) {
-		preg_match_all( '/@import\s*(?:url\s*\()?["\'](.*?)["\']\)?\s*;/', $css, $matches );
+		preg_match_all( '/@import\s*(?:url\s*\()?["\']?(.*?)["\']?\)?\s*;/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[1] as $pos => $match ) {
