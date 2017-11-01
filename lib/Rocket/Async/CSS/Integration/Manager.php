@@ -18,6 +18,7 @@ class Manager extends ManagerAbstract {
 		'AvadaTheme',
 		'GoogleWebFonts',
 		'Woocommerce',
+		'FlatsomeTheme',
 	];
 
 }
