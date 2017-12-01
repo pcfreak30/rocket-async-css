@@ -85,8 +85,14 @@ class ResponsiveImages extends ComponentAbstract {
 	}
 
 	public function filter_where( $where ) {
-		$where .= $this->wpdb->prepare( " AND guid = %s", $this->current_guid );
+		$url_parts           = parse_url( $this->current_guid );
+		$url_parts['scheme'] = 'http';
+		$url                 = http_build_url( $url_parts );
 
+		$url_parts['scheme'] = 'https';
+		$url_ssl             = http_build_url( $url_parts );
+
+		$where .= $this->wpdb->prepare( " AND (guid = %s OR guid = %s)", $url, $url_ssl );
 		return $where;
 	}
 }
