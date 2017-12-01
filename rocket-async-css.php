@@ -72,6 +72,13 @@ function rocket_async_css_deactivate() {
 	rocket_async_css_instance()->deactivate();
 }
 
+if ( ! function_exists( '__return_one' ) ) {
+	function __return_one() {
+		return 1;
+	}
+}
+
+
 /**
  * Error for older php
  */
