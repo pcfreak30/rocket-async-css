@@ -19,6 +19,7 @@ class ThePreloader extends ComponentAbstract {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'check_css' ), 10, 2 );
 			add_action( 'rocket_buffer', array( $this, 'inject_div' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'add_window_resize_js' ) );
+			add_filter( 'rocket_async_css_preloader_enabled', [ $this, 'check_status' ] );
 		}
 	}
 
@@ -63,16 +64,24 @@ class ThePreloader extends ComponentAbstract {
     $(window).load(function () {
         $(window).trigger('resize');
         (function check() {
-            if (0 < $('#wptime-plugin-preloader').length) {
+            if (0 < $('#wptime-plugin-preloader').length || !window.preloader_event_registered) {
                 setTimeout(check, 1);
             }
             else {
                 $(window).trigger('resize');
+                window.preloader_loaded = true;
+                if(window.CustomEvent){
+                	window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));
+                }
             }
         })();
     })
 })(jQuery);
 JS
 		);
+	}
+
+	public function check_status() {
+		return has_action( 'rocket_buffer', array( $this, 'inject_div' ) );
 	}
 }
