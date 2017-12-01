@@ -21,19 +21,20 @@ class ResponsiveImages extends ComponentAbstract {
 		if ( ! preg_match_all( '/(?![\'"])\s*<img [^>]+>\s*(?![\'"])/', $content, $matches ) ) {
 			return $content;
 		}
-		$lazyload_enabled = $this->is_lazyload_enabled();
+		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
 		foreach ( $matches[0] as $image ) {
 			if ( ! ( ( ! $lazyload_enabled && ( $lazyload_enabled && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image ) ) ) || preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image ) ) && ( preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src ) || preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) ) ) {
-				$src_attr = array_shift( $src );
-				$src      = end( $src );
-				$path     = parse_url( $src, PHP_URL_PATH );
+				$src_attr    = array_shift( $src );
+				$src         = trim( end( $src ) );
+				$cleaned_src = trim( $src );
+				$path        = parse_url( $src, PHP_URL_PATH );
 
 				if ( preg_match( '/\d+x\d+/', $path, $size ) ) {
 					$size = end( $size );
 					$src  = str_replace( "-{$size}", '', $src );
 				}
 				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-				$this->current_guid = rocket_async_css_instance()->strip_cdn( $src );
+				$this->current_guid = $this->plugin->strip_cdn( $src );
 				$attachments        = get_posts( [
 					'post_type' => 'attachment'
 				] );
@@ -46,12 +47,12 @@ class ResponsiveImages extends ComponentAbstract {
 					continue;
 				}
 				$original_class = [];
-				if ( preg_match( '/class=[\'"](.+)[\'"]/U', $image, $class ) ) {
+				if ( preg_match( '/class=[\'"](.*)[\'"]/U', $image, $class ) ) {
 					$original_class = array_map( 'trim', explode( ' ', end( $class ) ) );
 				}
 				$new_image    = $image;
 				$new_src_attr = $src_attr;
-				$url          = parse_url( $src );
+				$url          = parse_url( $cleaned_src );
 				if ( empty( $url['host'] ) ) {
 					$new_src_attr = str_replace( $src, get_rocket_cdn_url( home_url( $src ) ), $src_attr );
 					$new_image    = str_replace( $src_attr, $new_src_attr, $new_image );
@@ -69,7 +70,7 @@ class ResponsiveImages extends ComponentAbstract {
 					$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
 				}
 				$new_image = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $new_image );
-				if ( $lazyload_enabled && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $src, $new_image ) ) {
+				if ( $lazyload_enabled && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
 					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
 						$new_image = get_lazyloadxt_html( $new_image );
@@ -81,19 +82,6 @@ class ResponsiveImages extends ComponentAbstract {
 
 
 		return $content;
-	}
-
-	private function is_lazyload_enabled() {
-		global $a3_lazy_load_global_settings;
-		$lazy_load = false;
-		if ( class_exists( 'A3_Lazy_Load' ) ) {
-			$lazy_load = (bool) $a3_lazy_load_global_settings['a3l_apply_lazyloadxt'];
-		}
-		if ( class_exists( 'LazyLoadXT' ) ) {
-			$lazy_load = true;
-		}
-
-		return $lazy_load;
 	}
 
 	public function filter_where( $where ) {
