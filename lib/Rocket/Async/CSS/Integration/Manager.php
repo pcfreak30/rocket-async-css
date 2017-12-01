@@ -19,6 +19,10 @@ class Manager extends ManagerAbstract {
 		'GoogleWebFonts',
 		'Woocommerce',
 		'FlatsomeTheme',
+		'WonderPluginCarousel',
+		'DiviBuilder',
+		'MaxMegaMenu',
+		'DiviBooster',
 	];
 
 }
