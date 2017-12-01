@@ -41,7 +41,7 @@ class ResponsiveImages extends ComponentAbstract {
 				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				$attachment_id = 0;
 				if ( ! empty( $attachments ) ) {
-					$attachment_id = get_the_ID( end( $attachments ) );
+					$attachment_id = end( $attachments )->ID;
 				}
 				if ( empty( $attachment_id ) ) {
 					continue;
