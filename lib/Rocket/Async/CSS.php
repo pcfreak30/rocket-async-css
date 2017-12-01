@@ -703,19 +703,7 @@ class CSS extends PluginAbstract {
 		$url_parts           = parse_url( $url );
 		$url_parts['host']   = $this->domain;
 		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
-		/*
-		 * Check and see what version of php-http we have.
-		 * 1.x uses procedural functions.
-		 * 2.x uses OOP classes with a http namespace.
-		 * Convert the address to a path, minify, and add to buffer.
-		 */
-		if ( class_exists( 'http\Url' ) ) {
-			$url = new \http\Url( $url_parts );
-			$url = $url->toString();
-		} else {
-			$url = http_build_url( $url_parts );
-		}
-
+		$url                 = http_build_url( $url_parts );
 		return $url;
 	}
 
