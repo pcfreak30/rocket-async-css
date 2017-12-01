@@ -220,8 +220,10 @@ class CSS extends PluginAbstract {
 	 *
 	 */
 	protected function normalize_cdn_domains() {
+		add_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Remote fetch external scripts
 		$this->cdn_domains = get_rocket_cdn_cnames();
+		remove_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Get the hostname for each CDN CNAME
 		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
 			$cdn_domain       = &$this->cdn_domains[ $index ];
@@ -232,10 +234,12 @@ class CSS extends PluginAbstract {
 		unset( $cdn_domain_parts, $cdn_domain );
 	}
 
+
 	/**
 	 *
 	 */
 	public function deactivate() {
+		do_action( 'rocket_async_css_deactivate' );
 		$this->cache_manager->get_store()->delete_cache_branch();
 	}
 
@@ -646,6 +650,7 @@ class CSS extends PluginAbstract {
 		}
 		$css = $this->parse_css_imports( $css, $url );
 		$css = $this->download_remote_files( $css, $url );
+		$css = $this->process_images( $css, $url );
 		$css = \Minify_CSS::minify( $css, $options );
 
 		return $css;
@@ -669,7 +674,7 @@ class CSS extends PluginAbstract {
 					if ( empty( $host ) ) {
 						$match = \phpUri::parse( $url )->join( $match );
 					}
-					if ( $host != $this->domain && ! in_array( $host, $this->cdn_domains ) ) {
+					if ( $host != $this->domain && ( ! empty( $this->cdn_domains ) && ! in_array( $host, $this->cdn_domains ) ) ) {
 						$imported_data = $this->remote_fetch( $match );
 					} else {
 						$match = $this->strip_cdn( $match );
@@ -746,7 +751,7 @@ class CSS extends PluginAbstract {
 	 * @return mixed
 	 */
 	public function download_remote_files( $css, $url ) {
-		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[2] as $index => $match ) {
@@ -767,7 +772,7 @@ class CSS extends PluginAbstract {
 					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
 					$url_parts   = parse_url( $fixed_match );
 				}
-				if ( ! ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
+				if ( ! ( $url_parts['host'] != $this->domain && ( ! in_array( $url_parts['host'], $this->cdn_domains ) && ! empty( $this->cdn_domains ) ) ) ) {
 					continue;
 				}
 				$data = $this->remote_fetch( $fixed_match );
@@ -789,6 +794,48 @@ class CSS extends PluginAbstract {
 					}
 				}
 
+			}
+		}
+
+		return $css;
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	private function process_images( $css, $url ) {
+		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		//Ensure there are matches
+		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			foreach ( $matches[2] as $index => $match ) {
+				if ( empty( $match ) ) {
+					$match = $matches[1][ $index ];
+				}
+				if ( 0 === strpos( $match, 'data:' ) ) {
+					continue;
+				}
+				$match       = trim( $match, '"' . "'" );
+				$fixed_match = $match;
+				if ( 0 === strpos( $fixed_match, '//' ) ) {
+					//Handle no protocol urls
+					$fixed_match = rocket_add_url_protocol( $fixed_match );
+				}
+				$url_parts = parse_url( $match );
+				if ( empty( $url_parts['host'] ) ) {
+					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
+					$url_parts   = parse_url( $fixed_match );
+				}
+				if ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) {
+					continue;
+				}
+				unset( $url_parts['scheme'] );
+				unset( $url_parts['host'] );
+				$final_url = http_build_url( $url_parts );
+				$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
+				$css       = str_replace( $matches[0][ $index ], $css_part, $css );
 			}
 		}
 
@@ -858,9 +905,7 @@ class CSS extends PluginAbstract {
 			// Remove any conditional comments for IE that somehow was put in the script tag
 			$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 			//Minify ?
-			if ( get_rocket_option( 'minify_html_inline_css', false ) ) {
-				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
-			}
+			$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
 			$css_part = $item_cache;
@@ -898,10 +943,25 @@ class CSS extends PluginAbstract {
 	protected function add_main_styles(
 		$hrefs
 	) {
+		// CustomEvent polyfill
+		$external_tag = $this->document->createElement( 'script' );
+		$external_tag->setAttribute( 'data-no-minify', '1' );
+		$js = 'try{var ce=new window.CustomEvent("test");ce.preventDefault();if(!0!==ce.defaultPrevented)throw Error("Could not prevent default");}catch(e){var CustomEvent=function(c,a){a=a||{bubbles:!1,cancelable:!1,detail:void 0};var b=document.createEvent("CustomEvent");b.initCustomEvent(c,a.bubbles,a.cancelable,a.detail);var d=b.preventDefault;b.preventDefault=function(){d.call(this);try{Object.defineProperty(this,"defaultPrevented",{get:function(){return!0}})}catch(f){this.defaultPrevented=!0}};return b};CustomEvent.prototype=
+window.Event.prototype;window.CustomEvent=CustomEvent};';
+		$external_tag->appendChild( $this->document->createTextNode( $js ) );
+		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+
 		// loadCSS
 		$external_tag = $this->document->createElement( 'script' );
 		$external_tag->setAttribute( 'data-no-minify', '1' );
-		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"; window.css_loaded=true;}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
+		$preloader_js = '';
+		if ( ! apply_filters( 'rocket_async_css_preloader_enabled', false ) ) {
+			$preloader_js .= 'window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));';
+		}
+		if ( ! apply_filters( 'rocket_async_css_preloader_event_bypass', false ) ) {
+			$preloader_js .= 'window.preloader_event_registered = true;';
+		}
+		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"; (window.addEventListener || window.attachEvent)((!window.addEventListener ? "on" : "") + "load", function(){window.css_loaded=true; window.dispatchEvent(new CustomEvent("CSSLoaded"));' . $preloader_js . '}, null);}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
 c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
 		$external_tag->appendChild( $this->document->createTextNode( $js ) );
 		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
