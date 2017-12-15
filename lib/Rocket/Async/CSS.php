@@ -949,6 +949,7 @@ window.Event.prototype;window.CustomEvent=CustomEvent};';
 		$external_tag->setAttribute( 'data-no-minify', '1' );
 		$preloader_js = '';
 		if ( ! apply_filters( 'rocket_async_css_preloader_enabled', false ) ) {
+			$preloader_js .= 'window.preloader_loaded = true;';
 			$preloader_js .= 'window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));';
 		}
 		if ( ! apply_filters( 'rocket_async_css_preloader_event_bypass', false ) ) {
