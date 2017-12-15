@@ -685,8 +685,7 @@ class CSS extends PluginAbstract {
 					} else {
 						$match = $this->strip_cdn( $match );
 						// Is this a URL? If so replace with ABSPATH
-						$match         = str_replace( $this->home, ABSPATH, $match );
-						$path          = untrailingslashit( ABSPATH ) . $match;
+						$path          = str_replace( $this->home, untrailingslashit( ABSPATH ), $match );
 						$imported_data = $this->get_content( $path );
 					}
 					// Process css to minify it, passing the path of the found file
