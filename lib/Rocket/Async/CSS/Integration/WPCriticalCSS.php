@@ -20,6 +20,7 @@ class WPCriticalCSS extends ComponentAbstract {
 	public function init() {
 		if ( function_exists( 'wp_criticalcss' ) ) {
 			add_filter( 'wp_criticalcss_print_styles_cache', [ $this, 'process_css' ] );
+			add_filter( 'pre_get_rocket_option_async_css', '__return_zero' );
 		}
 	}
 

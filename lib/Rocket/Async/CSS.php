@@ -337,7 +337,7 @@ class CSS extends PluginAbstract {
 			$nested_tag->textContent = strip_tags( $nested_tag->textContent );
 		}
 		$xpath        = new \DOMXPath( isset( $document ) ? $document : $this->document );
-		$excluded_css = implode( '|', get_rocket_exclude_css() );
+		$excluded_css = implode( '|', function_exists( 'get_rocket_exclude_files' ) ? get_rocket_exclude_files( 'css' ) : get_rocket_exclude_css() );
 		$excluded_css = str_replace( '//' . $this->domain, '', $excluded_css );
 		foreach ( $xpath->query( '((//style|//STYLE)|(//link|//LINK)[@rel="stylesheet"])' ) as $tag ) {
 			/** @var DOMElement $tag */
@@ -641,17 +641,23 @@ class CSS extends PluginAbstract {
 	 * @return mixed|string
 	 */
 	public function minify_css( $css, $options = array(), $url ) {
-		if ( ! class_exists( 'Minify_Loader' ) ) {
-			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
-			\Minify_Loader::register();
-		}
-		if ( ! apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
-			$options['compress'] = false;
-		}
 		$css = $this->parse_css_imports( $css, $url );
 		$css = $this->download_remote_files( $css, $url );
 		$css = $this->process_images( $css, $url );
-		$css = \Minify_CSS::minify( $css, $options );
+		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
+			require_once( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
+			\Minify_Loader::register();
+		}
+		if ( class_exists( 'Minify_CSS' ) ) {
+			if ( ! apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
+				$options['compress'] = false;
+			}
+			return \Minify_CSS::minify( $css, $options );
+		}
+		$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
+		if ( apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
+			$css = rocket_minify_inline_css( $css );
+		}
 
 		return $css;
 	}
