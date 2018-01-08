@@ -729,7 +729,7 @@ class CSS extends PluginAbstract {
 	protected function get_wp_filesystem() {
 		/** @var \WP_Filesystem_Base $wp_filesystem */
 		global $wp_filesystem;
-		if ( is_null( $wp_filesystem ) ) {
+		if ( null === $wp_filesystem ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
