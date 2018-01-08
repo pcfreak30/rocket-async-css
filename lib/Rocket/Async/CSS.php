@@ -765,7 +765,7 @@ class CSS extends PluginAbstract {
 					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
 					$url_parts   = parse_url( $fixed_match );
 				}
-				if ( ! ( $url_parts['host'] != $this->domain && ( ! in_array( $url_parts['host'], $this->cdn_domains ) && ! empty( $this->cdn_domains ) ) ) ) {
+				if ( $url_parts['host'] !== $this->domain && ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
 					continue;
 				}
 				$data = $this->remote_fetch( $fixed_match );
