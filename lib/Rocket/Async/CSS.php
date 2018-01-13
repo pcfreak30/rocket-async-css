@@ -654,7 +654,9 @@ class CSS extends PluginAbstract {
 			}
 			return \Minify_CSS::minify( $css, $options );
 		}
-		$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
+		if ( ! empty( $options['prependRelativePath'] ) ) {
+			$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
+		}
 		if ( apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
 			$css = rocket_minify_inline_css( $css );
 		}
