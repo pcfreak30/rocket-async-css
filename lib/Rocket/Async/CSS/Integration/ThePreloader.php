@@ -20,6 +20,7 @@ class ThePreloader extends ComponentAbstract {
 			add_action( 'rocket_buffer', array( $this, 'inject_div' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'add_window_resize_js' ) );
 			add_filter( 'rocket_async_css_preloader_enabled', [ $this, 'check_status' ] );
+			add_filter( 'after_setup_theme', [ $this, 'theme_hooks' ] );
 		}
 	}
 
@@ -83,5 +84,10 @@ JS
 
 	public function check_status() {
 		return has_action( 'rocket_buffer', array( $this, 'inject_div' ) );
+	}
+
+	public function theme_hooks() {
+		// Remove conflict with preloader on "The 7" theme
+		remove_action( 'presscore_body_top', 'presscore_render_fullscreen_overlay' );
 	}
 }
