@@ -950,8 +950,8 @@ window.Event.prototype;window.CustomEvent=CustomEvent};';
 		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
 
 		// loadCSS
-		$external_tag = $this->document->createElement( 'script' );
-		$external_tag->setAttribute( 'data-no-minify', '1' );
+		$js_tag = $this->document->createElement( 'script' );
+		$js_tag->setAttribute( 'data-no-minify', '1' );
 		$preloader_js = '';
 		if ( ! apply_filters( 'rocket_async_css_preloader_enabled', false ) ) {
 			$preloader_js .= 'window.preloader_loaded = true;';
@@ -960,19 +960,37 @@ window.Event.prototype;window.CustomEvent=CustomEvent};';
 		if ( ! apply_filters( 'rocket_async_css_preloader_event_bypass', false ) ) {
 			$preloader_js .= 'window.preloader_event_registered = true;';
 		}
-		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"; (window.addEventListener || window.attachEvent)((!window.addEventListener ? "on" : "") + "load", function(){window.css_loaded=true; window.dispatchEvent(new CustomEvent("CSSLoaded"));' . $preloader_js . '}, null);}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
+		$do_blocking = apply_filters( 'rocket_async_css_do_blocking', false );
+		if ( ! $do_blocking ) {
+			$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"; (window.addEventListener || window.attachEvent)((!window.addEventListener ? "on" : "") + "load", function(){window.css_loaded=true; window.dispatchEvent(new CustomEvent("CSSLoaded"));' . $preloader_js . '}, null);}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
 c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
-		$external_tag->appendChild( $this->document->createTextNode( $js ) );
-		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
-
-		foreach ( $hrefs as $media => $href ) {
-			$js           = "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1], ' . "'{$media}'" . ');';
-			$external_tag = $this->document->createElement( 'script' );
-			$external_tag->appendChild( $this->document->createTextNode( $js ) );
-			$external_tag->setAttribute( 'data-no-minify', '1' );
-			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+		}
+		if ( $do_blocking ) {
+			$js = '(function(){ ' . $preloader_js . '})();';
+		}
+		$js_tag->appendChild( $this->document->createTextNode( $js ) );
+		if ( ! $do_blocking ) {
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $js_tag );
 		}
 
+		foreach ( $hrefs as $media => $href ) {
+			if ( ! $do_blocking ) {
+				$js           = "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1], ' . "'{$media}'" . ');';
+				$external_tag = $this->document->createElement( 'script' );
+				$external_tag->appendChild( $this->document->createTextNode( $js ) );
+				$external_tag->setAttribute( 'data-no-minify', '1' );
+			}
+			if ( $do_blocking ) {
+				$external_tag = $this->document->createElement( 'link' );
+				$external_tag->setAttribute( 'rel', 'stylesheet' );
+				$external_tag->setAttribute( 'href', $href );
+				$external_tag->setAttribute( 'media', $media );
+			}
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+		}
+		if ( $do_blocking ) {
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $js_tag );
+		}
 
 	}
 
