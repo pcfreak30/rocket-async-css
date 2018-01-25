@@ -724,21 +724,6 @@ class CSS extends Plugin {
 	) {
 		return $this->get_wp_filesystem()->get_contents( $file );
 	}
-
-	/**
-	 * @return \WP_Filesystem_Base
-	 */
-	protected function get_wp_filesystem() {
-		/** @var \WP_Filesystem_Base $wp_filesystem */
-		global $wp_filesystem;
-		if ( null === $wp_filesystem ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-
-		return $wp_filesystem;
-	}
-
 	/**
 	 * @param $css
 	 * @param $url
