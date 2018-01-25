@@ -4,9 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class MaxMegaMenu extends ComponentAbstract {
+class MaxMegaMenu extends Component {
 
 	/**
 	 *

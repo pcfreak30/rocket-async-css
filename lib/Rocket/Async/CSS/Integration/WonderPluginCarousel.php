@@ -4,10 +4,10 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS\DOMDocument;
 
-class WonderPluginCarousel extends ComponentAbstract {
+class WonderPluginCarousel extends Component {
 	public function init() {
 		if ( class_exists( '\WonderPlugin_Carousel_Plugin' ) ) {
 			add_action( 'rocket_async_css_do_rewrites', [ $this, 'process' ] );

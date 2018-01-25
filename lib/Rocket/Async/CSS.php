@@ -2,7 +2,7 @@
 
 namespace Rocket\Async;
 
-use pcfreak30\WordPress\Plugin\Framework\PluginAbstract;
+use ComposePress\Core\Abstracts\Plugin;
 use Rocket\Async\CSS\Cache\Manager;
 use Rocket\Async\CSS\DOMDocument;
 use Rocket\Async\CSS\DOMElement;
@@ -14,7 +14,7 @@ use Rocket\Async\CSS\Util;
  * Class CSS
  * @package Rocket\Async
  */
-class CSS extends PluginAbstract {
+class CSS extends Plugin {
 	/**
 	 * Plugin version
 	 */
@@ -463,6 +463,17 @@ class CSS extends PluginAbstract {
 	}
 
 	/**
+	 * @return string
+	 */
+	protected function get_cache_hash() {
+		if ( null === $this->cache_hash ) {
+			$this->cache_hash = md5( serialize( $this->cache_list ) );
+		}
+
+		return $this->cache_hash;
+	}
+
+	/**
 	 * @return array
 	 */
 	protected function get_cache_filenames() {
@@ -491,17 +502,6 @@ class CSS extends PluginAbstract {
 	 */
 	public function get_cache_path() {
 		return WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . DIRECTORY_SEPARATOR;
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function get_cache_hash() {
-		if ( null === $this->cache_hash ) {
-			$this->cache_hash = md5( serialize( $this->cache_list ) );
-		}
-
-		return $this->cache_hash;
 	}
 
 	/**
@@ -799,6 +799,18 @@ class CSS extends PluginAbstract {
 	}
 
 	/**
+	 * @param $file
+	 * @param $data
+	 *
+	 * @return bool
+	 */
+	public function put_content(
+		$file, $data
+	) {
+		return $this->get_wp_filesystem()->put_contents( $file, $data );
+	}
+
+	/**
 	 * @param $css
 	 * @param $url
 	 *
@@ -838,18 +850,6 @@ class CSS extends PluginAbstract {
 		}
 
 		return $css;
-	}
-
-	/**
-	 * @param $file
-	 * @param $data
-	 *
-	 * @return bool
-	 */
-	public function put_content(
-		$file, $data
-	) {
-		return $this->get_wp_filesystem()->put_contents( $file, $data );
 	}
 
 	/**

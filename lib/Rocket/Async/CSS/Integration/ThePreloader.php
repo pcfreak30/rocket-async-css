@@ -4,10 +4,10 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS\DOMDocument;
 
-class ThePreloader extends ComponentAbstract {
+class ThePreloader extends Component {
 	private $document;
 
 	public function __construct( DOMDocument $document ) {

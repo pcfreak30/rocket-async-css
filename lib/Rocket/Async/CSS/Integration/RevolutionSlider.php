@@ -4,13 +4,13 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
 /**
  * Class RevolutionSlider
  * @package Rocket\Async\CSS\Integration
  */
-class RevolutionSlider extends ComponentAbstract {
+class RevolutionSlider extends Component {
 
 	public function init() {
 		if ( shortcode_exists( 'rev_slider' ) ) {

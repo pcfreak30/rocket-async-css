@@ -4,7 +4,7 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS\DOMCollection;
 use Rocket\Async\CSS\DOMDocument;
 use Rocket\Async\CSS\JSON;
@@ -13,7 +13,7 @@ use Rocket\Async\CSS\JSON;
  * Class GoogleWebFonts
  * @package Rocket\Async\CSS\Integration
  */
-class GoogleWebFonts extends ComponentAbstract {
+class GoogleWebFonts extends Component {
 	/**
 	 * @var DOMCollection
 	 */

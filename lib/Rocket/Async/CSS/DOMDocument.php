@@ -9,19 +9,19 @@ use DOMNode;
 class DOMDocument extends \DOMDocument {
 	use DOMElementTrait;
 
-	public function pre_process_scripts( $buffer ) {
-		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
-			$this,
-			'pre_process_scripts_callback',
-		], $buffer );
-	}
-
 	public function get_style_tags() {
 		return $this->getElementsByTagName( 'script' );
 	}
 
 	public function loadHTML( $source, $options = 0 ) {
 		return @parent::loadHTML( $this->pre_process_scripts( $source ), $options );
+	}
+
+	public function pre_process_scripts( $buffer ) {
+		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
+			$this,
+			'pre_process_scripts_callback',
+		], $buffer );
 	}
 
 	public function saveHTML( DOMNode $node = null ) {

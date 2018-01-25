@@ -3,9 +3,9 @@
 
 namespace Rocket\Async\CSS\Integration;
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class AvadaTheme extends ComponentAbstract {
+class AvadaTheme extends Component {
 
 	/**
 	 *

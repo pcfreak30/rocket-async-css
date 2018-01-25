@@ -2,14 +2,14 @@
 
 namespace Rocket\Async\CSS;
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
 
 /**
  * Class Util
  * @package Rocket\Footer\JS
  */
-class Util extends ComponentAbstract {
+class Util extends Component {
 
 	/**
 	 *

@@ -4,9 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class JuipterTheme extends ComponentAbstract {
+class JuipterTheme extends Component {
 
 	public function init() {
 		if ( 'juipter' === wp_get_theme()->get_template() ) {

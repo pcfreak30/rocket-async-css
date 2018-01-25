@@ -3,9 +3,9 @@
 
 namespace Rocket\Async\CSS;
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class Request extends ComponentAbstract {
+class Request extends Component {
 	public function init() {
 		if ( ! is_admin() ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );

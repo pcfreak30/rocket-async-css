@@ -4,9 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class DiviBooster extends ComponentAbstract {
+class DiviBooster extends Component {
 	private $path;
 
 	/**
