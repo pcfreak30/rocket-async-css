@@ -9,14 +9,14 @@ namespace Rocket\Async\CSS\Integration;
  * @package Rocket\Async\CSS\Integration
  */
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
 
 /**
  * Class LayerSlider
  * @package Rocket\Async\CSS\Integration
  */
-class LayerSlider extends ComponentAbstract {
+class LayerSlider extends Component {
 
 	/**
 	 * @var string
@@ -84,7 +84,7 @@ class LayerSlider extends ComponentAbstract {
 		foreach ( array_unique( $this->skins_queue ) as $skin ) :
 			?>
             <link href="<?php echo \LS_Sources::urlForSkin( $skin ) . 'skin.css' ?>"/>
-			<?php
+		<?php
 		endforeach;
 		$this->skins_queue = [];
 	}

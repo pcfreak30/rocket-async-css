@@ -2,22 +2,23 @@
 
 namespace Rocket\Async;
 
-use pcfreak30\WordPress\Plugin\Framework\PluginAbstract;
+use ComposePress\Core\Abstracts\Plugin;
 use Rocket\Async\CSS\Cache\Manager;
 use Rocket\Async\CSS\DOMDocument;
 use Rocket\Async\CSS\DOMElement;
 use Rocket\Async\CSS\Integration\Manager as IntegrationManager;
 use Rocket\Async\CSS\Request;
+use Rocket\Async\CSS\Util;
 
 /**
  * Class CSS
  * @package Rocket\Async
  */
-class CSS extends PluginAbstract {
+class CSS extends Plugin {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.6.0';
+	const VERSION = '0.7.0';
 
 	/**
 	 *  Transient Prefix
@@ -99,6 +100,15 @@ class CSS extends PluginAbstract {
 	 * @var Manager
 	 */
 	private $cache_manager;
+	/**
+	 * @var Util
+	 */
+	private $util;
+
+	/**
+	 * @var string
+	 */
+	private $cache_hash;
 
 	/**
 	 * CSS constructor.
@@ -107,9 +117,19 @@ class CSS extends PluginAbstract {
 	 * @param Request $request
 	 * @param Manager $cache_manager
 	 * @param DOMDocument $document
-	 * @param DOMDocument $style_document
+	 * @param DOMDocument $starter_document
+	 * @param Util $util
+	 *
+	 * @internal param DOMDocument $style_document
 	 */
-	public function __construct( IntegrationManager $integration_manager, Request $request, Manager $cache_manager, DOMDocument $document, DOMDocument $starter_document ) {
+	public function __construct(
+		IntegrationManager $integration_manager,
+		Request $request,
+		Manager $cache_manager,
+		DOMDocument $document,
+		DOMDocument $starter_document,
+		Util $util
+	) {
 		$this->integration_manager = $integration_manager;
 		$this->request             = $request;
 		$this->cache_manager       = $cache_manager;
@@ -117,6 +137,7 @@ class CSS extends PluginAbstract {
 		$this->starter_document    = $starter_document;
 		$this->node_queue          = new \SplQueue();
 		$this->node_map            = new \SplObjectStorage();
+		$this->util                = $util;
 		parent::__construct();
 	}
 
@@ -166,7 +187,7 @@ class CSS extends PluginAbstract {
 		$this->domain = parse_url( $this->home, PHP_URL_HOST );
 		$this->normalize_cdn_domains();
 		if ( isset( $this->wpml_url_filters ) ) {
-			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10 );
+			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10, 4 );
 		}
 	}
 
@@ -199,8 +220,10 @@ class CSS extends PluginAbstract {
 	 *
 	 */
 	protected function normalize_cdn_domains() {
+		add_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Remote fetch external scripts
 		$this->cdn_domains = get_rocket_cdn_cnames();
+		remove_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Get the hostname for each CDN CNAME
 		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
 			$cdn_domain       = &$this->cdn_domains[ $index ];
@@ -211,10 +234,12 @@ class CSS extends PluginAbstract {
 		unset( $cdn_domain_parts, $cdn_domain );
 	}
 
+
 	/**
 	 *
 	 */
 	public function deactivate() {
+		do_action( 'rocket_async_css_deactivate' );
 		$this->cache_manager->get_store()->delete_cache_branch();
 	}
 
@@ -227,12 +252,12 @@ class CSS extends PluginAbstract {
 		$this->disable_minify_overrides();
 		if ( get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
 			//Custom extract method based on wp-rockets
-			list( $buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
-
+			list( $pre_buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
 			// Import HTML
-			if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+			if ( ! @$this->document->loadHTML( mb_convert_encoding( $pre_buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
+
 			$head = $this->document->getElementsByTagName( 'head' )->item( 0 );
 			if ( null === $head ) {
 				return $buffer;
@@ -263,8 +288,7 @@ class CSS extends PluginAbstract {
 			$this->fix_old_libxml();
 
 			//Get HTML
-			$buffer = $this->document->saveHTML();
-
+			$buffer      = $this->document->saveHTML();
 			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
 			$this->files = $filename;
 		}
@@ -313,7 +337,7 @@ class CSS extends PluginAbstract {
 			$nested_tag->textContent = strip_tags( $nested_tag->textContent );
 		}
 		$xpath        = new \DOMXPath( isset( $document ) ? $document : $this->document );
-		$excluded_css = implode( '|', get_rocket_exclude_css() );
+		$excluded_css = implode( '|', function_exists( 'get_rocket_exclude_files' ) ? get_rocket_exclude_files( 'css' ) : get_rocket_exclude_css() );
 		$excluded_css = str_replace( '//' . $this->domain, '', $excluded_css );
 		foreach ( $xpath->query( '((//style|//STYLE)|(//link|//LINK)[@rel="stylesheet"])' ) as $tag ) {
 			/** @var DOMElement $tag */
@@ -419,7 +443,7 @@ class CSS extends PluginAbstract {
 	 * @return array
 	 */
 	protected function get_cache_id() {
-		$post_cache_id_hash = md5( serialize( $this->cache_list ) );
+		$post_cache_id_hash = $this->get_cache_hash();
 		$post_cache_id      = array();
 		if ( is_singular() ) {
 			$post_cache_id [] = 'post_' . get_the_ID();
@@ -436,6 +460,17 @@ class CSS extends PluginAbstract {
 		}
 
 		return $post_cache_id;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function get_cache_hash() {
+		if ( null === $this->cache_hash ) {
+			$this->cache_hash = md5( serialize( $this->cache_list ) );
+		}
+
+		return $this->cache_hash;
 	}
 
 	/**
@@ -470,13 +505,6 @@ class CSS extends PluginAbstract {
 	}
 
 	/**
-	 * @return string
-	 */
-	protected function get_cache_hash() {
-		return md5( serialize( $this->cache_list ) );
-	}
-
-	/**
 	 *
 	 */
 	protected function process_styles() {
@@ -504,6 +532,11 @@ class CSS extends PluginAbstract {
 		$href = html_entity_decode( preg_replace( '/((?<!&)#.*;)/', '&$1', $href ) );
 		// Decode url % encoding
 		$href = urldecode( $href );
+
+		if ( ! isset( $this->css[ $media ] ) ) {
+			$this->css[ $media ] = '';
+		}
+
 		if ( 'link' === $tag->tagName && ! empty( $href ) ) {
 			$this->process_external_style( $href, $media );
 
@@ -608,16 +641,29 @@ class CSS extends PluginAbstract {
 	 * @return mixed|string
 	 */
 	public function minify_css( $css, $options = array(), $url ) {
-		if ( ! class_exists( 'Minify_Loader' ) ) {
-			require( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
-			\Minify_Loader::register();
-		}
 		$css = $this->parse_css_imports( $css, $url );
 		$css = $this->download_remote_files( $css, $url );
-		$css = \Minify_CSS::minify( $css, $options );
+		$css = $this->process_images( $css, $url );
+		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
+			require_once( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
+			\Minify_Loader::register();
+		}
+		if ( class_exists( 'Minify_CSS' ) ) {
+			if ( ! apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
+				$options['compress'] = false;
+			}
+			return \Minify_CSS::minify( $css, $options );
+		}
+		if ( ! empty( $options['prependRelativePath'] ) ) {
+			$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
+		}
+		if ( apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
+			$css = rocket_minify_inline_css( $css );
+		}
 
 		return $css;
 	}
+
 
 	/**
 	 * @param $css
@@ -626,7 +672,7 @@ class CSS extends PluginAbstract {
 	 * @return mixed
 	 */
 	protected function parse_css_imports( $css, $url ) {
-		preg_match_all( '/@import\s*(?:url\s*\()?["\'](.*?)["\']\)?\s*;/', $css, $matches );
+		preg_match_all( '/@import\s*(?:url\s*\()?["\']?(.*?)["\']?\)?\s*;/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[1] as $pos => $match ) {
@@ -636,13 +682,12 @@ class CSS extends PluginAbstract {
 					if ( empty( $host ) ) {
 						$match = \phpUri::parse( $url )->join( $match );
 					}
-					if ( $host != $this->domain && ! in_array( $host, $this->cdn_domains ) ) {
+					if ( $host != $this->domain && ( ! empty( $this->cdn_domains ) && ! in_array( $host, $this->cdn_domains ) ) ) {
 						$imported_data = $this->remote_fetch( $match );
 					} else {
 						$match = $this->strip_cdn( $match );
 						// Is this a URL? If so replace with ABSPATH
-						$match         = str_replace( $this->home, ABSPATH, $match );
-						$path          = untrailingslashit( ABSPATH ) . $match;
+						$path          = str_replace( $this->home, untrailingslashit( ABSPATH ), $match );
 						$imported_data = $this->get_content( $path );
 					}
 					// Process css to minify it, passing the path of the found file
@@ -665,19 +710,7 @@ class CSS extends PluginAbstract {
 		$url_parts           = parse_url( $url );
 		$url_parts['host']   = $this->domain;
 		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
-		/*
-		 * Check and see what version of php-http we have.
-		 * 1.x uses procedural functions.
-		 * 2.x uses OOP classes with a http namespace.
-		 * Convert the address to a path, minify, and add to buffer.
-		 */
-		if ( class_exists( 'http\Url' ) ) {
-			$url = new \http\Url( $url_parts );
-			$url = $url->toString();
-		} else {
-			$url = http_build_url( $url_parts );
-		}
-
+		$url                 = http_build_url( $url_parts );
 		return $url;
 	}
 
@@ -691,21 +724,6 @@ class CSS extends PluginAbstract {
 	) {
 		return $this->get_wp_filesystem()->get_contents( $file );
 	}
-
-	/**
-	 * @return \WP_Filesystem_Base
-	 */
-	protected function get_wp_filesystem() {
-		/** @var \WP_Filesystem_Base $wp_filesystem */
-		global $wp_filesystem;
-		if ( is_null( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-
-		return $wp_filesystem;
-	}
-
 	/**
 	 * @param $css
 	 * @param $url
@@ -713,7 +731,7 @@ class CSS extends PluginAbstract {
 	 * @return mixed
 	 */
 	public function download_remote_files( $css, $url ) {
-		preg_match_all( '/url\\(\\s*([\'"](.*?)[\'"]|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[2] as $index => $match ) {
@@ -723,20 +741,31 @@ class CSS extends PluginAbstract {
 				if ( 0 === strpos( $match, 'data:' ) ) {
 					continue;
 				}
-				$match     = trim( $match, '"' . "'" );
+				$match       = trim( $match, '"' . "'" );
+				$fixed_match = $match;
+				if ( 0 === strpos( $fixed_match, '//' ) ) {
+					//Handle no protocol urls
+					$fixed_match = rocket_add_url_protocol( $fixed_match );
+				}
 				$url_parts = parse_url( $match );
 				if ( empty( $url_parts['host'] ) ) {
-					$match     = \phpUri::parse( $url )->join( $match );
-					$url_parts = parse_url( $match );
+					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
+					$url_parts   = parse_url( $fixed_match );
 				}
-				if ( ! ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
+				if ( $url_parts['host'] === $this->domain ) {
 					continue;
 				}
-				$data = $this->remote_fetch( $match );
+				if ( $url_parts['host'] !== $this->domain && ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
+					continue;
+				}
+				$data = $this->remote_fetch( $fixed_match );
 				if ( ! empty( $data ) ) {
 					$info = pathinfo( $url_parts['path'] );
 					if ( empty( $url_parts['port'] ) ) {
 						$url_parts['port'] = '';
+					}
+					if ( empty( $url_parts['scheme'] ) ) {
+						$url_parts['scheme'] = 'http';
 					}
 					$hash      = md5( $url_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $url_parts['port'] ) ? ":{$url_parts['port']}" : '' ) . '/' . $info['filename'] );
 					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
@@ -764,6 +793,48 @@ class CSS extends PluginAbstract {
 		$file, $data
 	) {
 		return $this->get_wp_filesystem()->put_contents( $file, $data );
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	private function process_images( $css, $url ) {
+		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		//Ensure there are matches
+		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			foreach ( $matches[2] as $index => $match ) {
+				if ( empty( $match ) ) {
+					$match = $matches[1][ $index ];
+				}
+				if ( 0 === strpos( $match, 'data:' ) ) {
+					continue;
+				}
+				$match       = trim( $match, '"' . "'" );
+				$fixed_match = $match;
+				if ( 0 === strpos( $fixed_match, '//' ) ) {
+					//Handle no protocol urls
+					$fixed_match = rocket_add_url_protocol( $fixed_match );
+				}
+				$url_parts = parse_url( $match );
+				if ( empty( $url_parts['host'] ) ) {
+					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
+					$url_parts   = parse_url( $fixed_match );
+				}
+				if ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) {
+					continue;
+				}
+				unset( $url_parts['scheme'] );
+				unset( $url_parts['host'] );
+				$final_url = http_build_url( $url_parts );
+				$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
+				$css       = str_replace( $matches[0][ $index ], $css_part, $css );
+			}
+		}
+
+		return $css;
 	}
 
 	/**
@@ -817,9 +888,7 @@ class CSS extends PluginAbstract {
 			// Remove any conditional comments for IE that somehow was put in the script tag
 			$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 			//Minify ?
-			if ( get_rocket_option( 'minify_html_inline_css', false ) ) {
-				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
-			}
+			$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
 			$css_part = $item_cache;
@@ -857,22 +926,56 @@ class CSS extends PluginAbstract {
 	protected function add_main_styles(
 		$hrefs
 	) {
-		// loadCSS
+		// CustomEvent polyfill
 		$external_tag = $this->document->createElement( 'script' );
 		$external_tag->setAttribute( 'data-no-minify', '1' );
-		$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
-c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
+		$js = 'try{var ce=new window.CustomEvent("test");ce.preventDefault();if(!0!==ce.defaultPrevented)throw Error("Could not prevent default");}catch(e){var CustomEvent=function(c,a){a=a||{bubbles:!1,cancelable:!1,detail:void 0};var b=document.createEvent("CustomEvent");b.initCustomEvent(c,a.bubbles,a.cancelable,a.detail);var d=b.preventDefault;b.preventDefault=function(){d.call(this);try{Object.defineProperty(this,"defaultPrevented",{get:function(){return!0}})}catch(f){this.defaultPrevented=!0}};return b};CustomEvent.prototype=
+window.Event.prototype;window.CustomEvent=CustomEvent};';
 		$external_tag->appendChild( $this->document->createTextNode( $js ) );
 		$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
 
-		foreach ( $hrefs as $media => $href ) {
-			$js           = "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1], ' . "'{$media}'" . ');';
-			$external_tag = $this->document->createElement( 'script' );
-			$external_tag->appendChild( $this->document->createTextNode( $js ) );
-			$external_tag->setAttribute( 'data-no-minify', '1' );
-			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+		// loadCSS
+		$js_tag = $this->document->createElement( 'script' );
+		$js_tag->setAttribute( 'data-no-minify', '1' );
+		$preloader_js = '';
+		if ( ! apply_filters( 'rocket_async_css_preloader_enabled', false ) ) {
+			$preloader_js .= 'window.preloader_loaded = true;';
+			$preloader_js .= 'window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));';
+		}
+		if ( ! apply_filters( 'rocket_async_css_preloader_event_bypass', false ) ) {
+			$preloader_js .= 'window.preloader_event_registered = true;';
+		}
+		$do_blocking = apply_filters( 'rocket_async_css_do_blocking', false );
+		if ( ! $do_blocking ) {
+			$js = '(function(h){var d=function(d,e,n){function k(a){if(b.body)return a();setTimeout(function(){k(a)})}function f(){a.addEventListener&&a.removeEventListener("load",f);a.media=n||"all"; (window.addEventListener || window.attachEvent)((!window.addEventListener ? "on" : "") + "load", function(){window.css_loaded=true; window.dispatchEvent(new CustomEvent("CSSLoaded"));' . $preloader_js . '}, null);}var b=h.document,a=b.createElement("link"),c;if(e)c=e;else{var l=(b.body||b.getElementsByTagName("head")[0]).childNodes;c=l[l.length-1]}var m=b.styleSheets;a.rel="stylesheet";a.href=d;a.media="only x";k(function(){c.parentNode.insertBefore(a,e?c:c.nextSibling)});var g=function(b){for(var c=a.href,d=m.length;d--;)if(m[d].href===
+c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListener("load",f);a.onloadcssdefined=g;g(f);return a};"undefined"!==typeof exports?exports.loadCSS=d:h.loadCSS=d})("undefined"!==typeof global?global:this);';
+		}
+		if ( $do_blocking ) {
+			$js = '(function(){ ' . $preloader_js . '})();';
+		}
+		$js_tag->appendChild( $this->document->createTextNode( $js ) );
+		if ( ! $do_blocking ) {
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $js_tag );
 		}
 
+		foreach ( $hrefs as $media => $href ) {
+			if ( ! $do_blocking ) {
+				$js           = "loadCSS(" . wp_json_encode( $href ) . ',  document.getElementsByTagName("head")[0].childNodes[ document.getElementsByTagName("head")[0].childNodes.length-1], ' . "'{$media}'" . ');';
+				$external_tag = $this->document->createElement( 'script' );
+				$external_tag->appendChild( $this->document->createTextNode( $js ) );
+				$external_tag->setAttribute( 'data-no-minify', '1' );
+			}
+			if ( $do_blocking ) {
+				$external_tag = $this->document->createElement( 'link' );
+				$external_tag->setAttribute( 'rel', 'stylesheet' );
+				$external_tag->setAttribute( 'href', $href );
+				$external_tag->setAttribute( 'media', $media );
+			}
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $external_tag );
+		}
+		if ( $do_blocking ) {
+			$this->document->getElementsByTagName( 'head' )->item( 0 )->appendChild( $js_tag );
+		}
 
 	}
 
@@ -975,6 +1078,13 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	}
 
 	/**
+	 * @return Util
+	 */
+	public function get_util() {
+		return $this->util;
+	}
+
+	/**
 	 * @return void
 	 */
 	public function uninstall() {
@@ -984,4 +1094,5 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	public function get_transient_prefix() {
 		return static::TRANSIENT_PREFIX;
 	}
+
 }

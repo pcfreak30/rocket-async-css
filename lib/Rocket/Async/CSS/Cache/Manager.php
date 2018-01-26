@@ -3,10 +3,10 @@
 namespace Rocket\Async\CSS\Cache;
 
 use pcfreak30\WordPress\Cache\Store;
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS;
 
-class Manager extends ComponentAbstract {
+class Manager extends Component {
 	/**
 	 * @var \pcfreak30\WordPress\Cache\Store
 	 */

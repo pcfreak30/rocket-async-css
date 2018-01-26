@@ -3,7 +3,7 @@
     "jakeasmith/http_build_url": "^1",
     "level-2/dice": "dev-v2.0-PHP5.4-5.5",
     "pcfreak30/wordpress-cache-store": "^0.1.0",
-    "pcfreak30/wordpress-plugin-framework": "^0.1.0",
+    "composepress/core": "^0.3.0",
     "pguardiario/phpuri": "^1.0"
   },
   "autoload": {
@@ -15,9 +15,5 @@
     "psr-4": {
       "": "tests/"
     }
-  },
-  "require-dev": {
-    "mockery/mockery": "^0.9.9",
-    "10up/wp_mock": "dev-dev"
   }
 }

@@ -16,7 +16,7 @@
  * Plugin Name:       WP Rocket ASYNC CSS
  * Plugin URI:        https://github.com/pcfreak30/rocket-async-css
  * Description:       WordPress plugin to combine all CSS load async including inline scripts. Extends WP-Rocket
- * Version:           0.6.0
+ * Version:           0.7.0
  * Author:            Derrick Hammer
  * Author URI:        http://www.derrickhammer.com
  * License:           GPL-2.0+
@@ -71,6 +71,13 @@ function rocket_async_css_activate() {
 function rocket_async_css_deactivate() {
 	rocket_async_css_instance()->deactivate();
 }
+
+if ( ! function_exists( '__return_one' ) ) {
+	function __return_one() {
+		return 1;
+	}
+}
+
 
 /**
  * Error for older php
