@@ -3,9 +3,9 @@
 
 namespace Rocket\Async\CSS;
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class Request extends ComponentAbstract {
+class Request extends Component {
 	public function init() {
 		if ( ! is_admin() ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
@@ -21,6 +21,7 @@ class Request extends ComponentAbstract {
 			} else {
 				add_filter( 'pre_get_rocket_option_minify_js', '__return_zero' );
 			}
+			add_action( 'wp_footer', [ $this, 'scripts' ], PHP_INT_MAX );
 		}
 
 	}
@@ -60,5 +61,16 @@ class Request extends ComponentAbstract {
 
 	public function process_buffer( $buffer ) {
 		return apply_filters( 'rocket_async_css_request_buffer', $buffer );
+	}
+
+	public function scripts() {
+		?>
+        <script type="text/javascript">
+            window.js_loaded = true;
+            if (window.CustomEvent) {
+                window.dispatchEvent(new CustomEvent("JSLoaded"));
+            }
+        </script>
+		<?php
 	}
 }

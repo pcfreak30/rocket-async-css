@@ -1,50 +1,5 @@
 [
     {
-        "name": "level-2/dice",
-        "version": "dev-v2.0-PHP5.4-5.5",
-        "version_normalized": "dev-v2.0-PHP5.4-5.5",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/Level-2/Dice.git",
-            "reference": "33e5401c4a577b7d8dc7dc04db295fe5084343c4"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/Level-2/Dice/zipball/33e5401c4a577b7d8dc7dc04db295fe5084343c4",
-            "reference": "33e5401c4a577b7d8dc7dc04db295fe5084343c4",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.4.0"
-        },
-        "time": "2015-11-30T17:19:11+00:00",
-        "type": "library",
-        "installation-source": "source",
-        "autoload": {
-            "psr-4": {
-                "Dice\\": "./"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "BSD-2-Clause"
-        ],
-        "authors": [
-            {
-                "name": "Tom Butler",
-                "email": "tom@r.je"
-            }
-        ],
-        "description": "A minimalist Dependency injection container (DIC) for PHP. Please note: This branch is only compatible with PHP5.6. 5.5, 5.4 and 5.3 compatible version is available as a separate branch on github. ",
-        "homepage": "http://r.je/dice.html",
-        "keywords": [
-            "dependency injection",
-            "dependency injection container",
-            "di",
-            "ioc"
-        ]
-    },
-    {
         "name": "pguardiario/phpuri",
         "version": "1.0",
         "version_normalized": "1.0.0.0",
@@ -141,31 +96,34 @@
         "description": "WordPress cache library to enable a data tree inspired storage structure to offset the limitation of the WordPress cache API for querying available keys"
     },
     {
-        "name": "pcfreak30/wordpress-plugin-framework",
-        "version": "0.1.1",
-        "version_normalized": "0.1.1.0",
+        "name": "composepress/core",
+        "version": "0.3.1",
+        "version_normalized": "0.3.1.0",
         "source": {
             "type": "git",
-            "url": "https://github.com/pcfreak30/wordpress-plugin-framework.git",
-            "reference": "4cd64268f2d25503fd96ce0f2064428002a8813b"
+            "url": "https://github.com/ComposePress/core.git",
+            "reference": "6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/pcfreak30/wordpress-plugin-framework/zipball/4cd64268f2d25503fd96ce0f2064428002a8813b",
-            "reference": "4cd64268f2d25503fd96ce0f2064428002a8813b",
+            "url": "https://api.github.com/repos/ComposePress/core/zipball/6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c",
+            "reference": "6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c",
             "shasum": ""
         },
-        "time": "2017-08-16T08:20:28+00:00",
+        "require": {
+            "level-2/dice": "dev-v2.0-PHP5.4-5.5"
+        },
+        "time": "2018-01-26T10:27:10+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
-                "pcfreak30\\WordPress\\Plugin\\Framework\\": "src/"
+                "ComposePress\\Core\\": "src/"
             }
         },
         "notification-url": "https://packagist.org/downloads/",
         "license": [
-            "LGPL3"
+            "LGPL-3.0-or-later"
         ],
         "authors": [
             {
@@ -174,5 +132,50 @@
             }
         ],
         "description": "A simple PSR-4 and composer ready plugin framework for the modern wordpress age"
+    },
+    {
+        "name": "level-2/dice",
+        "version": "dev-v2.0-PHP5.4-5.5",
+        "version_normalized": "dev-v2.0-PHP5.4-5.5",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/Level-2/Dice.git",
+            "reference": "33e5401c4a577b7d8dc7dc04db295fe5084343c4"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/Level-2/Dice/zipball/33e5401c4a577b7d8dc7dc04db295fe5084343c4",
+            "reference": "33e5401c4a577b7d8dc7dc04db295fe5084343c4",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.4.0"
+        },
+        "time": "2015-11-30T17:19:11+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Dice\\": "./"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "BSD-2-Clause"
+        ],
+        "authors": [
+            {
+                "name": "Tom Butler",
+                "email": "tom@r.je"
+            }
+        ],
+        "description": "A minimalist Dependency injection container (DIC) for PHP. Please note: This branch is only compatible with PHP5.6. 5.5, 5.4 and 5.3 compatible version is available as a separate branch on github. ",
+        "homepage": "http://r.je/dice.html",
+        "keywords": [
+            "dependency injection",
+            "dependency injection container",
+            "di",
+            "ioc"
+        ]
     }
 ]

@@ -4,7 +4,7 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS;
 
 /**
@@ -12,7 +12,7 @@ use Rocket\Async\CSS;
  * @package Rocket\Async\CSS\Integration
  * @property CSS $plugin
  */
-class WPCriticalCSS extends ComponentAbstract {
+class WPCriticalCSS extends Component {
 
 	/**
 	 *

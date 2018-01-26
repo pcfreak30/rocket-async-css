@@ -14,20 +14,19 @@ class ComposerStaticInit59326ced126251fe7e556fbc1858f556
     public static $prefixLengthsPsr4 = array (
         'p' => 
         array (
-            'pcfreak30\\WordPress\\Plugin\\Framework\\' => 37,
             'pcfreak30\\' => 10,
         ),
         'D' => 
         array (
             'Dice\\' => 5,
         ),
+        'C' => 
+        array (
+            'ComposePress\\Core\\' => 18,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'pcfreak30\\WordPress\\Plugin\\Framework\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/pcfreak30/wordpress-plugin-framework/src',
-        ),
         'pcfreak30\\' => 
         array (
             0 => __DIR__ . '/..' . '/pcfreak30/wordpress-cache-store/src',
@@ -36,10 +35,15 @@ class ComposerStaticInit59326ced126251fe7e556fbc1858f556
         array (
             0 => __DIR__ . '/..' . '/level-2/dice',
         ),
+        'ComposePress\\Core\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/composepress/core/src',
+        ),
     );
 
     public static $fallbackDirsPsr4 = array (
         0 => __DIR__ . '/../..' . '/lib',
+        1 => __DIR__ . '/../..' . '/tests',
     );
 
     public static function getInitializer(ClassLoader $loader)

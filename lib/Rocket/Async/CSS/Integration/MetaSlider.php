@@ -4,9 +4,9 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 
-class MetaSlider extends ComponentAbstract {
+class MetaSlider extends Component {
 
 	public function init() {
 		if ( class_exists( 'MetaSliderPlugin' ) ) {

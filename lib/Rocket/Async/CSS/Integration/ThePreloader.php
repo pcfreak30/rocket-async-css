@@ -4,10 +4,10 @@
 namespace Rocket\Async\CSS\Integration;
 
 
-use pcfreak30\WordPress\Plugin\Framework\ComponentAbstract;
+use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS\DOMDocument;
 
-class ThePreloader extends ComponentAbstract {
+class ThePreloader extends Component {
 	private $document;
 
 	public function __construct( DOMDocument $document ) {
@@ -19,6 +19,8 @@ class ThePreloader extends ComponentAbstract {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'check_css' ), 10, 2 );
 			add_action( 'rocket_buffer', array( $this, 'inject_div' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'add_window_resize_js' ) );
+			add_filter( 'rocket_async_css_preloader_enabled', [ $this, 'check_status' ] );
+			add_filter( 'after_setup_theme', [ $this, 'theme_hooks' ] );
 		}
 	}
 
@@ -45,11 +47,14 @@ class ThePreloader extends ComponentAbstract {
 		if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 			return $buffer;
 		}
-		$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
-		$div  = $this->document->createElement( 'div' );
-		$div->setAttribute( 'id', 'wptime-plugin-preloader' );
-		$body->insertBefore( $div, $body->firstChild );
-		$buffer = $this->document->saveHTML();
+		if ( null === $this->document->getElementById( 'wptime-plugin-preloader' ) ) {
+			$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
+			$div  = $this->document->createElement( 'div' );
+			$div->setAttribute( 'id', 'wptime-plugin-preloader' );
+			$body->insertBefore( $div, $body->firstChild );
+			$buffer = $this->document->saveHTML();
+
+		}
 
 		return $buffer;
 	}
@@ -60,16 +65,29 @@ class ThePreloader extends ComponentAbstract {
     $(window).load(function () {
         $(window).trigger('resize');
         (function check() {
-            if (0 < $('#wptime-plugin-preloader').length) {
+            if (0 < $('#wptime-plugin-preloader').length || !window.preloader_event_registered) {
                 setTimeout(check, 1);
             }
             else {
                 $(window).trigger('resize');
+                window.preloader_loaded = true;
+                if(window.CustomEvent){
+                	window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));
+                }
             }
         })();
     })
 })(jQuery);
 JS
 		);
+	}
+
+	public function check_status() {
+		return has_action( 'rocket_buffer', array( $this, 'inject_div' ) );
+	}
+
+	public function theme_hooks() {
+		// Remove conflict with preloader on "The 7" theme
+		remove_action( 'presscore_body_top', 'presscore_render_fullscreen_overlay' );
 	}
 }

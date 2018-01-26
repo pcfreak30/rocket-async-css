@@ -56,6 +56,31 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0 ###
+
+This is considered  a ***MAJOR*** release due to the amount of effort that has been invested since the last release in 2017
+
+* BUGS!: Too many bug fixes to give out in detail. It would be ideal to review git commits in this case
+
+* Integration: Add AvadaTheme integration to work around css bug
+* Integration: Add Google Web Fonts integration
+* Integration: Add integration with Flatsome theme
+* Integration: Add integration with wonder plugin carousel
+* Integration: Add integration with max mega menu
+* Integration: Add integration with divi builder
+* Integration: Add integration with divi booster
+* Integration: Add compatibility with The 7 theme
+* Feature: Add rocket_async_css_do_blocking filter to force the CSS to output in normal blocking mode for odd edge case exceptions
+* Enhancement: Add a footer JS to signal that js is fully loaded
+* Enhancement: Add rocket_async_css_do_minify filter for css item to skip minify if it is problematic
+* Enhancement: Run lazyload on every individual image and not the whole document to prevent altering javascript or other markup that doesn't need to be touched
+* Enhancement: Refactor responsive images integration to look up based on GUID and not do a post meta query for performance
+* Enhancement: Add filter, rocket_async_css_lazy_load_responsive_image, to determine if responsive image should be lazy loaded
+* Compatibility: Add workaround technique for processing inline javascript that has html
+* Compatibility: Don't lazyload images in revolution slider
+* Compatibility: Add woocommerce integration to fix cache issues
+* Compatibility: Fix compatibility with wp-rocket causing fatal errors
+
 ### 0.6.0 ###
 
 This is a ***MAJOR*** release and over 50% of the code is rewritten. While it has been extensively tested, there may still be bugs! Please test in a development site before deploying! Due to the amount of work, only a summary of this version will be detailed below.
