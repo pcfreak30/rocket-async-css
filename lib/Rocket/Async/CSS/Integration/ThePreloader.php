@@ -15,6 +15,7 @@ class ThePreloader extends Component {
 	}
 
 	public function init() {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		if ( is_plugin_active( 'the-preloader/preloader.php' ) || function_exists( 'WPTime_plugin_preloader_script' ) ) {
 			add_filter( 'rocket_async_css_process_style', array( $this, 'check_css' ), 10, 2 );
 			add_action( 'rocket_buffer', array( $this, 'inject_div' ) );
