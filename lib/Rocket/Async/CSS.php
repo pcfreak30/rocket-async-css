@@ -174,7 +174,6 @@ class CSS extends Plugin {
 	 *
 	 */
 	public function init() {
-		parent::init();
 		if ( ! $this->get_dependancies_exist() ) {
 			return;
 		}
@@ -189,6 +188,7 @@ class CSS extends Plugin {
 		if ( isset( $this->wpml_url_filters ) ) {
 			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10, 4 );
 		}
+		parent::init();
 	}
 
 	/**
