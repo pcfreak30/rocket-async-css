@@ -140,7 +140,7 @@ abstract class Plugin extends Component {
 	 * Plugin initialization
 	 */
 	public function init() {
-		if ( ! $this->get_dependencies_exist() ) {
+		if ( ! static::get_dependencies_exist() ) {
 			return;
 		}
 		$this->setup_components();

@@ -96,44 +96,6 @@
         "description": "WordPress cache library to enable a data tree inspired storage structure to offset the limitation of the WordPress cache API for querying available keys"
     },
     {
-        "name": "composepress/core",
-        "version": "0.3.1",
-        "version_normalized": "0.3.1.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/ComposePress/core.git",
-            "reference": "6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/ComposePress/core/zipball/6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c",
-            "reference": "6fa83dcced4b22a83c1cc9085e131d11c8a8eb6c",
-            "shasum": ""
-        },
-        "require": {
-            "level-2/dice": "dev-v2.0-PHP5.4-5.5"
-        },
-        "time": "2018-01-26T10:27:10+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "ComposePress\\Core\\": "src/"
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "LGPL-3.0-or-later"
-        ],
-        "authors": [
-            {
-                "name": "Derrick Hammer",
-                "email": "derrick@derrickhammer.com"
-            }
-        ],
-        "description": "A simple PSR-4 and composer ready plugin framework for the modern wordpress age"
-    },
-    {
         "name": "level-2/dice",
         "version": "dev-v2.0-PHP5.4-5.5",
         "version_normalized": "dev-v2.0-PHP5.4-5.5",
@@ -177,5 +139,43 @@
             "di",
             "ioc"
         ]
+    },
+    {
+        "name": "composepress/core",
+        "version": "0.3.2",
+        "version_normalized": "0.3.2.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/ComposePress/core.git",
+            "reference": "080287b81fd811edfe13afe7831c8115e0fce281"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/ComposePress/core/zipball/080287b81fd811edfe13afe7831c8115e0fce281",
+            "reference": "080287b81fd811edfe13afe7831c8115e0fce281",
+            "shasum": ""
+        },
+        "require": {
+            "level-2/dice": "dev-v2.0-PHP5.4-5.5"
+        },
+        "time": "2018-01-29T06:17:21+00:00",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-4": {
+                "ComposePress\\Core\\": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "LGPL-3.0-or-later"
+        ],
+        "authors": [
+            {
+                "name": "Derrick Hammer",
+                "email": "derrick@derrickhammer.com"
+            }
+        ],
+        "description": "A simple PSR-4 and composer ready plugin framework for the modern wordpress age"
     }
 ]
