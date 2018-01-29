@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.3 ###
+
+* Fix bug with plugin startup that could cause a crash
+
 ### 0.7.0.2 ###
 
 * Update plugin framework
