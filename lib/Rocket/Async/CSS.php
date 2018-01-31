@@ -18,7 +18,7 @@ class CSS extends Plugin {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.7.0.3';
+	const VERSION = '0.7.0.4';
 
 	/**
 	 *  Transient Prefix
@@ -724,6 +724,7 @@ class CSS extends Plugin {
 	) {
 		return $this->get_wp_filesystem()->get_contents( $file );
 	}
+
 	/**
 	 * @param $css
 	 * @param $url
@@ -983,13 +984,11 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 *
 	 */
 	protected function fix_old_libxml() {
-		// Hack to fix a bug with libxml versions earlier than 2.9.x
-		$body = $this->document->getElementsByTagName( 'body' )->item( 0 );
-		if ( 1 === version_compare( '2.9.0', LIBXML_DOTTED_VERSION ) ) {
-			$body_class = $body->getAttribute( 'class' );
-			if ( empty( $body_class ) ) {
-				$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
-			}
+		// Hack to fix a bug with some libxml versions
+		$body       = $this->document->getElementsByTagName( 'body' )->item( 0 );
+		$body_class = $body->getAttribute( 'class' );
+		if ( empty( $body_class ) ) {
+			$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
 		}
 	}
 
