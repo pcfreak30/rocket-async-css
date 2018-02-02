@@ -20,6 +20,7 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'DiviBuilder',
 		'MaxMegaMenu',
 		'DiviBooster',
+		'EssentialGrid',
 	];
 
 }
