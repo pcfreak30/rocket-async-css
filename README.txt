@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.5 ###
+
+* Enhancement: Add rocket_async_css_process_responsive_image filter to process image before going to lazy load if enabled
+* Integration: AAdd EssentialGrid integration module to prevent lazy load on images and force cdn'ifying the ajax response HTML
+
 ### 0.7.0.4 ###
 
 * Don't check libxml version on body fix

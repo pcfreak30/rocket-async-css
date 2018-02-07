@@ -70,6 +70,7 @@ class ResponsiveImages extends Component {
 					$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
 				}
 				$new_image = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $new_image );
+				$new_image = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
 				if ( $lazyload_enabled && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
 					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
