@@ -36,7 +36,8 @@ class ResponsiveImages extends Component {
 				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				$this->current_guid = $this->plugin->strip_cdn( $src );
 				$attachments        = get_posts( [
-					'post_type' => 'attachment',
+					'post_type'        => 'attachment',
+					'suppress_filters' => false
 				] );
 				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				$attachment_id = 0;
