@@ -36,7 +36,7 @@ class ResponsiveImages extends Component {
 				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				$this->current_guid = $this->plugin->strip_cdn( $src );
 				$attachments        = get_posts( [
-					'post_type' => 'attachment'
+					'post_type' => 'attachment',
 				] );
 				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				$attachment_id = 0;
@@ -46,9 +46,11 @@ class ResponsiveImages extends Component {
 				if ( empty( $attachment_id ) ) {
 					continue;
 				}
-				$original_class = [];
+				$original_class      = [];
+				$original_class_html = '';
 				if ( preg_match( '/class=[\'"](.*)[\'"]/U', $image, $class ) ) {
-					$original_class = array_map( 'trim', explode( ' ', end( $class ) ) );
+					$original_class      = array_map( 'trim', explode( ' ', end( $class ) ) );
+					$original_class_html = $class[0];
 				}
 				$new_image    = $image;
 				$new_src_attr = $src_attr;
@@ -69,8 +71,9 @@ class ResponsiveImages extends Component {
 				if ( false === strpos( $image, 'class=' ) ) {
 					$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
 				}
-				$new_image = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $new_image );
-				$new_image = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
+				$new_image_class_html = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $original_class_html );
+				$new_image            = str_replace( $original_class_html, $new_image_class_html, $new_image );
+				$new_image            = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
 				if ( $lazyload_enabled && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
 					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
@@ -94,6 +97,7 @@ class ResponsiveImages extends Component {
 		$url_ssl             = http_build_url( $url_parts );
 
 		$where .= $this->wpdb->prepare( " AND (guid = %s OR guid = %s)", $url, $url_ssl );
+
 		return $where;
 	}
 }
