@@ -910,7 +910,12 @@ class CSS extends Plugin {
 			$data = [ 'filename' => $filenames ];
 			foreach ( $filenames as $media => $filename ) {
 				$this->put_content( $filename, $this->css[ $media ] );
-				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
+					'all',
+					'css',
+					'js',
+					'css_and_js'
+				] );
 			}
 
 			$this->cache_manager->get_store()->update_cache_fragment( $this->get_cache_id(), $data );
