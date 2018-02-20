@@ -770,7 +770,13 @@ class CSS extends Plugin {
 					}
 					$hash      = md5( $url_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $url_parts['port'] ) ? ":{$url_parts['port']}" : '' ) . '/' . $info['filename'] );
 					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
-					$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) ), PHP_URL_PATH );
+					$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
+						'all',
+						'css',
+						'js',
+						'css_and_js',
+						'images'
+					]  ), PHP_URL_PATH );
 					$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
 					$css       = str_replace( $matches[0][ $index ], $css_part, $css );
 					if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
