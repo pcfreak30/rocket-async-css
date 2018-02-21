@@ -222,7 +222,13 @@ class CSS extends Plugin {
 	protected function normalize_cdn_domains() {
 		add_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Remote fetch external scripts
-		$this->cdn_domains = get_rocket_cdn_cnames();
+		$this->cdn_domains = get_rocket_cdn_cnames( [
+			'all',
+			'css',
+			'js',
+			'css_and_js',
+			'images'
+		] );
 		remove_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Get the hostname for each CDN CNAME
 		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
