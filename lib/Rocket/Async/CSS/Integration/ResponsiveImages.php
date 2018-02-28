@@ -10,11 +10,13 @@ class ResponsiveImages extends Component {
 	private $current_guid;
 
 	public function init() {
-		add_filter( 'the_content', [ $this, 'process' ], 11 );
-		add_filter( 'widget_text', [ $this, 'process' ], PHP_INT_MAX );
+		add_filter( 'the_content', [ $this, 'process' ], 8 );
+		add_filter( 'the_content', [ $this, 'process' ], 13 );
+		add_filter( 'widget_text', [ $this, 'process' ], 9999 );
+		add_filter( 'widget_text', [ $this, 'process' ], 10001 );
 		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ] );
-		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive', PHP_INT_MAX );
-		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ], PHP_INT_MAX );
+		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive', 9999 );
+		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ], 10000 );
 	}
 
 	public function process( $content ) {
@@ -23,7 +25,14 @@ class ResponsiveImages extends Component {
 		}
 		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
 		foreach ( $matches[0] as $image ) {
-			if ( ! ( ( ! $lazyload_enabled && ( $lazyload_enabled && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image ) ) ) || preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image ) ) && ( preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src ) || preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) ) ) {
+
+			$srcset_match      = preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
+			$data_srcset_match = preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
+			$src_match         = preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src );
+			if ( ! $src_match ) {
+				$data_src_match = preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src );
+			}
+			if ( ( ( $lazyload_enabled && ! $data_srcset_match ) || ( $lazyload_enabled && $srcset_match ) ) && ( ( $lazyload_enabled && ! $data_src_match ) || ( $lazyload_enabled && $src_match ) ) ) {
 				$src_attr    = array_shift( $src );
 				$src         = trim( end( $src ) );
 				$cleaned_src = trim( $src );
@@ -75,7 +84,7 @@ class ResponsiveImages extends Component {
 				$new_image_class_html = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $original_class_html );
 				$new_image            = str_replace( $original_class_html, $new_image_class_html, $new_image );
 				$new_image            = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
-				if ( $lazyload_enabled && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
+				if ( $lazyload_enabled && isset( $new_srcset ) && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
 					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
 						$new_image = get_lazyloadxt_html( $new_image );
