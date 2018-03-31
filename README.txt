@@ -56,6 +56,16 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.8 ###
+
+* Bug: Don't use PHP_INT_MAX on rocket_buffer
+* Enhancement: Major refactor/rewrite of the responsive image class with many bug fixes
+
+### 0.7.0.7 ###
+
+* Enhancement: Ensure get_rocket_cdn_url uses all css/js zones as well as the default all
+* Enhancement: Major refactor/rewrite of the responsive image class with many bug fixes
+
 ### 0.7.0.6 ###
 
 * Enhancement: Ensure get_rocket_cdn_url uses all css/js zones as well as the default all
