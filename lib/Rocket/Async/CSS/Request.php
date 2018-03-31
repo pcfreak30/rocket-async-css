@@ -10,7 +10,7 @@ class Request extends Component {
 		if ( ! is_admin() ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
-			add_filter( 'rocket_buffer', [ $this->plugin, 'process_buffer' ], PHP_INT_MAX - 1 );
+			add_filter( 'rocket_buffer', [ $this->plugin, 'process_buffer' ], 9998 );
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', [ $this, 'return_one' ] );
 			remove_filter( 'the_content', 'wp_make_content_images_responsive' );
 			add_filter( 'the_content', 'wp_make_content_images_responsive', 9 );
