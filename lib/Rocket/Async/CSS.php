@@ -222,7 +222,13 @@ class CSS extends Plugin {
 	protected function normalize_cdn_domains() {
 		add_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Remote fetch external scripts
-		$this->cdn_domains = get_rocket_cdn_cnames();
+		$this->cdn_domains = get_rocket_cdn_cnames( [
+			'all',
+			'css',
+			'js',
+			'css_and_js',
+			'images'
+		] );
 		remove_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Get the hostname for each CDN CNAME
 		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
@@ -770,7 +776,13 @@ class CSS extends Plugin {
 					}
 					$hash      = md5( $url_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $url_parts['port'] ) ? ":{$url_parts['port']}" : '' ) . '/' . $info['filename'] );
 					$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
-					$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) ), PHP_URL_PATH );
+					$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
+						'all',
+						'css',
+						'js',
+						'css_and_js',
+						'images'
+					]  ), PHP_URL_PATH );
 					$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
 					$css       = str_replace( $matches[0][ $index ], $css_part, $css );
 					if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
@@ -910,7 +922,12 @@ class CSS extends Plugin {
 			$data = [ 'filename' => $filenames ];
 			foreach ( $filenames as $media => $filename ) {
 				$this->put_content( $filename, $this->css[ $media ] );
-				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ) );
+				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
+					'all',
+					'css',
+					'js',
+					'css_and_js'
+				] );
 			}
 
 			$this->cache_manager->get_store()->update_cache_fragment( $this->get_cache_id(), $data );
