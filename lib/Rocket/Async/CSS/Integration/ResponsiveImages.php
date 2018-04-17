@@ -28,7 +28,7 @@ class ResponsiveImages extends Component {
 		}
 		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
 		foreach ( $matches[0] as $image ) {
-
+			$attachment_id = 0;
 			$srcset_match      = false !== strpos( $image, ' data-srcset=' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
 			$data_srcset_match = false !== strpos( $image, ' srcset=' ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
 			$src_match         = preg_match( '/src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
@@ -65,7 +65,6 @@ class ResponsiveImages extends Component {
 						'suppress_filters' => false
 					] );
 					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-					$attachment_id = 0;
 					if ( ! empty( $attachments ) ) {
 						$attachment_id = end( $attachments )->ID;
 					}
