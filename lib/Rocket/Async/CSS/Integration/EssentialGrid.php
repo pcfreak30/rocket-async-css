@@ -18,7 +18,7 @@ class EssentialGrid extends Component {
 	/**
 	 * @var bool
 	 */
-	private $in_essentialgrid = true;
+	private $in_essentialgrid = false;
 
 	/**
 	 *
