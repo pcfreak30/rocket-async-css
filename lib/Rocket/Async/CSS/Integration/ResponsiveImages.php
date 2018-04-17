@@ -28,7 +28,7 @@ class ResponsiveImages extends Component {
 		}
 		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
 		foreach ( $matches[0] as $image ) {
-			$attachment_id = 0;
+			$attachment_id     = 0;
 			$srcset_match      = false !== strpos( $image, ' data-srcset=' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
 			$data_srcset_match = false !== strpos( $image, ' srcset=' ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
 			$src_match         = preg_match( '/src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
@@ -105,6 +105,7 @@ class ResponsiveImages extends Component {
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
 						$new_image = get_lazyloadxt_html( $new_image );
 					}
+					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', "=$attr_quote\$2$attr_quote", $new_image );
 					$new_image = str_replace( [ 'srcset=""', "srcset={$attr_quote}{$attr_quote}" ], '', $new_image );
 				}
 				if ( $image !== $new_image ) {
