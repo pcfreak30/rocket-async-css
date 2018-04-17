@@ -67,7 +67,9 @@ class EssentialGrid extends Component {
 	 */
 	public function block_image( $value ) {
 		if ( $this->in_essentialgrid ) {
-			$value = str_replace( 'class="', 'class="no-lazyload ', $value );
+			if ( false === strpos( $value, 'no-lazyload' ) ) {
+				$value = str_replace( 'class="', 'class="no-lazyload ', $value );
+			}
 		}
 		return $value;
 	}
