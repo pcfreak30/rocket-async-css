@@ -48,6 +48,7 @@ class ResponsiveImages extends Component {
 				if ( preg_match( '/class=[\'"](.*)[\'"]/U', $image, $class ) ) {
 					$original_class      = array_map( 'trim', explode( ' ', end( $class ) ) );
 					$original_class_html = $class[0];
+					$class               = $original_class;
 				}
 				$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
 				if ( ! empty( $wp_images ) ) {
@@ -62,7 +63,7 @@ class ResponsiveImages extends Component {
 					$this->current_guid = $this->plugin->strip_cdn( $src );
 					$attachments        = get_posts( [
 						'post_type'        => 'attachment',
-						'suppress_filters' => false
+						'suppress_filters' => false,
 					] );
 					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 					if ( ! empty( $attachments ) ) {
