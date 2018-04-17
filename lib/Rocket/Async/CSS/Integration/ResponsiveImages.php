@@ -31,14 +31,15 @@ class ResponsiveImages extends Component {
 
 			$srcset_match      = false !== strpos( $image, ' data-srcset=' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
 			$data_srcset_match = false !== strpos( $image, ' srcset=' ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
-			$src_match         = preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
+			$src_match         = preg_match( '/src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
 			$data_src_match    = false;
 			if ( ! $src_match ) {
-				$data_src_match = preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' data-src=' );
+				$data_src_match = preg_match( '/data-src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' data-src=' );
 			}
 			if ( ( $lazyload_enabled && ! $data_srcset_match ) || ( $lazyload_enabled && ! $data_src_match ) || ! $srcset_match ) {
 				$src_attr    = array_shift( $src );
-				$src         = trim( end( $src ) );
+				$attr_quote  = array_shift( $src );
+				$src         = trim( array_shift( $src ) );
 				$cleaned_src = trim( $src );
 				$path        = parse_url( $src, PHP_URL_PATH );
 
@@ -93,7 +94,7 @@ class ResponsiveImages extends Component {
 					$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
 					$class = array_unique( $class );
 					if ( false === strpos( $image, 'class=' ) ) {
-						$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
+						$new_image = str_replace( $new_src_attr, "class={$attr_quote}" . implode( $class, ' ' ) . "{$attr_quote} " . $new_src_attr, $new_image );
 					}
 					$new_image_class_html = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $original_class_html );
 					$new_image            = str_replace( $original_class_html, $new_image_class_html, $new_image );
@@ -105,7 +106,7 @@ class ResponsiveImages extends Component {
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
 						$new_image = get_lazyloadxt_html( $new_image );
 					}
-					$new_image = str_replace( 'srcset=""', '', $new_image );
+					$new_image = str_replace( [ 'srcset=""', "srcset={$attr_quote}{$attr_quote}" ], '', $new_image );
 				}
 				if ( $image !== $new_image ) {
 					$content = str_replace( $image, $new_image, $content );
