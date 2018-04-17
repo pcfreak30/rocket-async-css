@@ -80,6 +80,7 @@ class EssentialGrid extends Component {
 	public function skip_class( $classes ) {
 		$classes   = array_map( 'trim', explode( ',', $classes ) );
 		$classes[] = 'no-lazyload';
+		$classes   = array_unique( $classes );
 		$classes   = implode( ',', $classes );
 		return $classes;
 	}
