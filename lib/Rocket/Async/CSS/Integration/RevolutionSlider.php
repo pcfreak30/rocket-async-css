@@ -61,7 +61,7 @@ class RevolutionSlider extends Component {
 	/**
 	 *
 	 */
-	public function maybe_in_slider() {
+	public function in_slider() {
 		$this->in_slider = true;
 	}
 
@@ -70,7 +70,7 @@ class RevolutionSlider extends Component {
 	 *
 	 * @return mixed
 	 */
-	public function maybe_out_slider( $value ) {
+	public function out_slider( $value ) {
 		$this->in_slider = false;
 
 		return $value;
