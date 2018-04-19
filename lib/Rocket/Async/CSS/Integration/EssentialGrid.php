@@ -69,6 +69,7 @@ class EssentialGrid extends Component {
 		if ( $this->in_essentialgrid ) {
 			if ( false === strpos( $value, 'no-lazyload' ) ) {
 				$value = str_replace( 'class="', 'class="no-lazyload ', $value );
+				$value = str_replace( "class='", "class='no-lazyload ", $value );
 			}
 		}
 		return $value;
