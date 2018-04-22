@@ -56,6 +56,13 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.9 ###
+
+* Bug: Various bug fixes in responsive image module including better handling of quotes
+* Bug: Fix essential grid state defaulting to true
+* Compatibility: Disable lazy loading completely for all revolution slider images
+* Compatibility: Fix quotes in responsive image module due to bug in a3 lazy load
+
 ### 0.7.0.8 ###
 
 * Bug: Don't use PHP_INT_MAX on rocket_buffer

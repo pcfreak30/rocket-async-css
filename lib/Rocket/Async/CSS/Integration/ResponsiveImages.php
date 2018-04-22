@@ -28,17 +28,18 @@ class ResponsiveImages extends Component {
 		}
 		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
 		foreach ( $matches[0] as $image ) {
-
+			$attachment_id     = 0;
 			$srcset_match      = false !== strpos( $image, ' data-srcset=' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
 			$data_srcset_match = false !== strpos( $image, ' srcset=' ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
-			$src_match         = preg_match( '/src=[\'"](.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
+			$src_match         = preg_match( '/src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' );
 			$data_src_match    = false;
 			if ( ! $src_match ) {
-				$data_src_match = preg_match( '/data-src=[\'"](.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' data-src=' );
+				$data_src_match = preg_match( '/data-src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' data-src=' );
 			}
 			if ( ( $lazyload_enabled && ! $data_srcset_match ) || ( $lazyload_enabled && ! $data_src_match ) || ! $srcset_match ) {
 				$src_attr    = array_shift( $src );
-				$src         = trim( end( $src ) );
+				$attr_quote  = array_shift( $src );
+				$src         = trim( array_shift( $src ) );
 				$cleaned_src = trim( $src );
 				$path        = parse_url( $src, PHP_URL_PATH );
 
@@ -47,6 +48,7 @@ class ResponsiveImages extends Component {
 				if ( preg_match( '/class=[\'"](.*)[\'"]/U', $image, $class ) ) {
 					$original_class      = array_map( 'trim', explode( ' ', end( $class ) ) );
 					$original_class_html = $class[0];
+					$class               = $original_class;
 				}
 				$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
 				if ( ! empty( $wp_images ) ) {
@@ -61,10 +63,9 @@ class ResponsiveImages extends Component {
 					$this->current_guid = $this->plugin->strip_cdn( $src );
 					$attachments        = get_posts( [
 						'post_type'        => 'attachment',
-						'suppress_filters' => false
+						'suppress_filters' => false,
 					] );
 					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-					$attachment_id = 0;
 					if ( ! empty( $attachments ) ) {
 						$attachment_id = end( $attachments )->ID;
 					}
@@ -93,7 +94,7 @@ class ResponsiveImages extends Component {
 					$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
 					$class = array_unique( $class );
 					if ( false === strpos( $image, 'class=' ) ) {
-						$new_image = str_replace( $new_src_attr, "class=\"" . implode( $class, ' ' ) . "\" " . $new_src_attr, $new_image );
+						$new_image = str_replace( $new_src_attr, "class={$attr_quote}" . implode( $class, ' ' ) . "{$attr_quote} " . $new_src_attr, $new_image );
 					}
 					$new_image_class_html = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $original_class_html );
 					$new_image            = str_replace( $original_class_html, $new_image_class_html, $new_image );
@@ -105,7 +106,8 @@ class ResponsiveImages extends Component {
 					if ( function_exists( 'get_lazyloadxt_html' ) ) {
 						$new_image = get_lazyloadxt_html( $new_image );
 					}
-					$new_image = str_replace( 'srcset=""', '', $new_image );
+					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', "=$attr_quote\$2$attr_quote", $new_image );
+					$new_image = str_replace( [ 'srcset=""', "srcset={$attr_quote}{$attr_quote}" ], '', $new_image );
 				}
 				if ( $image !== $new_image ) {
 					$content = str_replace( $image, $new_image, $content );

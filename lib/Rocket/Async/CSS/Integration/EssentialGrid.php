@@ -18,7 +18,7 @@ class EssentialGrid extends Component {
 	/**
 	 * @var bool
 	 */
-	private $in_essentialgrid = true;
+	private $in_essentialgrid = false;
 
 	/**
 	 *
@@ -67,7 +67,10 @@ class EssentialGrid extends Component {
 	 */
 	public function block_image( $value ) {
 		if ( $this->in_essentialgrid ) {
-			$value = str_replace( 'class="', 'class="no-lazyload ', $value );
+			if ( false === strpos( $value, 'no-lazyload' ) ) {
+				$value = str_replace( 'class="', 'class="no-lazyload ', $value );
+				$value = str_replace( "class='", "class='no-lazyload ", $value );
+			}
 		}
 		return $value;
 	}
@@ -80,6 +83,7 @@ class EssentialGrid extends Component {
 	public function skip_class( $classes ) {
 		$classes   = array_map( 'trim', explode( ',', $classes ) );
 		$classes[] = 'no-lazyload';
+		$classes   = array_unique( array_filter( $classes ) );
 		$classes   = implode( ',', $classes );
 		return $classes;
 	}
