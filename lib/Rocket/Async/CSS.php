@@ -669,7 +669,13 @@ class CSS extends Plugin {
 			$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
 		}
 		if ( apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
-			$css = rocket_minify_inline_css( $css );
+			if ( class_exists( '\MatthiasMullie\Minify\CSS' ) ) {
+				$minify = new \MatthiasMullie\Minify\CSS( $css );
+				$css    = $minify->minify();
+			} else {
+				$css = rocket_minify_inline_css( $css );
+			}
+
 		}
 
 		return $css;
