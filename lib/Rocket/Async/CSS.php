@@ -18,7 +18,7 @@ class CSS extends Plugin {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.7.0.9';
+	const VERSION = '0.7.0.10';
 
 	/**
 	 *  Transient Prefix
@@ -234,7 +234,12 @@ class CSS extends Plugin {
 		foreach ( array_keys( (array) $this->cdn_domains ) as $index ) {
 			$cdn_domain       = &$this->cdn_domains[ $index ];
 			$cdn_domain_parts = parse_url( $cdn_domain );
-			$cdn_domain       = $cdn_domain_parts['host'];
+			if ( empty( $cdn_domain_parts['host'] ) ) {
+				$cdn_domain       = "//{$cdn_domain}";
+				$cdn_domain       = set_url_scheme( $cdn_domain );
+				$cdn_domain_parts = parse_url( $cdn_domain );
+			}
+			$cdn_domain = $cdn_domain_parts['host'];
 		}
 		// Cleanup
 		unset( $cdn_domain_parts, $cdn_domain );
@@ -664,7 +669,13 @@ class CSS extends Plugin {
 			$css = \Minify_CSS_UriRewriter::prepend( $css, $options['prependRelativePath'] );
 		}
 		if ( apply_filters( 'rocket_async_css_do_minify', true, $css, $url ) ) {
-			$css = rocket_minify_inline_css( $css );
+			if ( class_exists( '\MatthiasMullie\Minify\CSS' ) ) {
+				$minify = new \MatthiasMullie\Minify\CSS( $css );
+				$css    = $minify->minify();
+			} else {
+				$css = rocket_minify_inline_css( $css );
+			}
+
 		}
 
 		return $css;
@@ -782,7 +793,7 @@ class CSS extends Plugin {
 						'js',
 						'css_and_js',
 						'images'
-					]  ), PHP_URL_PATH );
+					] ), PHP_URL_PATH );
 					$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
 					$css       = str_replace( $matches[0][ $index ], $css_part, $css );
 					if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
