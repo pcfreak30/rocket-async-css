@@ -56,6 +56,12 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.10 ###
+
+* Bug: Handle case where CDN domain may be just a domain and not a url
+* Compatibility: Add compatibility with wp-rocket 3.1 due to JS minify class change
+* Compatibility: Force disable Avada async css option
+
 ### 0.7.0.9 ###
 
 * Bug: Various bug fixes in responsive image module including better handling of quotes
