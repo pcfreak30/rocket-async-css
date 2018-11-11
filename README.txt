@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.11 ###
+
+* Bug: Fix bug that avada setting media_queries_async is tested as a string 0 specifically and not boolean false
+* Compatibility: WP Rocket update changed when IE conditions are processed and are done unconditionally, so refactoring needed to prevent issues. Side effect was that the title, meta, and link tags could be put in the body causing serious SEO problems.
+
 ### 0.7.0.10 ###
 
 * Bug: Handle case where CDN domain may be just a domain and not a url
