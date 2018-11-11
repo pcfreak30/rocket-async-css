@@ -17,7 +17,7 @@ class AvadaTheme extends Component {
 	public function is_theme_active() {
 		if ( function_exists( 'avada_dynamic_css_array' ) || class_exists( 'Avada' ) || class_exists( 'FusionCore_Plugin' ) ) {
 			add_action( 'avada_dynamic_css_array', [ $this, 'clean_css' ] );
-			add_filter( 'avada_setting_get_media_queries_async', '__return_false' );
+			add_filter( 'avada_setting_get_media_queries_async', [ $this, 'return_zero' ] );
 		}
 	}
 
@@ -31,5 +31,9 @@ class AvadaTheme extends Component {
 		}
 
 		return $css;
+	}
+
+	public function return_zero() {
+		return '0';
 	}
 }
