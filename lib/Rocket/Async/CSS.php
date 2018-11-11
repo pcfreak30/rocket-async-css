@@ -111,6 +111,11 @@ class CSS extends Plugin {
 	private $cache_hash;
 
 	/**
+	 * @var array
+	 */
+	private $ie_conditionals;
+
+	/**
 	 * CSS constructor.
 	 *
 	 * @param IntegrationManager $integration_manager
@@ -188,6 +193,7 @@ class CSS extends Plugin {
 		if ( isset( $this->wpml_url_filters ) ) {
 			add_filter( 'home_url', array( $this->wpml_url_filters, 'home_url_filter' ), - 10, 4 );
 		}
+
 		parent::init();
 	}
 
@@ -261,11 +267,9 @@ class CSS extends Plugin {
 	 */
 	public function process_buffer( $buffer ) {
 		$this->disable_minify_overrides();
-		if ( get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer ) ) {
-			//Custom extract method based on wp-rockets
-			list( $pre_buffer, $conditionals ) = $this->extract_ie_conditionals( $buffer );
+		if ( $this->do_process_page( $buffer ) ) {
 			// Import HTML
-			if ( ! @$this->document->loadHTML( mb_convert_encoding( $pre_buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+			if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 				return $buffer;
 			}
 
@@ -300,18 +304,33 @@ class CSS extends Plugin {
 
 			//Get HTML
 			$buffer      = $this->document->saveHTML();
-			$buffer      = $this->inject_ie_conditionals( $buffer, $conditionals );
+			$buffer      = $this->inject_ie_conditionals( $buffer );
 			$this->files = $filename;
 		}
 
 		return $buffer;
 	}
 
+
+	public function process_ie_conditionals( $buffer ) {
+		$this->disable_minify_overrides();
+		if ( $this->do_process_page( $buffer ) ) {
+			$buffer = $this->extract_ie_conditionals( $buffer );
+		}
+		add_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
+		return $buffer;
+	}
+
+
+	protected function do_process_page( $buffer ) {
+		return get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer );
+	}
+
 	/**
 	 *
 	 */
 	protected function disable_minify_overrides() {
-		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );/**/
+		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 	}
 
 	/**
@@ -323,13 +342,13 @@ class CSS extends Plugin {
 		preg_match_all( '/<!--\[if[^\]]*?\]>.*?<!\[endif\]-->/is', $buffer, $conditionals_match );
 		$conditionals = array();
 		foreach ( $conditionals_match[0] as $conditional ) {
-			if ( ! preg_match( '/<html[^>]*>/i', $buffer ) ) {
-				$conditionals[] = $conditional;
-				$buffer         = preg_replace( '/<!--\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '<WP_ROCKET_CONDITIONAL />', $buffer, 1 );
-			}
+			$conditionals[] = $conditional;
+			$buffer         = preg_replace( '/<!--\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '<WP_ROCKET_CONDITIONAL></WP_ROCKET_CONDITIONAL>', $buffer, 1 );
 		}
 
-		return array( $buffer, $conditionals );
+		$this->ie_conditionals = $conditionals;
+
+		return $buffer;
 	}
 
 	/**
@@ -1024,16 +1043,15 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 * Add conditional comments back in
 	 *
 	 * @param $buffer
-	 * @param $conditionals
 	 *
 	 * @return mixed
 	 */
 	protected function inject_ie_conditionals(
-		$buffer, $conditionals
+		$buffer
 	) {
-		foreach ( $conditionals as $conditional ) {
-			if ( false !== strpos( $buffer, '<WP_ROCKET_CONDITIONAL />' ) ) {
-				$buffer = preg_replace( '/<WP_ROCKET_CONDITIONAL \/>/', $conditional, $buffer, 1 );
+		foreach ( $this->ie_conditionals as $conditional ) {
+			if ( false !== stripos( $buffer, '<WP_ROCKET_CONDITIONAL></WP_ROCKET_CONDITIONAL>' ) ) {
+				$buffer = preg_replace( '/<WP_ROCKET_CONDITIONAL><\/WP_ROCKET_CONDITIONAL>/i', $conditional, $buffer, 1 );
 			} else {
 				break;
 			}
@@ -1041,6 +1059,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 		return $buffer;
 	}
+
 
 	/**
 	 * @return DOMDocument
