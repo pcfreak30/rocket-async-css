@@ -275,6 +275,7 @@ class CSS extends Plugin {
 
 			$head = $this->document->getElementsByTagName( 'head' )->item( 0 );
 			if ( null === $head ) {
+				$buffer = $this->inject_ie_conditionals( $buffer );
 				return $buffer;
 			}
 
@@ -305,8 +306,10 @@ class CSS extends Plugin {
 			//Get HTML
 			$buffer      = $this->document->saveHTML();
 			$buffer      = $this->inject_ie_conditionals( $buffer );
+
 			$this->files = $filename;
 		}
+
 
 		return $buffer;
 	}
@@ -343,7 +346,7 @@ class CSS extends Plugin {
 		$conditionals = array();
 		foreach ( $conditionals_match[0] as $conditional ) {
 			$conditionals[] = $conditional;
-			$buffer         = preg_replace( '/<!--\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '<WP_ROCKET_CONDITIONAL></WP_ROCKET_CONDITIONAL>', $buffer, 1 );
+			$buffer         = preg_replace( '/<!--\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '<!-- WP_ROCKET_CONDITIONAL -->', $buffer, 1 );
 		}
 
 		$this->ie_conditionals = $conditionals;
@@ -1050,8 +1053,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		$buffer
 	) {
 		foreach ( $this->ie_conditionals as $conditional ) {
-			if ( false !== stripos( $buffer, '<WP_ROCKET_CONDITIONAL></WP_ROCKET_CONDITIONAL>' ) ) {
-				$buffer = preg_replace( '/<WP_ROCKET_CONDITIONAL><\/WP_ROCKET_CONDITIONAL>/i', $conditional, $buffer, 1 );
+			if ( false !== stripos( $buffer, '<!-- WP_ROCKET_CONDITIONAL -->' ) ) {
+				$buffer = preg_replace( '/<!-- WP_ROCKET_CONDITIONAL -->/i', $conditional, $buffer, 1 );
 			} else {
 				break;
 			}
