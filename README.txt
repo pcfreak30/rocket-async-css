@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.12 ###
+
+* Bug: Switch back to using comments for IE conditionals since they are re-processed before the JS plugin can HTML minify
+* Compatibility: Change file purge filter for compatibility with wp-rocket 3.2
+
 ### 0.7.0.11 ###
 
 * Bug: Fix bug that avada setting media_queries_async is tested as a string 0 specifically and not boolean false
