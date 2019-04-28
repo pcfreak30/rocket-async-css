@@ -56,6 +56,10 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.13.1 ###
+
+* Misc: Fix missing changes from 0.7.0.13 release
+
 ### 0.7.0.13 ###
 
 * Bug: Limit query in responsive images module to 1 item and disable sorting
