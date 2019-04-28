@@ -21,6 +21,7 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'MaxMegaMenu',
 		'DiviBooster',
 		'EssentialGrid',
+		'FoundationPress',
 	];
 
 }
