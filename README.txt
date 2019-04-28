@@ -56,6 +56,11 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.0.13 ###
+
+* Bug: Limit query in responsive images module to 1 item and disable sorting
+* Compatibility: Add compatibility with foundationpress theme
+
 ### 0.7.0.12 ###
 
 * Bug: Switch back to using comments for IE conditionals since they are re-processed before the JS plugin can HTML minify
