@@ -64,6 +64,8 @@ class ResponsiveImages extends Component {
 					$attachments        = get_posts( [
 						'post_type'        => 'attachment',
 						'suppress_filters' => false,
+						'posts_per_page'   => 1,
+						'order_by'         => 'none'
 					] );
 					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 					if ( ! empty( $attachments ) ) {
