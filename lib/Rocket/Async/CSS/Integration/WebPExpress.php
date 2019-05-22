@@ -49,7 +49,7 @@ class WebPExpress extends Component {
 
 			$this->image_replace = new AlterHtmlImageUrls;
 
-			add_filter( 'rocket_async_css_after_process_images', [ $this, 'maybe_process' ], 10, 2 );
+			add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
 		}
 	}
 
