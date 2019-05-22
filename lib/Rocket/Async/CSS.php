@@ -109,7 +109,6 @@ class CSS extends Plugin {
 	 * @var array
 	 */
 	private $ie_conditionals;
-
 	/**
 	 * CSS constructor.
 	 *
@@ -461,6 +460,7 @@ class CSS extends Plugin {
 	 */
 	protected function fetch_cache() {
 		$this->cache = $this->cache_manager->get_store()->get_cache_fragment( $this->get_cache_id() );
+
 		if ( ! empty( $this->cache ) ) {
 			// Cached file is gone, we dont have cache
 			foreach ( (array) $this->cache  ['filename'] as $filename ) {
@@ -627,7 +627,7 @@ class CSS extends Plugin {
 				$this->css[ $media ] .= $css_part;
 			}
 		} else {
-			$this->css[ $media ] .= apply_filters( 'rocket_footer_js_process_remote_script', $item_cache, $src, $media );
+			$this->css[ $media ] .= apply_filters( 'rocket_sync_css_process_remote_style', $item_cache, $src, $media );
 		}
 	}
 
@@ -684,8 +684,11 @@ class CSS extends Plugin {
 		$css = $this->download_remote_files( $css, $url );
 		$css = apply_filters( 'rocket_async_css_after_download_files', $css, $url );
 
-		$css = $this->process_images( $css, $url );
-		$css = apply_filters( 'rocket_async_css_after_process_images', $css, $url );
+		$css = $this->process_local_files( $css, $url );
+		$css = apply_filters( 'rocket_async_css_after_process_local_files', $css, $url );
+
+		$css = $this->lazy_load_fonts( $css, $url );
+		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
 
 		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
 			require_once( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
@@ -856,7 +859,7 @@ class CSS extends Plugin {
 	 *
 	 * @return mixed
 	 */
-	private function process_images( $css, $url ) {
+	private function process_local_files( $css, $url ) {
 		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
@@ -889,6 +892,44 @@ class CSS extends Plugin {
 			}
 		}
 
+		return $css;
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	public function lazy_load_fonts( $css, $url ) {
+		preg_match_all( '/@font-face\s*{(.*)}/sU', $css, $matches, PREG_SET_ORDER );
+		if ( ! empty( $matches ) ) {
+			foreach ( $matches as $font_face_match ) {
+
+				preg_match_all( '/([\w\-]+)\s*:\s*(.*);/sU', $font_face_match[1], $css_statement_matches, PREG_SET_ORDER );
+				$css_rules = [];
+				error_log( var_export( $font_face_match[1], true ) );
+				if ( ! empty( $css_statement_matches ) ) {
+					foreach ( $css_statement_matches as $css_statement_match ) {
+						$css_rules[ $css_statement_match[1] ] = $css_statement_match[2];
+					}
+
+					$font_display = apply_filters( 'rocket_async_css_font_display', 'auto', $css_rules, $url );
+					error_log( $font_display );
+					if ( 'auto' !== $font_display ) {
+						$css_rules['font-display'] = $font_display;
+						$css_rule_strings          = [];
+						foreach ( $css_rules as $rule => $value ) {
+							$value              = rtrim( $value );
+							$value              = rtrim( $value, ';' );
+							$css_rule_strings[] = "{$rule}: $value;";
+						}
+						$new_font_face = implode( '', $css_rule_strings );
+						$css           = str_replace( $font_face_match[1], $new_font_face, $css );
+					}
+				}
+			}
+		}
 		return $css;
 	}
 
@@ -1157,5 +1198,4 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	public function get_transient_prefix() {
 		return static::TRANSIENT_PREFIX;
 	}
-
 }

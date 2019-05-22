@@ -22,6 +22,9 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'DiviBooster',
 		'EssentialGrid',
 		'FoundationPress',
+		'FontAwesome',
+		'LayersTheme',
+		'GoogleFonts',
 		'WebPExpress',
 		'Elementor',
 	];

@@ -6,8 +6,6 @@ namespace Rocket\Async\CSS\Integration;
 
 use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS;
-use WebPExpress\AlterHtmlImageUrls;
-use WebPExpress\Option;
 
 /**
  * Class WPCriticalCSS
@@ -37,6 +35,11 @@ class WPCriticalCSS extends Component {
 			$css = $webp->maybe_process( $css );
 		}
 
-		return $this->plugin->download_remote_files( $css, home_url( $_SERVER['REQUEST_URI'] ) );
+		$home = home_url( $_SERVER['REQUEST_URI'] );
+
+		$css = $this->plugin->lazy_load_fonts( $css, $home );
+		$css = $this->plugin->download_remote_files( $css, $home );
+
+		return $css;
 	}
 }
