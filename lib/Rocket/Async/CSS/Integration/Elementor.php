@@ -7,9 +7,13 @@ namespace Rocket\Async\CSS\Integration;
 use ComposePress\Core\Abstracts\Component;
 use Elementor\Core\DynamicTags\Dynamic_CSS;
 use Elementor\Core\Files\Base;
+use Elementor\Core\Files\CSS\Base as CSS_Base_File;
 use Elementor\Core\Files\CSS\Global_CSS;
 use Elementor\Core\Files\CSS\Post;
 use Elementor\Core\Responsive\Files\Frontend;
+use Elementor\Core\Settings\Manager as Settings_Manager;
+use Elementor\Core\Settings\Page\Manager as Page_Manager;
+use Elementor\Element_Base;
 use Elementor\Plugin;
 use Rocket\Async\CSS\Integration\Elementor\Dynamic_CSS_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Frontend_WebP;
@@ -37,6 +41,8 @@ class Elementor extends Component {
 	 * @var Dynamic_CSS_WebP|Frontend_WebP|Global_CSS_WebP|Post_WebP[]
 	 */
 	private $files = [];
+
+	private $in_meta = false;
 
 	/**
 	 *
@@ -167,6 +173,8 @@ class Elementor extends Component {
 
 			add_filter( 'wp_get_attachment_url', [ $this, 'filter_attachment_url' ], 999999, 1 );
 			add_filter( 'wp_get_attachment_image_src', [ $this, 'filter_attachment_image_src' ], 999999, 1 );
+			add_action( 'elementor/element/before_parse_css', [ $this, 'process_webp_background' ], 10, 2 );
+			add_action( 'elementor/css-file/post/parse', [ $this, 'process_webp_page_background' ], 9 );
 
 			foreach ( $this->files as $file ) {
 				if ( $file instanceof Frontend_WebP ) {
@@ -196,19 +204,6 @@ class Elementor extends Component {
 	}
 
 	/**
-	 * @param $url
-	 *
-	 * @return mixed
-	 */
-	public function filter_attachment_url( $url ) {
-		$new_url = $this->image_replace->replaceUrl( $url );
-		if ( ! empty( $new_url ) ) {
-			$url = $new_url;
-		}
-		return $url;
-	}
-
-	/**
 	 * @param $image
 	 *
 	 * @return mixed
@@ -228,5 +223,83 @@ class Elementor extends Component {
 		}
 
 		return $process;
+	}
+
+	public function process_webp_background( Base $css, Element_Base $element ) {
+		$settings = array_filter( $element->get_settings() );
+		$settings = $this->modify_element_settings( $settings );
+		foreach ( $settings as $setting => $value ) {
+			$element->set_settings( $setting, $value );
+		}
+
+	}
+
+	private function modify_element_settings( array $settings ) {
+		$setting_keys_desktop = [
+			'background_image'          => true,
+			'background_overlay'        => true,
+			'background_video_fallback' => true,
+		];
+		$setting_keys         = [];
+
+		foreach ( $setting_keys_desktop as $setting_key ) {
+			$setting_keys ["{$setting_key}_mobile"] = true;
+			$setting_keys ["{$setting_key}_tablet"] = true;
+		}
+
+		$setting_keys = array_merge( $setting_keys, $setting_keys_desktop );
+		$found        = array_intersect_key( $settings, $setting_keys );
+		if ( $found ) {
+			foreach ( $found as $setting => $item ) {
+				$item_filtered = array_filter( $item );
+				if ( ! empty( $item_filtered ) ) {
+					$item['url']          = $this->filter_attachment_url( $item['url'] );
+					$settings[ $setting ] = $item;
+				}
+			}
+		}
+		return $settings;
+	}
+
+	/**
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	public function filter_attachment_url( $url ) {
+		$new_url = $this->image_replace->replaceUrl( $url );
+		if ( ! empty( $new_url ) ) {
+			$url = $new_url;
+		}
+		return $url;
+	}
+
+	public function process_webp_page_background( CSS_Base_File $css_file ) {
+		if ( $css_file instanceof Post ) {
+			remove_filter( 'get_post_metadata', [ $this, 'process_page_meta' ] );
+			$settings = get_post_meta( $css_file->get_post_id(), Page_Manager::META_KEY, true );
+			if ( $settings ) {
+				Settings_Manager::get_settings_managers( 'page' )->save_settings( $settings, $css_file->get_post_id() );
+			}
+			add_filter( 'get_post_metadata', [ $this, 'process_page_meta' ], 10, 4 );
+		}
+
+
+	}
+
+	public function process_page_meta( $value, $post_id, $meta_key, $single ) {
+		if ( ! $this->in_meta && $meta_key === Page_Manager::META_KEY ) {
+			$this->in_meta = true;
+			$settings      = get_post_meta( $post_id, Page_Manager::META_KEY, true );
+			if ( is_array( $settings ) ) {
+				$settings = $this->modify_element_settings( $settings );
+				$value    = $single ? [ $settings ] : $settings;
+			}
+
+		}
+
+		/** @noinspection SuspiciousAssignmentsInspection */
+		$this->in_meta = false;
+		return $value;
 	}
 }
