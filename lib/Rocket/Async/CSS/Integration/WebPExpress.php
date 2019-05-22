@@ -50,7 +50,21 @@ class WebPExpress extends Component {
 			$this->image_replace = new AlterHtmlImageUrls;
 
 			add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
+
+			if ( false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) {
+				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_cache_key' ] );
+			}
 		}
+	}
+
+	public function modify_cache_key( $key ) {
+		if ( 2 === count( $key ) ) {
+			$key[] = 'webp';
+		} else {
+			array_splice( $key, count( $key ) - 2, 0, [ 'webp' ] );
+		}
+
+		return $key;
 	}
 
 	public function maybe_process( $css, $url = null ) {
