@@ -5,6 +5,7 @@ namespace Rocket\Async\CSS\Integration;
 
 
 use ComposePress\Core\Abstracts\Component;
+use Elementor\Core\Base\Document;
 use Elementor\Core\DynamicTags\Dynamic_CSS;
 use Elementor\Core\Files\Base;
 use Elementor\Core\Files\CSS\Base as CSS_Base_File;
@@ -15,6 +16,7 @@ use Elementor\Core\Settings\Manager as Settings_Manager;
 use Elementor\Core\Settings\Page\Manager as Page_Manager;
 use Elementor\Element_Base;
 use Elementor\Plugin;
+use Elementor\Widget_Base;
 use Rocket\Async\CSS\Integration\Elementor\Dynamic_CSS_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Frontend_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Global_CSS_WebP;
@@ -73,6 +75,25 @@ class Elementor extends Component {
 		add_action( 'elementor/core/files/clear_cache', [ $this, 'clear_cache' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ], 11 );
 		add_action( 'rocket_async_css_webpexpress_process', [ $this, 'webp_exclude_file' ], 10, 3 );
+		add_action( 'elementor/document/after_save', [ $this, 'clear_post_cache' ] );
+		add_action( 'elementor/widget/render_content', [ $this, 'add_image_id_carousel' ], 10, 2 );
+	}
+
+	public function add_image_id_carousel( $content, Widget_Base $widget ) {
+
+		if ( 'image-carousel' === $widget->get_name() ) {
+			$settings = $widget->get_settings_for_display();
+			if ( ! empty( $settings['carousel'] ) ) {
+				preg_match_all( '/<img[^>]+>/', $content, $matches );
+				foreach ( $settings['carousel'] as $index => $attachment ) {
+					if ( ! isset( $matches[0][ $index ] ) ) {
+						continue;
+					}
+					$content = str_replace( $matches[0][ $index ], wp_get_attachment_image( $attachment['id'], 'thumbnail', [ 'class' => 'slick-slide-image' ] ), $content );
+				}
+			}
+		}
+		return $content;
 	}
 
 	/**
@@ -209,11 +230,36 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_image_src( $image ) {
-		$new_url = $this->image_replace->replaceUrl( $image[0] );
-		if ( ! empty( $new_url ) ) {
-			$image[0] = $new_url;
-		}
+		$image[0] = $this->process_url( $image[0] );
 		return $image;
+	}
+
+	private function process_url( $url ) {
+
+		if ( preg_match( '/\.webp$/', $url ) ) {
+			return $url;
+		}
+
+		$domain      = $this->plugin->domain;
+		$cdn_domains = $this->plugin->cdn_domains;
+
+		$url_parts = parse_url( $url );
+		$cdn       = false;
+
+		if ( in_array( $url_parts['host'], $cdn_domains ) ) {
+			$url_parts['host'] = $domain;
+			$url               = http_build_url( $url_parts );
+			$cdn               = true;
+		}
+
+		$new_url = $this->image_replace->replaceUrl( $url );
+		if ( ! empty( $new_url ) ) {
+			$url = $new_url;
+			if ( $cdn ) {
+				$url = get_rocket_cdn_url( $url, [ 'images' ] );
+			}
+		}
+		return $url;
 	}
 
 	public function webp_exclude_file( $process, $css, $url ) {
@@ -242,7 +288,7 @@ class Elementor extends Component {
 		];
 		$setting_keys         = [];
 
-		foreach ( $setting_keys_desktop as $setting_key ) {
+		foreach ( array_keys( $setting_keys_desktop ) as $setting_key ) {
 			$setting_keys ["{$setting_key}_mobile"] = true;
 			$setting_keys ["{$setting_key}_tablet"] = true;
 		}
@@ -267,10 +313,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_url( $url ) {
-		$new_url = $this->image_replace->replaceUrl( $url );
-		if ( ! empty( $new_url ) ) {
-			$url = $new_url;
-		}
+		$url = $this->process_url( $url );
 		return $url;
 	}
 
@@ -301,5 +344,11 @@ class Elementor extends Component {
 		/** @noinspection SuspiciousAssignmentsInspection */
 		$this->in_meta = false;
 		return $value;
+	}
+
+	public function clear_post_cache( Document $document ) {
+		$post_css = new Post_WebP( $document->get_post()->ID );
+
+		$post_css->delete();
 	}
 }
