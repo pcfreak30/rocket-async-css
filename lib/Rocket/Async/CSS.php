@@ -908,14 +908,12 @@ class CSS extends Plugin {
 
 				preg_match_all( '/([\w\-]+)\s*:\s*(.*);/sU', $font_face_match[1], $css_statement_matches, PREG_SET_ORDER );
 				$css_rules = [];
-				error_log( var_export( $font_face_match[1], true ) );
 				if ( ! empty( $css_statement_matches ) ) {
 					foreach ( $css_statement_matches as $css_statement_match ) {
 						$css_rules[ $css_statement_match[1] ] = $css_statement_match[2];
 					}
 
 					$font_display = apply_filters( 'rocket_async_css_font_display', 'auto', $css_rules, $url );
-					error_log( $font_display );
 					if ( 'auto' !== $font_display ) {
 						$css_rules['font-display'] = $font_display;
 						$css_rule_strings          = [];
