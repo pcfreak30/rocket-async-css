@@ -13,7 +13,7 @@ class GoogleFonts extends Component {
 
 	public function process( $url ) {
 		$url_parts = parse_url( $url );
-		if ( 'fonts.googleapis.com' === $url_parts['host'] ) {
+		if ( isset( $url_parts['host'] ) && 'fonts.googleapis.com' === $url_parts['host'] ) {
 			$url = add_query_arg( 'display', 'swap', $url );
 		}
 		return $url;
