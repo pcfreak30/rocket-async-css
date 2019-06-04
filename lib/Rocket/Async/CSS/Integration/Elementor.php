@@ -55,7 +55,7 @@ class Elementor extends Component {
 
 			add_action( 'deleted_post', [ $this, 'on_delete_post' ] );
 			add_action( 'wxr_export_skip_postmeta', [ $this, 'on_export_post_meta' ], 10, 2 );
-
+			add_filter( 'rocket_async_css_font_display', [ $this, 'process_font' ], 10, 2 );
 			if ( class_exists( '\WebPExpress\Config' ) && Option::getOption( 'webp-express-alter-html', false ) ) {
 				$options = json_decode( Option::getOption( 'webp-express-alter-html-options', null ), true );
 				if ( 'url' === Option::getOption( 'webp-express-alter-html-replacement' ) && $options['only-for-webp-enabled-browsers'] ) {
@@ -67,7 +67,6 @@ class Elementor extends Component {
 		}
 	}
 
-
 	/**
 	 *
 	 */
@@ -78,6 +77,17 @@ class Elementor extends Component {
 		add_action( 'rocket_async_css_webpexpress_process', [ $this, 'webp_exclude_file' ], 10, 3 );
 		add_action( 'elementor/document/after_save', [ $this, 'clear_post_cache' ] );
 		add_action( 'elementor/widget/render_content', [ $this, 'add_image_id_carousel' ], 10, 2 );
+	}
+
+	public function process_font( $mode, $rules ) {
+		$family = $rules['font-family'];
+		$family = rtrim( $family, "' " );
+		$family = ltrim( $family, "' " );
+		$family = strtolower( $family );
+		if ( 'eicon' === $family ) {
+			$mode = 'block';
+		}
+		return $mode;
 	}
 
 	public function add_image_id_carousel( $content, Widget_Base $widget ) {
