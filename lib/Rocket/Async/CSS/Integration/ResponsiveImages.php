@@ -5,9 +5,21 @@ namespace Rocket\Async\CSS\Integration;
 
 
 use ComposePress\Core\Abstracts\Component;
+use Rocket\Async\CSS\DOMCollection;
+use Rocket\Async\CSS\DOMDocument;
 
 class ResponsiveImages extends Component {
 	private $current_guid;
+	private $document;
+
+	/**
+	 * ResponsiveImages constructor.
+	 *
+	 * @param DOMDocument $document
+	 */
+	public function __construct( DOMDocument $document ) {
+		$this->document = $document;
+	}
 
 	public function init() {
 		add_filter( 'the_content', [ $this, 'process' ], 8 );
@@ -25,113 +37,133 @@ class ResponsiveImages extends Component {
 	}
 
 	public function process( $content ) {
-		if ( ! preg_match_all( '/(?![\'"])\s*<img [^>]+>\s*(?![\'"])/', $content, $matches ) ) {
+		$new_content = $content;
+
+		$partial = false;
+
+		if ( ! preg_match( '/<html[^>]+>/', $new_content ) ) {
+			$new_content = "<html><head></head><body><div id=\"domdoc_content\">{$new_content}</div></body></html>";
+			$partial     = true;
+		}
+
+		if ( ! @$this->document->loadHTML( mb_convert_encoding( $new_content, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
 			return $content;
 		}
+
 		$lazyload_enabled = $this->plugin->util->is_lazyload_enabled();
-		foreach ( $matches[0] as $image ) {
-			$attachment_id     = 0;
-			$srcset_match      = false !== strpos( $image, ' data-srcset=' ) && preg_match( '/srcset=[\'"](.+)[\'"]/U', $image );
-			$data_srcset_match = false !== strpos( $image, ' srcset=' ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $image );
-			$src_match         = preg_match( '/src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' src=' ) && false !== strpos( $image, 'data-fake-src=' );
-			$data_src_match    = false;
+		$collection       = new DOMCollection( $this->document, 'img' );
+
+		while ( $collection->valid() ) {
+			$image             = $collection->current();
+			$srcset_match      = '' !== $image->getAttribute( 'srcset' );
+			$data_srcset_match = '' !== $image->getAttribute( 'data-srcset' );
+			$src_match         = '' !== $image->getAttribute( 'src' );
 			if ( ! $src_match ) {
-				$data_src_match = preg_match( '/data-src=([\'"])(.+)[\'"]/U', $image, $src ) && false !== strpos( $image, ' data-src=' );
+				$data_src_match = '' !== $image->getAttribute( 'data-src' );
 			}
+
+			if ( $src_match ) {
+				$src_attr = 'src';
+				$src      = $image->getAttribute( $src_attr );
+			}
+
+			if ( $data_src_match ) {
+				$src_attr = 'data-src';
+				$src      = $image->getAttribute( $src_attr );
+				$path     = parse_url( $src, PHP_URL_PATH );
+			}
+
 			if ( ( $lazyload_enabled && ! $data_srcset_match ) || ( $lazyload_enabled && ! $data_src_match ) || ! $srcset_match ) {
-				if ( ! empty( $src ) ) {
-					$src_attr    = array_shift( $src );
-					$attr_quote  = array_shift( $src );
-					$src         = trim( array_shift( $src ) );
-					$cleaned_src = trim( $src );
-					$path        = parse_url( $src, PHP_URL_PATH );
-				}
+				$class          = $image->getAttribute( 'class' );
+				$original_class = array_map( 'trim', explode( ' ', $class ) );
+			}
 
+			$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
+			if ( ! empty( $wp_images ) ) {
+				$attachment_id = str_replace( 'wp-image-', '', end( $wp_images ) );
+			}
 
-				$original_class      = [];
-				$original_class_html = '';
-				if ( preg_match( '/class=[\'"](.*)[\'"]/U', $image, $class ) ) {
-					$original_class      = array_map( 'trim', explode( ' ', end( $class ) ) );
-					$original_class_html = $class[0];
-					$class               = $original_class;
+			if ( ! empty( $src ) && preg_match( '/\d+x\d+/', $path, $size ) ) {
+				$size = end( $size );
+				$src  = str_replace( "-{$size}", '', $src );
+			}
+			if ( empty( $attachment_id ) ) {
+				if ( empty( $src ) ) {
+					$collection->next();
+					continue;
 				}
-				$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
-				if ( ! empty( $wp_images ) ) {
-					$attachment_id = str_replace( 'wp-image-', '', end( $wp_images ) );
-				}
-				if ( ! empty( $src ) && preg_match( '/\d+x\d+/', $path, $size ) ) {
-					$size = end( $size );
-					$src  = str_replace( "-{$size}", '', $src );
+				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+				$this->current_guid = $this->plugin->strip_cdn( $src );
+				$attachments        = get_posts( [
+					'post_type'        => 'attachment',
+					'suppress_filters' => false,
+					'posts_per_page'   => 1,
+					'order_by'         => 'none'
+				] );
+				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+				if ( ! empty( $attachments ) ) {
+					$attachment_id = end( $attachments )->ID;
 				}
 				if ( empty( $attachment_id ) ) {
-					if ( empty( $src ) ) {
-						continue;
-					}
-					add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-					$this->current_guid = $this->plugin->strip_cdn( $src );
-					$attachments        = get_posts( [
-						'post_type'        => 'attachment',
-						'suppress_filters' => false,
-						'posts_per_page'   => 1,
-						'order_by'         => 'none'
-					] );
-					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-					if ( ! empty( $attachments ) ) {
-						$attachment_id = end( $attachments )->ID;
-					}
-					if ( empty( $attachment_id ) ) {
-						continue;
-					}
-				}
-				$new_image = $image;
-				if ( ! empty( $src ) ) {
-					$new_src_attr = $src_attr;
-					$url          = parse_url( $cleaned_src );
-
-					if ( empty( $url['host'] ) ) {
-						$new_src_attr = str_replace( $src, get_rocket_cdn_url( home_url( $src ) ), $src_attr );
-						$new_image    = str_replace( $src_attr, $new_src_attr, $new_image );
-					}
-
-					if ( ! empty( $wp_images ) && $srcset_match ) {
-						$new_image = str_replace( $new_src_attr, '', $new_image );
-					}
-				}
-
-				if ( $lazyload_enabled && ( false !== strpos( $new_image, 'data-src' ) || false !== strpos( $new_image, ' data-srcset=' ) ) && preg_match( '/data-srcset=[\'"](.+)[\'"]/U', $new_image, $srcset ) ) {
-					$new_srcset = str_replace( ' srcset', ' data-srcset', $srcset[0] );
-					$new_image  = str_replace( $srcset[0], $new_srcset, $image );
-				}
-				if ( empty( $wp_images ) ) {
-					$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
-					$class = array_unique( $class );
-					if ( false === strpos( $image, 'class=' ) ) {
-						$new_image = str_replace( $new_src_attr, "class={$attr_quote}" . implode( $class, ' ' ) . "{$attr_quote} " . $new_src_attr, $new_image );
-					}
-					$new_image_class_html = str_replace( trim( implode( $original_class, ' ' ) ), trim( implode( $class, ' ' ) ), $original_class_html );
-					$new_image            = str_replace( $original_class_html, $new_image_class_html, $new_image );
-				}
-
-				$new_image = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
-				if ( $lazyload_enabled && ! empty( $wp_images ) && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $cleaned_src, $new_image ) ) {
-					$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
-					if ( function_exists( 'get_lazyloadxt_html' ) ) {
-						$new_image = get_lazyloadxt_html( $new_image );
-					}
-					if ( ! empty( $src ) ) {
-						$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', "=$attr_quote\$2$attr_quote", $new_image );
-						$new_image = str_replace( [
-							'srcset=""',
-							"srcset={$attr_quote}{$attr_quote}"
-						], '', $new_image );
-					}
-				}
-				if ( $image !== $new_image ) {
-					$content = str_replace( $image, $new_image, $content );
+					$collection->next();
+					continue;
 				}
 			}
+
+			if ( ! empty( $src ) ) {
+				$url = parse_url( $src );
+				if ( empty( $url['host'] ) ) {
+					$image->setAttribute( $src_attr, get_rocket_cdn_url( home_url( $src ) ) );
+				}
+			}
+
+			if ( $lazyload_enabled && ( $data_src_match || $data_srcset_match ) ) {
+				$image->setAttribute( 'data-srcset', $image->getAttribute( 'srcset' ) );
+				$image->removeAttribute( 'srcset' );
+			}
+
+			if ( empty( $wp_images ) ) {
+				$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
+				$class = array_filter( $class );
+				$class = array_unique( $class );
+				$class = implode( ' ', $class );
+				$image->setAttribute( 'class', $class );
+			}
+
+			$new_image = $this->document->saveHTML( $image );
+
+			$new_image = apply_filters( 'rocket_async_css_process_responsive_image', $new_image );
+			if ( $lazyload_enabled && ! empty( $wp_images ) && apply_filters( 'rocket_async_css_lazy_load_responsive_image', true, $class, $src_match, $new_image ) ) {
+				$new_image = apply_filters( 'a3_lazy_load_html', $new_image );
+				if ( function_exists( 'get_lazyloadxt_html' ) ) {
+					$new_image = get_lazyloadxt_html( $new_image );
+				}
+				if ( ! empty( $src ) ) {
+					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', '="$2"', $new_image );
+					$new_image = str_replace( [
+						'srcset=""',
+						"srcset=''"
+					], '', $new_image );
+				}
+			}
+
+			$image_document = new DOMDocument();
+			$new_image      = mb_convert_encoding( $new_image, 'HTML-ENTITIES', 'UTF-8' );
+			@$image_document->loadHTML( "<html><head></head><body>{$new_image}</body></html>" );
+			$image->parentNode->replaceChild( $this->document->importNode( $image_document->getElementsByTagName( 'img' )->item( 0 ), true ), $image );
+			$collection->next();
 		}
 
+		if ( ! $partial ) {
+			return $this->document->saveHTML();
+		}
+
+		$content = '';
+
+		$doc = $this->document->getElementById( 'domdoc_content' );
+		foreach ( $doc->childNodes as $node ) {
+			$content .= $this->document->saveHTML( $node );
+		}
 
 		return $content;
 	}
