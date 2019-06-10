@@ -70,7 +70,10 @@ class ResponsiveImages extends Component {
 			if ( $data_src_match ) {
 				$src_attr = 'data-src';
 				$src      = $image->getAttribute( $src_attr );
-				$path     = parse_url( $src, PHP_URL_PATH );
+			}
+
+			if ( ! empty( $src ) ) {
+				$path = parse_url( $src, PHP_URL_PATH );
 			}
 
 			if ( ( $lazyload_enabled && ! $data_srcset_match ) || ( $lazyload_enabled && ! $data_src_match ) || ! $srcset_match ) {
@@ -98,7 +101,7 @@ class ResponsiveImages extends Component {
 					'post_type'        => 'attachment',
 					'suppress_filters' => false,
 					'posts_per_page'   => 1,
-					'order_by'         => 'none'
+					'order_by'         => 'none',
 				] );
 				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
 				if ( ! empty( $attachments ) ) {
@@ -142,7 +145,7 @@ class ResponsiveImages extends Component {
 					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', '="$2"', $new_image );
 					$new_image = str_replace( [
 						'srcset=""',
-						"srcset=''"
+						"srcset=''",
 					], '', $new_image );
 				}
 			}
