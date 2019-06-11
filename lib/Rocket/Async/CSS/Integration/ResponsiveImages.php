@@ -121,7 +121,10 @@ class ResponsiveImages extends Component {
 			}
 
 			if ( $lazyload_enabled && ( $data_src_match || $data_srcset_match ) ) {
-				$image->setAttribute( 'data-srcset', $image->getAttribute( 'srcset' ) );
+				$srcset = $image->getAttribute( 'srcset' );
+				if ( ! empty( $srcset ) ) {
+					$image->setAttribute( 'data-srcset', $srcset );
+				}
 				$image->removeAttribute( 'srcset' );
 			}
 
@@ -144,8 +147,8 @@ class ResponsiveImages extends Component {
 				if ( ! empty( $src ) ) {
 					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', '="$2"', $new_image );
 					$new_image = str_replace( [
-						'srcset=""',
-						"srcset=''",
+						' srcset=""',
+						" srcset=''",
 					], '', $new_image );
 				}
 			}
