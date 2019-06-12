@@ -129,8 +129,21 @@ class ResponsiveImages extends Component {
 					}
 					$image->removeAttribute( 'src' );
 				}
-				$image->removeAttribute( 'srcset' );
 			}
+
+			$data_srcset = $image->getAttribute( 'data-srcset' );
+			if ( ! empty( $data_srcset ) && $lazyload_enabled ) {
+				$image->removeAttribute( 'data-src' );
+				$image->removeAttribute( 'src' );
+				$image->removeAttribute( 'srcset' );
+
+				$data_sizes = $image->getAttribute( 'sizes' );
+				if ( ! empty( $data_sizes ) ) {
+					$image->setAttribute( 'data-sizes', $data_sizes );
+					$image->removeAttribute( 'sizes' );
+				}
+			}
+
 
 			if ( empty( $wp_images ) ) {
 				$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
