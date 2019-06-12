@@ -13,9 +13,10 @@ class FontAwesome extends Component {
 	public function process( $mode, $rules ) {
 		$family = $rules['font-family'];
 		$family = strtolower( $family );
-		if ( false !== strpos( 'fontawesome', $family ) || false !== strpos( 'font awesome', $family ) ) {
+		if ( false !== strpos( $family, 'fontawesome' ) || false !== strpos( $family, 'font awesome' ) ) {
 			$mode = 'block';
 		}
+
 		return $mode;
 	}
 }
