@@ -337,6 +337,11 @@ class CSS extends Plugin {
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 	}
 
+	/**
+	 * @param $buffer
+	 *
+	 * @return bool
+	 */
 	protected function do_process_page( $buffer ) {
 		return get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer );
 	}
@@ -1110,6 +1115,11 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 	}
 
+	/**
+	 * @param $buffer
+	 *
+	 * @return array
+	 */
 	public function process_ie_conditionals( $buffer ) {
 		$this->disable_minify_overrides();
 		if ( $this->do_process_page( $buffer ) ) {
@@ -1214,6 +1224,9 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		// noop
 	}
 
+	/**
+	 * @return string
+	 */
 	public function get_transient_prefix() {
 		return static::TRANSIENT_PREFIX;
 	}
