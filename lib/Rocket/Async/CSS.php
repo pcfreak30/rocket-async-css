@@ -30,6 +30,8 @@ class CSS extends Plugin {
 	 *
 	 */
 	const PLUGIN_SLUG = 'rocket-async-css';
+
+	const URL_SRC_REGEX = '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/';
 	/**
 	 * @var DOMDocument
 	 */
@@ -696,14 +698,14 @@ class CSS extends Plugin {
 		$css = $this->parse_css_imports( $css, $url );
 		$css = apply_filters( 'rocket_async_css_after_parse_css_imports', $css, $url );
 
+		$css = $this->lazy_load_fonts( $css, $url );
+		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
+
 		$css = $this->download_remote_files( $css, $url );
 		$css = apply_filters( 'rocket_async_css_after_download_files', $css, $url );
 
 		$css = $this->process_local_files( $css, $url );
 		$css = apply_filters( 'rocket_async_css_after_process_local_files', $css, $url );
-
-		$css = $this->lazy_load_fonts( $css, $url );
-		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
 
 		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
 			require_once( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
@@ -799,8 +801,52 @@ class CSS extends Plugin {
 	 *
 	 * @return mixed
 	 */
+	public function lazy_load_fonts( $css, $url ) {
+		preg_match_all( '/@font-face\s*({.*})/sU', $css, $matches, PREG_SET_ORDER );
+		if ( ! empty( $matches ) ) {
+			foreach ( $matches as $font_face_match ) {
+
+				preg_match_all( '/([\w\-]+)\s*:\s*(.*)(?:;|\s*})/sU', $font_face_match[1], $css_statement_matches, PREG_SET_ORDER );
+				$css_rules = [];
+				if ( ! empty( $css_statement_matches ) ) {
+					foreach ( $css_statement_matches as $css_statement_match ) {
+						$css_rules[ $css_statement_match[1] ] = $css_statement_match[2];
+					}
+					$chars  = "' " . '"';
+					$srcses = [];
+					if ( isset( $css_rules['src'] ) ) {
+						preg_match_all( self::URL_SRC_REGEX, $css_rules['src'], $src_matches );
+						if ( ! empty( $src_matches ) && ! empty( $src_matches[1] ) ) {
+							$srcses = array_values( $src_matches[2] );
+						}
+					}
+					$font_display = apply_filters( 'rocket_async_css_font_display', 'auto', array_merge( $css_rules, [ 'font-family' => ltrim( rtrim( $css_rules['font-family'], $chars ), $chars ) ] ), $url, $srcses );
+					if ( 'auto' !== $font_display ) {
+						$css_rules['font-display'] = $font_display;
+						$css_rule_strings          = [];
+						foreach ( $css_rules as $rule => $value ) {
+							$value              = rtrim( $value );
+							$value              = rtrim( $value, ';' );
+							$css_rule_strings[] = "{$rule}: $value;";
+						}
+						$new_font_face = implode( '', $css_rule_strings );
+						$css           = str_replace( $font_face_match[1], "{{$new_font_face}}", $css );
+					}
+				}
+			}
+		}
+
+		return $css;
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
 	public function download_remote_files( $css, $url ) {
-		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		preg_match_all( self::URL_SRC_REGEX, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[2] as $index => $match ) {
@@ -884,7 +930,7 @@ class CSS extends Plugin {
 	 * @return mixed
 	 */
 	private function process_local_files( $css, $url ) {
-		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		preg_match_all( self::URL_SRC_REGEX, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[2] as $index => $match ) {
@@ -913,43 +959,6 @@ class CSS extends Plugin {
 				$final_url = http_build_url( $url_parts );
 				$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
 				$css       = str_replace( $matches[0][ $index ], $css_part, $css );
-			}
-		}
-
-		return $css;
-	}
-
-	/**
-	 * @param $css
-	 * @param $url
-	 *
-	 * @return mixed
-	 */
-	public function lazy_load_fonts( $css, $url ) {
-		preg_match_all( '/@font-face\s*{(.*)}/sU', $css, $matches, PREG_SET_ORDER );
-		if ( ! empty( $matches ) ) {
-			foreach ( $matches as $font_face_match ) {
-
-				preg_match_all( '/([\w\-]+)\s*:\s*(.*);/sU', $font_face_match[1], $css_statement_matches, PREG_SET_ORDER );
-				$css_rules = [];
-				if ( ! empty( $css_statement_matches ) ) {
-					foreach ( $css_statement_matches as $css_statement_match ) {
-						$css_rules[ $css_statement_match[1] ] = $css_statement_match[2];
-					}
-
-					$font_display = apply_filters( 'rocket_async_css_font_display', 'auto', $css_rules, $url );
-					if ( 'auto' !== $font_display ) {
-						$css_rules['font-display'] = $font_display;
-						$css_rule_strings          = [];
-						foreach ( $css_rules as $rule => $value ) {
-							$value              = rtrim( $value );
-							$value              = rtrim( $value, ';' );
-							$css_rule_strings[] = "{$rule}: $value;";
-						}
-						$new_font_face = implode( '', $css_rule_strings );
-						$css           = str_replace( $font_face_match[1], $new_font_face, $css );
-					}
-				}
 			}
 		}
 
