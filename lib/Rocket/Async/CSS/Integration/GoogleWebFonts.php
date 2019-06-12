@@ -87,7 +87,11 @@ class GoogleWebFonts extends Component {
 
 			$fonts = implode( '|', $fonts );
 
-			$style->setAttribute( 'href', add_query_arg( 'family', $fonts, 'https://fonts.googleapis.com/css' ) );
+			$style->setAttribute( 'href', add_query_arg(
+				[
+					'family'  => $fonts,
+					'display' => 'swap'
+				], 'https://fonts.googleapis.com/css' ) );
 
 			$this->inject_tag( $style );
 
