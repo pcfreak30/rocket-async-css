@@ -514,11 +514,7 @@ class CSS extends Plugin {
 	protected function get_cache_filenames() {
 		$js_key     = get_rocket_option( 'minify_css_key' );
 		$cache_path = $this->get_cache_path();
-		// Create post_cache dir if needed
-		if ( ! is_dir( $cache_path ) ) {
-			rocket_mkdir_p( $cache_path );
-		}
-		$filenames = [];
+		$filenames  = [];
 		foreach ( array_keys( $this->media_documents ) as $media ) {
 			// If we have a user logged in, include user role in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
 			if ( is_user_logged_in() ) {
@@ -536,7 +532,13 @@ class CSS extends Plugin {
 	 * @return string
 	 */
 	public function get_cache_path() {
-		return WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . DIRECTORY_SEPARATOR;
+		$cache_path = WP_ROCKET_MINIFY_CACHE_PATH . get_current_blog_id() . DIRECTORY_SEPARATOR;
+		// Create post_cache dir if needed
+		if ( ! is_dir( $cache_path ) ) {
+			rocket_mkdir_p( $cache_path );
+		}
+
+		return $cache_path;
 	}
 
 	/**
