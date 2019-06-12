@@ -120,10 +120,14 @@ class ResponsiveImages extends Component {
 				}
 			}
 
-			if ( $lazyload_enabled && ( $data_src_match || $data_srcset_match ) ) {
+			if ( $data_src_match || $data_srcset_match ) {
 				$srcset = $image->getAttribute( 'srcset' );
 				if ( ! empty( $srcset ) ) {
-					$image->setAttribute( 'data-srcset', $srcset );
+					if ( $lazyload_enabled ) {
+						$image->setAttribute( 'data-srcset', $srcset );
+						$image->removeAttribute( 'data-src' );
+					}
+					$image->removeAttribute( 'src' );
 				}
 				$image->removeAttribute( 'srcset' );
 			}
