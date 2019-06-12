@@ -81,8 +81,6 @@ class Elementor extends Component {
 
 	public function process_font( $mode, $rules ) {
 		$family = $rules['font-family'];
-		$family = rtrim( $family, "' " );
-		$family = ltrim( $family, "' " );
 		$family = strtolower( $family );
 		if ( 'eicon' === $family ) {
 			$mode = 'block';

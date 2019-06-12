@@ -18,8 +18,6 @@ class LayersTheme extends Component {
 
 	public function process( $mode, $rules ) {
 		$family = $rules['font-family'];
-		$family = rtrim( $family, "' " );
-		$family = ltrim( $family, "' " );
 		$family = strtolower( $family );
 		if ( 'layers-icons' === $family ) {
 			$mode = 'block';

@@ -12,8 +12,6 @@ class FontAwesome extends Component {
 
 	public function process( $mode, $rules ) {
 		$family = $rules['font-family'];
-		$family = rtrim( $family, "' " );
-		$family = ltrim( $family, "' " );
 		$family = strtolower( $family );
 		if ( false !== strpos( 'fontawesome', $family ) || false !== strpos( 'font awesome', $family ) ) {
 			$mode = 'block';
