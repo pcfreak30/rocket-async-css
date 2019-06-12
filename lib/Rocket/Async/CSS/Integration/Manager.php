@@ -27,6 +27,7 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'GoogleFonts',
 		'WebPExpress',
 		'Elementor',
+		'IcoMoon',
 	];
 
 }
