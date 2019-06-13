@@ -54,7 +54,7 @@ class RevolutionSlider extends Component {
 	 * @return bool
 	 */
 	public function check_image( $value, $classes, $src, $image ) {
-		if ( $this->in_slider || in_array( 'rev-slidebg', $classes ) ) {
+		if ( $this->in_slider || in_array( 'rev-slidebg', (array) $classes ) ) {
 			$value = false;
 		}
 
