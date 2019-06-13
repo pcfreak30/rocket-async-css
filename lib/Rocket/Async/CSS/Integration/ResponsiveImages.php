@@ -81,7 +81,10 @@ class ResponsiveImages extends Component {
 				$original_class = array_map( 'trim', explode( ' ', $class ) );
 			}
 
-			$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
+			if ( isset( $original_class ) ) {
+				$wp_images = preg_grep( '/wp-image-\d+/', $original_class );
+			}
+
 			if ( ! empty( $wp_images ) ) {
 				$attachment_id = str_replace( 'wp-image-', '', end( $wp_images ) );
 			}
