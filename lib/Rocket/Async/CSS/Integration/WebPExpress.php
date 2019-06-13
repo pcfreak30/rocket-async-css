@@ -117,6 +117,10 @@ class WebPExpress extends Component {
 				$url_parts['host'] = $this->plugin->domain;
 
 				$final_url = http_build_url( $url_parts );
+				if ( ! apply_filters( 'rocket_async_css_webp_enabled', $final_url ) ) {
+					continue;
+				}
+
 				$final_url = $this->image_replace->replaceUrl( $final_url );
 
 				if ( ! $final_url ) {
