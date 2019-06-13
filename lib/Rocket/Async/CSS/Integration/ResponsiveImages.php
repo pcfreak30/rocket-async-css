@@ -146,7 +146,7 @@ class ResponsiveImages extends Component {
 
 
 			if ( empty( $wp_images ) ) {
-				$class = array_merge( $original_class, [ "wp-image-{$attachment_id}" ] );
+				$class = array_merge( $original_class ?: [], [ "wp-image-{$attachment_id}" ] );
 				$class = array_filter( $class );
 				$class = array_unique( $class );
 				$class = implode( ' ', $class );
