@@ -7,7 +7,7 @@ use ComposePress\Core\Abstracts\Component;
 
 class Request extends Component {
 	public function init() {
-		if ( ! is_admin() ) {
+		if ( ! is_admin() && ! wp_is_json_request() ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			add_filter( 'rocket_async_css_process_style', array( $this, 'exclude_wpadminbar' ), 10, 2 );
 			add_filter( 'rocket_buffer', [ $this->plugin, 'process_ie_conditionals' ], 0 );
