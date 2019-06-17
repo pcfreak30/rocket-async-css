@@ -29,11 +29,15 @@ class WebPExpress extends Component {
 	 *
 	 */
 	public function init() {
-		if ( ! is_admin() && class_exists( '\WebPExpress\Config' ) && Option::getOption( 'webp-express-alter-html', false ) ) {
+		if ( class_exists( '\WebPExpress\Config' ) && Option::getOption( 'webp-express-alter-html', false ) ) {
 			$this->webp_available = true;
 			$options              = json_decode( Option::getOption( 'webp-express-alter-html-options', null ), true );
 			if ( 'url' === Option::getOption( 'webp-express-alter-html-replacement' ) && $options['only-for-webp-enabled-browsers'] ) {
 				$this->conditional = true;
+			}
+
+			if ( ! defined( 'WEBPEXPRESS_PLUGIN_DIR' ) ) {
+				return;
 			}
 
 			$autoload = WEBPEXPRESS_PLUGIN_DIR . '/vendor/autoload.php';
