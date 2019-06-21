@@ -82,7 +82,7 @@ class Elementor extends Component {
 	public function process_font( $mode, $rules ) {
 		$family = $rules['font-family'];
 		$family = strtolower( $family );
-		if ( 'eicon' === $family ) {
+		if ( 'eicons' === $family ) {
 			$mode = 'block';
 		}
 		return $mode;
