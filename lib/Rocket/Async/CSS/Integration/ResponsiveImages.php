@@ -67,7 +67,7 @@ class ResponsiveImages extends Component {
 				$src      = $image->getAttribute( $src_attr );
 			}
 
-			if ( $data_src_match ) {
+			if ( ! empty( $data_src_match ) ) {
 				$src_attr = 'data-src';
 				$src      = $image->getAttribute( $src_attr );
 			}
