@@ -123,7 +123,7 @@ class ResponsiveImages extends Component {
 				}
 			}
 
-			if ( $data_src_match || $data_srcset_match ) {
+			if ( ! empty( $data_src_match ) || $data_srcset_match ) {
 				$srcset = $image->getAttribute( 'srcset' );
 				if ( ! empty( $srcset ) ) {
 					if ( $lazyload_enabled ) {
