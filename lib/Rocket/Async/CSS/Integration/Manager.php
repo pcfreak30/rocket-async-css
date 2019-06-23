@@ -28,6 +28,7 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'WebPExpress',
 		'Elementor',
 		'IcoMoon',
+		'RankMathSEO',
 	];
 
 }
