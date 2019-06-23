@@ -64,8 +64,13 @@ class Request extends Component {
 	}
 
 	public function process_buffer( $buffer ) {
-		return apply_filters( 'rocket_async_css_request_buffer', $buffer );
+		if ( apply_filters( 'rocket_async_css_do_request_buffer', true ) ) {
+			$buffer = apply_filters( 'rocket_async_css_request_buffer', $buffer );
+		}
+
+		return $buffer;
 	}
+
 
 	public function scripts() {
 		?>
