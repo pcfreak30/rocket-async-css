@@ -640,7 +640,7 @@ class CSS extends Plugin {
 			// Catch Error
 			if ( ! empty( $file ) ) {
 				$css_part = $this->minify_remote_file( $src, $file );
-				$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
+				$this->update_cache_fragment( $item_cache_id, $css_part );
 				$this->css[ $media ] .= $css_part;
 			}
 		} else {
@@ -967,6 +967,12 @@ class CSS extends Plugin {
 		return $css;
 	}
 
+	private function update_cache_fragment( $cache_id, $data ) {
+		if ( apply_filters( 'rocket_async_css_save_cache', true ) ) {
+			$this->cache_manager->get_store()->update_cache_fragment( $cache_id, $data );
+		}
+	}
+
 	/**
 	 * @param string $href
 	 *
@@ -998,7 +1004,7 @@ class CSS extends Plugin {
 			$css_part            = $file;
 			$css_part            = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $url );
 			$this->css[ $media ] .= $css_part;
-			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
+			$this->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
 			$this->css[ $media ] .= $item_cache;
 		}
@@ -1019,7 +1025,7 @@ class CSS extends Plugin {
 			$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
 			//Minify ?
 			$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
-			$this->cache_manager->get_store()->update_cache_fragment( $item_cache_id, $css_part );
+			$this->update_cache_fragment( $item_cache_id, $css_part );
 		} else {
 			$css_part = $item_cache;
 		}
@@ -1047,7 +1053,7 @@ class CSS extends Plugin {
 				] );
 			}
 
-			$this->cache_manager->get_store()->update_cache_fragment( $this->get_cache_id(), $data );
+			$this->update_cache_fragment( $this->get_cache_id(), $data );
 
 			return $data;
 		}
