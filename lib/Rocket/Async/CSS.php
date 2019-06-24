@@ -725,6 +725,8 @@ class CSS extends Plugin {
 			if ( class_exists( '\MatthiasMullie\Minify\CSS' ) ) {
 				$minify = new \MatthiasMullie\Minify\CSS( $css );
 				$css    = $minify->minify();
+				$css    = preg_replace( '/\n?\/\*(!|.*?@license|.*?@preserve).*?\*\/\n?/s', '', $css );
+				$css    = preg_replace( '/\/\*.*?\*\//s', '', $css );
 			} else {
 				$css = rocket_minify_inline_css( $css );
 			}
