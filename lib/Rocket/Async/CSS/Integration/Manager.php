@@ -29,6 +29,7 @@ class Manager extends \ComposePress\Core\Abstracts\Manager {
 		'Elementor',
 		'IcoMoon',
 		'RankMathSEO',
+		'Divi',
 	];
 
 }
