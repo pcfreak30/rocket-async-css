@@ -55,6 +55,7 @@ class WebPExpress extends Component {
 			$this->image_replace = new AlterHtmlImageUrls;
 
 			add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
+			add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
 
 			if ( false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) {
 				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_cache_key' ] );
