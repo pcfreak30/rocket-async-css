@@ -58,6 +58,7 @@ class ResponsiveImages extends Component {
 			$srcset_match      = '' !== $image->getAttribute( 'srcset' );
 			$data_srcset_match = '' !== $image->getAttribute( 'data-srcset' );
 			$src_match         = '' !== $image->getAttribute( 'src' );
+			$attachment_id     = 0;
 			if ( ! $src_match ) {
 				$data_src_match = '' !== $image->getAttribute( 'data-src' );
 			}
