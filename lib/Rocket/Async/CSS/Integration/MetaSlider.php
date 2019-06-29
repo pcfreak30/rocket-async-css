@@ -11,6 +11,7 @@ class MetaSlider extends Component {
 	public function init() {
 		if ( class_exists( 'MetaSliderPlugin' ) ) {
 			add_filter( 'metaslider_image_slide_attributes', [ $this, 'add_image_class' ] );
+			add_filter( 'metaslider_slideshow_output', 'wp_make_content_images_responsive' );
 		}
 	}
 
