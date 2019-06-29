@@ -59,6 +59,17 @@ class ResponsiveImages extends Component {
 			$data_srcset_match = '' !== $image->getAttribute( 'data-srcset' );
 			$src_match         = '' !== $image->getAttribute( 'src' );
 			$attachment_id     = 0;
+			$path              = null;
+			$class             = null;
+			$original_class    = null;
+			$wp_images         = null;
+			$size              = null;
+			$src               = null;
+			$url               = null;
+			$srcset            = null;
+			$data_srcset       = null;
+			$data_sizes        = null;
+			$new_image         = null;
 			if ( ! $src_match ) {
 				$data_src_match = '' !== $image->getAttribute( 'data-src' );
 			}
@@ -74,6 +85,11 @@ class ResponsiveImages extends Component {
 			}
 
 			if ( ! empty( $src ) ) {
+				if ( 0 === strpos( $src, 'data:' ) ) {
+					$collection->next();
+					continue;
+				}
+
 				$path = parse_url( $src, PHP_URL_PATH );
 			}
 
