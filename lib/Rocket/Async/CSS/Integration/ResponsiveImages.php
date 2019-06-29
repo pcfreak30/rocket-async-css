@@ -27,10 +27,12 @@ class ResponsiveImages extends Component {
 		add_filter( 'widget_text', [ $this, 'process' ], 9999 );
 		add_filter( 'widget_text', [ $this, 'process' ], 10001 );
 		add_action( 'elementor/widget/render_content', [ $this, 'process' ] );
+		add_filter( 'do_shortcode_tag', 'wp_make_content_images_responsive', 9998 );
 		add_filter( 'do_shortcode_tag', [ $this, 'process' ], 9999 );
 		add_filter( 'do_shortcode_tag', 'wp_make_content_images_responsive', 10000 );
 		add_filter( 'do_shortcode_tag', [ $this, 'process' ], 10001 );
-		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ] );
+		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive' );
+		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ], 11 );
 		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive', 9999 );
 		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ], 10000 );
 		add_filter( 'wp_get_attachment_image_attributes', [ $this, 'maybe_remove_src' ], 10, 2 );
