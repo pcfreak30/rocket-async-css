@@ -5,6 +5,7 @@ namespace Rocket\Async\CSS\Integration;
 
 
 use ComposePress\Core\Abstracts\Component;
+use Rocket\Async\CSS;
 use WebPExpress\AlterHtmlImageUrls;
 use WebPExpress\Option;
 
@@ -94,7 +95,7 @@ class WebPExpress extends Component {
 			return $css;
 		}
 
-		preg_match_all( '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/', $css, $matches );
+		preg_match_all( CSS::URL_SRC_REGEX, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
 			foreach ( $matches[2] as $index => $match ) {
