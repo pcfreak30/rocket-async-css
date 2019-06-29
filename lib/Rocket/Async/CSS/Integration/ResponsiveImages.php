@@ -182,7 +182,7 @@ class ResponsiveImages extends Component {
 					$new_image = get_lazyloadxt_html( $new_image );
 				}
 				if ( ! empty( $src ) ) {
-					$new_image = preg_replace( '/\=([\'"])(.+)[\'"]/U', '="$2"', $new_image );
+					$new_image = preg_replace( '/\=([\'"])(.+)\1/U', '="$2"', $new_image );
 					$new_image = str_replace( [
 						' srcset=""',
 						" srcset=''",
