@@ -1060,7 +1060,7 @@ class CSS extends Plugin {
 		$filenames
 	) {
 		if ( empty( $this->cache ) ) {
-			$data = [ 'filename' => $filename, 'remote_file_list' => $this->remote_file_list ];
+			$data = [ 'filename' => $filenames, 'remote_file_list' => $this->remote_file_list ];
 			foreach ( $filenames as $media => $filename ) {
 				$this->put_content( $filename, apply_filters( 'rocket_async_css_output', $this->css[ $media ], $media ) );
 				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
