@@ -11,6 +11,7 @@ use WebPExpress\Option;
 
 /**
  * Class WebPExpress
+ *
  * @package Rocket\Async\CSS\Integration
  */
 class WebPExpress extends Component {
@@ -24,15 +25,18 @@ class WebPExpress extends Component {
 	 * @var AlterHtmlImageUrls
 	 */
 	private $image_replace;
-	private $webp_available = false;
+	/**
+	 * @var bool
+	 */
+	private $webp_express_available = false;
 
 	/**
 	 *
 	 */
 	public function init() {
 		if ( class_exists( '\WebPExpress\Config' ) && Option::getOption( 'webp-express-alter-html', false ) ) {
-			$this->webp_available = true;
-			$options              = json_decode( Option::getOption( 'webp-express-alter-html-options', null ), true );
+			$this->webp_express_available = true;
+			$options                      = json_decode( Option::getOption( 'webp-express-alter-html-options', null ), true );
 			if ( 'url' === Option::getOption( 'webp-express-alter-html-replacement' ) && $options['only-for-webp-enabled-browsers'] ) {
 				$this->conditional = true;
 			}
@@ -54,16 +58,30 @@ class WebPExpress extends Component {
 
 			$this->image_replace = new AlterHtmlImageUrls;
 
-			add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
-			add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
-
-			if ( false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) {
-				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_cache_key' ] );
+			if ( $this->is_webp_enabled() ) {
+				add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
+				add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
+				foreach ( [ 'local', 'remote', 'inline' ] as $type ) {
+					add_filter( "rocket_async_css_get_{$type}_style_cache_id", [ $this, 'modify_fragment_cache_key' ] );
+				}
+				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_page_cache_key' ] );
 			}
 		}
 	}
 
-	public function modify_cache_key( $key ) {
+	/**
+	 * @return bool
+	 */
+	private function is_webp_enabled() {
+		return ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional;
+	}
+
+	/**
+	 * @param $key
+	 *
+	 * @return array
+	 */
+	public function modify_page_cache_key( $key ) {
 		if ( 2 === count( $key ) ) {
 			$key[] = 'webp';
 		} else {
@@ -73,15 +91,40 @@ class WebPExpress extends Component {
 		return $key;
 	}
 
+	/**
+	 * @param $cache_id
+	 *
+	 * @return array
+	 */
+	public function modify_fragment_cache_key( $cache_id ) {
+		$cache_id[] = 'webp';
+
+		return $cache_id;
+	}
+
+	/**
+	 * @param $css
+	 * @param null $url
+	 *
+	 * @return mixed
+	 */
 	public function maybe_process( $css, $url = null ) {
 		if ( ! $url ) {
 			$url = home_url( $_SERVER['REQUEST_URI'] );
 		}
 
-		if ( ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional ) {
+		if ( $this->is_webp_express_available() && $this->is_webp_enabled() ) {
 			$css = $this->process( $css, $url );
 		}
+
 		return $css;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function is_webp_express_available() {
+		return $this->webp_express_available;
 	}
 
 	/**
@@ -99,6 +142,7 @@ class WebPExpress extends Component {
 		preg_match_all( CSS::URL_SRC_REGEX, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			add_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
 			foreach ( $matches[2] as $index => $match ) {
 				if ( empty( $match ) ) {
 					$match = $matches[1][ $index ];
@@ -138,15 +182,23 @@ class WebPExpress extends Component {
 				$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
 				$css      = str_replace( $matches[0][ $index ], $css_part, $css );
 			}
+			remove_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
 		}
 
 		return $css;
 	}
 
 	/**
-	 * @return bool
+	 * @param $upload
+	 *
+	 * @return mixed
 	 */
-	public function is_webp_available() {
-		return $this->webp_available;
+	public function override_upload_dir( $upload ) {
+		foreach ( [ 'path', 'url', 'basedir', 'baseurl' ] as $key ) {
+			$upload[ $key ] = str_replace( $upload['subdir'], '', $upload[ $key ] );
+			$upload[ $key ] = dirname( $upload[ $key ] );
+		}
+
+		return $upload;
 	}
 }
