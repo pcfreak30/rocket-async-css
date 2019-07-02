@@ -120,6 +120,11 @@ class CSS extends Plugin {
 	private $remote_file_list;
 
 	/**
+	 * @var array
+	 */
+	private $remote_cache = [];
+
+	/**
 	 * CSS constructor.
 	 *
 	 * @param IntegrationManager $integration_manager
@@ -669,7 +674,11 @@ class CSS extends Plugin {
 	 *
 	 * @return bool|string
 	 */
-	public function remote_fetch( $url ) {
+	public function remote_fetch( $url, $cache = true ) {
+		if ( isset( $this->remote_cache[ $url ] ) && $cache ) {
+			return $this->remote_cache[ $url ];
+		}
+
 		$file = wp_remote_get( $url, [
 			'user-agent' => 'WP-Rocket',
 			'sslverify'  => false,
@@ -680,6 +689,7 @@ class CSS extends Plugin {
 					) ) ) )
 		)
 		) {
+			$this->remote_cache[ $url ] = $file['body'];
 			return $file['body'];
 		}
 
