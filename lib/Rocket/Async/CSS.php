@@ -32,6 +32,7 @@ class CSS extends Plugin {
 	const PLUGIN_SLUG = 'rocket-async-css';
 
 	const URL_SRC_REGEX = '/url\\(\\s*([\'"]?(.*?)[\'"]?|[^\\)\\s]+)\\s*\\)/';
+	const IMPORT_REGEX = '/@import\s*(?:url\s*\()?["\']?(.*?)["\']?\)?\s*;/';
 	/**
 	 * @var DOMDocument
 	 */
@@ -242,7 +243,7 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function normalize_cdn_domains() {
+	private function normalize_cdn_domains() {
 		add_filter( 'pre_get_rocket_option_cdn', '__return_one' );
 		// Remote fetch external scripts
 		$this->cdn_domains = get_rocket_cdn_cnames( [
@@ -335,7 +336,7 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function disable_minify_overrides() {
+	private function disable_minify_overrides() {
 		remove_filter( 'pre_get_rocket_option_minify_css', '__return_zero' );
 	}
 
@@ -344,7 +345,7 @@ class CSS extends Plugin {
 	 *
 	 * @return bool
 	 */
-	protected function do_process_page( $buffer ) {
+	private function do_process_page( $buffer ) {
 		return get_rocket_option( 'minify_css' ) && ! ( defined( 'DONOTMINIFYCSS' ) && DONOTMINIFYCSS ) && ! is_rocket_post_excluded_option( 'minify_css' ) && ! is_admin() && ! is_feed() && ! is_preview() && ! empty( $buffer );
 	}
 
@@ -355,7 +356,7 @@ class CSS extends Plugin {
 	 *
 	 * @return mixed
 	 */
-	protected function inject_ie_conditionals(
+	private function inject_ie_conditionals(
 		$buffer
 	) {
 		foreach ( $this->ie_conditionals as $conditional ) {
@@ -372,7 +373,7 @@ class CSS extends Plugin {
 	/**
 	 * @param DOMElement $nested_tag
 	 */
-	protected function build_style_list( $nested_tag = null ) {
+	private function build_style_list( $nested_tag = null ) {
 		if ( null !== $nested_tag ) {
 			/** @noinspection NotOptimalRegularExpressionsInspection */
 			if ( ! preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $nested_tag->textContent ) ) {
@@ -458,7 +459,7 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function cleanup_nodes() {
+	private function cleanup_nodes() {
 		/** @var DOMElement $tag */
 		// Remove all elements from DOM
 		foreach ( $this->media_documents as $document ) {
@@ -473,7 +474,7 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function maybe_fetch_cache() {
+	private function maybe_fetch_cache() {
 		if ( false === $this->cache ) {
 			return;
 		}
@@ -505,7 +506,7 @@ class CSS extends Plugin {
 	/**
 	 * @return array
 	 */
-	protected function get_cache_id() {
+	private function get_cache_id() {
 		$post_cache_id_hash = $this->get_cache_hash();
 		$post_cache_id      = array();
 		if ( is_singular() ) {
@@ -529,7 +530,7 @@ class CSS extends Plugin {
 	/**
 	 * @return string
 	 */
-	protected function get_cache_hash() {
+	private function get_cache_hash() {
 		if ( null === $this->cache_hash ) {
 			$this->cache_hash = md5( serialize( $this->cache_list ) );
 		}
@@ -540,7 +541,7 @@ class CSS extends Plugin {
 	/**
 	 * @return array
 	 */
-	protected function get_cache_filenames() {
+	private function get_cache_filenames() {
 		$js_key     = get_rocket_option( 'minify_css_key' );
 		$cache_path = $this->get_cache_path();
 		$filenames  = [];
@@ -573,7 +574,7 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function process_styles() {
+	private function process_styles() {
 		/** @var DOMElement $tag */
 		foreach ( $this->node_queue as $tag ) {
 			$media = false;
@@ -592,7 +593,7 @@ class CSS extends Plugin {
 	/**
 	 * @param $tag
 	 */
-	protected function process_style( $tag, $media ) {
+	private function process_style( $tag, $media ) {
 		$href = $tag->getAttribute( 'href' );
 		//Decode html entities
 		$href = html_entity_decode( preg_replace( '/((?<!&)#.*;)/', '&$1', $href ) );
@@ -615,7 +616,7 @@ class CSS extends Plugin {
 	 * @param string $src
 	 * @param        $media
 	 */
-	protected function process_external_style( $src, $media ) {
+	private function process_external_style( $src, $media ) {
 		if ( empty( $this->cache ) ) {
 			if ( 0 === strpos( $src, '//' ) ) {
 				//Handle no protocol urls
@@ -644,7 +645,7 @@ class CSS extends Plugin {
 	 *
 	 * @param        $media
 	 */
-	protected function process_remote_style( $src, $media ) {
+	private function process_remote_style( $src, $media ) {
 		// Check item cache
 		$item_cache_id = [ md5( $src ) ];
 		$item_cache_id = apply_filters( 'rocket_async_css_get_remote_style_cache_id', $item_cache_id );
@@ -710,16 +711,16 @@ class CSS extends Plugin {
 	public function minify_css( $css, $options, $url ) {
 		$css = apply_filters( 'rocket_async_css_before_minify', $css, $url );
 
-		$css = $this->parse_css_imports( $css, $url );
+		$css = $this->process_css_callback( self::IMPORT_REGEX, $css, $url, 'parse_css_imports' );
 		$css = apply_filters( 'rocket_async_css_after_parse_css_imports', $css, $url );
 
 		$css = $this->lazy_load_fonts( $css, $url );
 		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
 
-		$css = $this->download_remote_files( $css, $url );
+		$css = $this->process_css_urls( $css, $url, 'download_remote_files' );
 		$css = apply_filters( 'rocket_async_css_after_download_files', $css, $url );
 
-		$css = $this->process_local_files( $css, $url );
+		$css = $this->process_css_urls( $css, $url, 'process_local_files' );
 		$css = apply_filters( 'rocket_async_css_after_process_local_files', $css, $url );
 
 		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
@@ -751,65 +752,37 @@ class CSS extends Plugin {
 		return apply_filters( 'rocket_async_css_after_minify', $css );
 	}
 
-	/**
-	 * @param $css
-	 * @param $local
-	 *
-	 * @return mixed
-	 */
-	protected function parse_css_imports( $css, $url ) {
-		preg_match_all( '/@import\s*(?:url\s*\()?["\']?(.*?)["\']?\)?\s*;/', $css, $matches );
+	private function process_css_callback( $regex, $css, $url, $callback ) {
+		preg_match_all( $regex, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
-			foreach ( $matches[1] as $pos => $match ) {
-				// Ensure not an empty string
-				if ( ! empty( $match ) ) {
-					$host = parse_url( $match, PHP_URL_HOST );
-					if ( empty( $host ) ) {
-						$match = \phpUri::parse( $url )->join( $match );
-					}
-					if ( $host != $this->domain && ( ! empty( $this->cdn_domains ) && ! in_array( $host, $this->cdn_domains ) ) ) {
-						$imported_data = $this->remote_fetch( $match );
-					} else {
-						$match = $this->strip_cdn( $match );
-						// Is this a URL? If so replace with ABSPATH
-						$path          = str_replace( $this->home, untrailingslashit( ABSPATH ), $match );
-						$imported_data = $this->get_content( $path );
-					}
-					// Process css to minify it, passing the path of the found file
-					$imported_data = $this->minify_css( $imported_data, [], $match );
-					// Replace match wth fetched css
-					$css = str_replace( $matches[0][ $pos ], $imported_data, $css );
+			$this->maybe_fetch_cache();
+			foreach ( $matches[2] as $index => $match ) {
+				if ( empty( $match ) ) {
+					$match = $matches[1][ $index ];
 				}
+				if ( 0 === strpos( $match, 'data:' ) ) {
+					continue;
+				}
+				$match       = trim( $match, '"' . "'" );
+				$fixed_match = $match;
+				$url_parts   = $this->get_url_parts( $fixed_match );
+				$css         = $this->{$callback}( $matches, $match, $index, $url_parts, $css, $url );
 			}
 		}
-
-		return $css;
 	}
 
-	/**
-	 * @param $url
-	 *
-	 * @return \http\Url|string
-	 */
-	public function strip_cdn( $url ) {
-		$url_parts           = parse_url( $url );
-		$url_parts['host']   = $this->domain;
-		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
-		$url                 = http_build_url( $url_parts );
-
-		return $url;
-	}
-
-	/**
-	 * @param $file
-	 *
-	 * @return bool|mixed
-	 */
-	public function get_content(
-		$file
-	) {
-		return $this->get_wp_filesystem()->get_contents( $file );
+	private function get_url_parts( $url ) {
+		if ( 0 === strpos( $url, '//' ) ) {
+			//Handle no protocol urls
+			$url = rocket_add_url_protocol( $url );
+		}
+		$url_parts = parse_url( $url );
+		if ( empty( $url_parts['host'] ) ) {
+			$fixed_match = \phpUri::parse( $url )->join( $url );
+			$url_parts   = parse_url( $fixed_match );
+		}
+		return $url_parts;
 	}
 
 	/**
@@ -856,131 +829,8 @@ class CSS extends Plugin {
 		return $css;
 	}
 
-	/**
-	 * @param $css
-	 * @param $url
-	 *
-	 * @return mixed
-	 */
-	public function download_remote_files( $css, $url ) {
-		preg_match_all( self::URL_SRC_REGEX, $css, $matches );
-		//Ensure there are matches
-		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
-			$this->maybe_fetch_cache();
-			foreach ( $matches[2] as $index => $match ) {
-				if ( empty( $match ) ) {
-					$match = $matches[1][ $index ];
-				}
-				if ( 0 === strpos( $match, 'data:' ) ) {
-					continue;
-				}
-				$match       = trim( $match, '"' . "'" );
-				$fixed_match = $match;
-				if ( 0 === strpos( $fixed_match, '//' ) ) {
-					//Handle no protocol urls
-					$fixed_match = rocket_add_url_protocol( $fixed_match );
-				}
-				$url_parts = parse_url( $match );
-				if ( empty( $url_parts['host'] ) ) {
-					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
-					$url_parts   = parse_url( $fixed_match );
-				}
-				if ( $url_parts['host'] === $this->domain ) {
-					continue;
-				}
-				if ( $url_parts['host'] !== $this->domain && ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) ) ) {
-					continue;
-				}
-				$data = $this->remote_fetch( $fixed_match );
-				if ( ! empty( $data ) ) {
-					$content_hash = md5( $data );
-					if ( isset( $this->remote_file_list[ $content_hash ] ) ) {
-						$final_url = $this->remote_file_list[ $content_hash ];
-					}
-					if ( ! isset( $this->remote_file_list[ $content_hash ] ) ) {
-						$info = pathinfo( $url_parts['path'] );
-						if ( empty( $url_parts['port'] ) ) {
-							$url_parts['port'] = '';
-						}
-						if ( empty( $url_parts['scheme'] ) ) {
-							$url_parts['scheme'] = 'http';
-						}
-						$hash      = md5( $url_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $url_parts['port'] ) ? ":{$url_parts['port']}" : '' ) . '/' . $info['filename'] );
-						$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
-						$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
-							'all',
-							'css',
-							'js',
-							'css_and_js',
-							'images',
-						] ), PHP_URL_PATH );
-						if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
-							$this->put_content( $filename, $data );
-						}
-						$this->remote_file_list[ $content_hash ] = $final_url;
-					}
-
-					$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
-					$css      = str_replace( $matches[0][ $index ], $css_part, $css );
-				}
-			}
-		}
-
-		return $css;
-	}
-
-	/**
-	 * @param $file
-	 * @param $data
-	 *
-	 * @return bool
-	 */
-	public function put_content(
-		$file, $data
-	) {
-		return $this->get_wp_filesystem()->put_contents( $file, $data );
-	}
-
-	/**
-	 * @param $css
-	 * @param $url
-	 *
-	 * @return mixed
-	 */
-	private function process_local_files( $css, $url ) {
-		preg_match_all( self::URL_SRC_REGEX, $css, $matches );
-		//Ensure there are matches
-		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
-			foreach ( $matches[2] as $index => $match ) {
-				if ( empty( $match ) ) {
-					$match = $matches[1][ $index ];
-				}
-				if ( 0 === strpos( $match, 'data:' ) ) {
-					continue;
-				}
-				$match       = trim( $match, '"' . "'" );
-				$fixed_match = $match;
-				if ( 0 === strpos( $fixed_match, '//' ) ) {
-					//Handle no protocol urls
-					$fixed_match = rocket_add_url_protocol( $fixed_match );
-				}
-				$url_parts = parse_url( $match );
-				if ( empty( $url_parts['host'] ) ) {
-					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
-					$url_parts   = parse_url( $fixed_match );
-				}
-				if ( $url_parts['host'] != $this->domain && ! in_array( $url_parts['host'], $this->cdn_domains ) ) {
-					continue;
-				}
-				unset( $url_parts['scheme'] );
-				unset( $url_parts['host'] );
-				$final_url = http_build_url( $url_parts );
-				$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
-				$css       = str_replace( $matches[0][ $index ], $css_part, $css );
-			}
-		}
-
-		return $css;
+	private function process_css_urls( $css, $url, $callback ) {
+		return $this->process_css_callback( self::URL_SRC_REGEX, $css, $url, $callback );
 	}
 
 	private function update_cache_fragment( $cache_id, $data ) {
@@ -996,7 +846,7 @@ class CSS extends Plugin {
 	 *
 	 * @internal param DOMElement $tag
 	 */
-	protected function process_local_style(
+	private function process_local_style(
 		$href, $media
 	) {
 		if ( 0 == strpos( $href, '/' ) ) {
@@ -1028,9 +878,34 @@ class CSS extends Plugin {
 	}
 
 	/**
+	 * @param $url
+	 *
+	 * @return \http\Url|string
+	 */
+	public function strip_cdn( $url ) {
+		$url_parts           = parse_url( $url );
+		$url_parts['host']   = $this->domain;
+		$url_parts['scheme'] = is_ssl() ? 'https' : 'http';
+		$url                 = http_build_url( $url_parts );
+
+		return $url;
+	}
+
+	/**
+	 * @param $file
+	 *
+	 * @return bool|mixed
+	 */
+	public function get_content(
+		$file
+	) {
+		return $this->get_wp_filesystem()->get_contents( $file );
+	}
+
+	/**
 	 * @param $tag
 	 */
-	protected function process_inline_style(
+	private function process_inline_style(
 		$tag, $media
 	) {
 		// Check item cache
@@ -1056,7 +931,7 @@ class CSS extends Plugin {
 	 *
 	 * @return array
 	 */
-	protected function write_cache(
+	private function write_cache(
 		$filenames
 	) {
 		if ( empty( $this->cache ) ) {
@@ -1080,9 +955,21 @@ class CSS extends Plugin {
 	}
 
 	/**
+	 * @param $file
+	 * @param $data
+	 *
+	 * @return bool
+	 */
+	public function put_content(
+		$file, $data
+	) {
+		return $this->get_wp_filesystem()->put_contents( $file, $data );
+	}
+
+	/**
 	 * @param $hrefs
 	 */
-	protected function add_main_styles(
+	private function add_main_styles(
 		$hrefs
 	) {
 		// CustomEvent polyfill
@@ -1141,13 +1028,67 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	/**
 	 *
 	 */
-	protected function fix_old_libxml() {
+	private function fix_old_libxml() {
 		// Hack to fix a bug with some libxml versions
 		$body       = $this->document->getElementsByTagName( 'body' )->item( 0 );
 		$body_class = $body->getAttribute( 'class' );
 		if ( empty( $body_class ) ) {
 			$body->setAttribute( 'class', implode( ' ', get_body_class() ) );
 		}
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	public function download_remote_files( $matches, $match, $index, $match_parts, $css, $url ) {
+		$this->maybe_fetch_cache();
+		if ( $this->is_url_parts_local( $match_parts ) ) {
+			return $css;
+		}
+		$data = $this->remote_fetch( $match );
+		if ( ! empty( $data ) ) {
+			$content_hash = md5( $data );
+			if ( isset( $this->remote_file_list[ $content_hash ] ) ) {
+				$final_url = $this->remote_file_list[ $content_hash ];
+			}
+			if ( ! isset( $this->remote_file_list[ $content_hash ] ) ) {
+				$info = pathinfo( $match_parts['path'] );
+				if ( empty( $match_parts['port'] ) ) {
+					$match_parts['port'] = '';
+				}
+				if ( empty( $match_parts['scheme'] ) ) {
+					$match_parts['scheme'] = 'http';
+				}
+				$hash      = md5( $match_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $match_parts['port'] ) ? ":{$match_parts['port']}" : '' ) . '/' . $info['filename'] );
+				$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
+				$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
+					'all',
+					'css',
+					'js',
+					'css_and_js',
+					'images',
+				] ), PHP_URL_PATH );
+				if ( ! $this->get_wp_filesystem()->is_file( $filename ) ) {
+					$this->put_content( $filename, $data );
+				}
+				$this->remote_file_list[ $content_hash ] = $final_url;
+			}
+
+			$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
+			$css      = str_replace( $matches[0][ $index ], $css_part, $css );
+		}
+
+		return $css;
+	}
+
+	public function is_url_parts_local( $url_parts ) {
+		if ( ! is_array( $url_parts ) ) {
+			$url_parts = parse_url( $url_parts );
+		}
+		return $url_parts['host'] === $this->domain || ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) );
 	}
 
 	/**
@@ -1264,5 +1205,57 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	public function get_transient_prefix() {
 		return static::TRANSIENT_PREFIX;
+	}
+
+	/**
+	 * @param $css
+	 * @param $url
+	 *
+	 * @return mixed
+	 */
+	private function process_local_files( $matches, $match, $index, $match_parts, $css, $url ) {
+		if ( $this->is_url_parts_remote( $match ) ) {
+			return $css;
+		}
+
+		unset( $match_parts['scheme'] );
+		unset( $match_parts['host'] );
+		$final_url = http_build_url( $match_parts );
+		$css_part  = str_replace( $match, $final_url, $matches[0][ $index ] );
+		$css       = str_replace( $matches[0][ $index ], $css_part, $css );
+
+		return $css;
+	}
+
+	public function is_url_parts_remote( $url_parts ) {
+		if ( ! is_array( $url_parts ) ) {
+			$url_parts = parse_url( $url_parts );
+		}
+		return $url_parts['host'] !== $this->domain && ( empty( $this->cdn_domains ) || ( ! empty( $this->cdn_domains ) && ! in_array( $url_parts['host'], $this->cdn_domains ) ) );
+	}
+
+	/**
+	 * @param $css
+	 * @param $local
+	 *
+	 * @return mixed
+	 */
+	private function parse_css_imports( $matches, $match, $index, $match_parts, $css, $url ) {
+		if ( ! empty( $match ) ) {
+			if ( $this->is_url_parts_remote( $match_parts ) ) {
+				$imported_data = $this->remote_fetch( $match );
+			} else {
+				$match = $this->strip_cdn( $match );
+				// Is this a URL? If so replace with ABSPATH
+				$path          = str_replace( $this->home, untrailingslashit( ABSPATH ), $match );
+				$imported_data = $this->get_content( $path );
+			}
+			// Process css to minify it, passing the path of the found file
+			$imported_data = $this->minify_css( $imported_data, [], $match );
+			// Replace match wth fetched css
+			$css = str_replace( $matches[0][ $index ], $imported_data, $css );
+		}
+
+		return $css;
 	}
 }
