@@ -669,7 +669,7 @@ class CSS extends Plugin {
 				$this->css[ $media ] .= $css_part;
 			}
 		} else {
-			$this->css[ $media ] .= apply_filters( 'rocket_sync_css_process_remote_style', $item_cache, $src, $media );
+			$this->css[ $media ] .= apply_filters( 'rocket_aync_css_process_remote_style', $item_cache, $src, $media );
 		}
 	}
 
