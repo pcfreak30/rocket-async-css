@@ -38,7 +38,7 @@ class WPCriticalCSS extends Component {
 		$home = home_url( $_SERVER['REQUEST_URI'] );
 
 		$css = $this->plugin->lazy_load_fonts( $css, $home );
-		$css = $this->plugin->download_remote_files( $css, $home );
+		$css = $this->plugin->process_css_urls( $css, $home, 'download_remote_files' );
 
 		return $css;
 	}

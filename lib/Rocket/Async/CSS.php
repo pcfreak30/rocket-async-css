@@ -1053,7 +1053,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 *
 	 * @return mixed
 	 */
-	public function download_remote_files( $matches, $match, $index, $match_parts, $css, $url ) {
+	private function download_remote_files( $matches, $match, $index, $match_parts, $css, $url ) {
 		$this->maybe_fetch_cache();
 		if ( $this->is_url_parts_local( $match_parts ) ) {
 			return $css;
