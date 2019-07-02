@@ -306,7 +306,7 @@ class CSS extends Plugin {
 				return $buffer;
 			}
 
-			$this->fetch_cache();
+			$this->maybe_fetch_cache();
 
 			$filename = [];
 			if ( empty( $this->cache ) ) {
@@ -473,7 +473,11 @@ class CSS extends Plugin {
 	/**
 	 *
 	 */
-	protected function fetch_cache() {
+	protected function maybe_fetch_cache() {
+		if ( false === $this->cache ) {
+			return;
+		}
+
 		$this->cache = $this->cache_manager->get_store()->get_cache_fragment( $this->get_cache_id() );
 
 		if ( ! empty( $this->cache ) ) {
@@ -484,8 +488,18 @@ class CSS extends Plugin {
 					break;
 				}
 			}
+			$files = [];
+			foreach ( $this->cache['remote_file_list'] as $hash => $filename ) {
+				$filepath = ABSPATH . $filename;
+				if ( file_exists( $filepath ) && $hash === md5_file( $filepath ) ) {
+					$files[ $hash ] = $filename;
+				}
+			}
+			$this->remote_file_list = $files;
 
+			return;
 		}
+		$this->cache = false;
 	}
 
 	/**
@@ -554,6 +568,17 @@ class CSS extends Plugin {
 		}
 
 		return $cache_path;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function get_cache_hash() {
+		if ( null === $this->cache_hash ) {
+			$this->cache_hash = md5( serialize( $this->cache_list ) );
+		}
+
+		return $this->cache_hash;
 	}
 
 	/**
@@ -851,6 +876,7 @@ class CSS extends Plugin {
 		preg_match_all( self::URL_SRC_REGEX, $css, $matches );
 		//Ensure there are matches
 		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
+			$this->maybe_fetch_cache();
 			foreach ( $matches[2] as $index => $match ) {
 				if ( empty( $match ) ) {
 					$match = $matches[1][ $index ];
@@ -911,6 +937,62 @@ class CSS extends Plugin {
 		}
 
 		return $css;
+	}
+
+	/**
+	 *
+	 */
+	protected function maybe_fetch_cache() {
+		if ( false !== $this->cache ) {
+			return;
+		}
+
+		$this->cache = $this->cache_manager->get_store()->get_cache_fragment( $this->get_cache_id() );
+
+		if ( ! empty( $this->cache ) ) {
+			// Cached file is gone, we dont have cache
+			foreach ( (array) $this->cache  ['filename'] as $filename ) {
+				if ( ! file_exists( $filename ) ) {
+					$this->cache = false;
+					break;
+				}
+			}
+			$files = [];
+			foreach ( $this->cache['remote_file_list'] as $hash => $filename ) {
+				$filepath = ABSPATH . $filename;
+				if ( file_exists( $filepath ) && $hash === md5_file( $filepath ) ) {
+					$files[ $hash ] = $filename;
+				}
+			}
+			$this->remote_file_list = $files;
+
+			return;
+		}
+		$this->cache = false;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function get_cache_id() {
+		$post_cache_id_hash = $this->get_cache_hash();
+		$post_cache_id      = array();
+		if ( is_singular() ) {
+			$post_cache_id [] = 'post_' . get_the_ID();
+		} else if ( is_tag() || is_category() || is_tax() ) {
+			$post_cache_id [] = 'tax_' . get_queried_object()->term_id;
+		} else if ( is_author() ) {
+			$post_cache_id [] = 'author_' . get_the_author_meta( 'ID' );
+		} else {
+			$post_cache_id [] = 'generic';
+		}
+		$post_cache_id [] = $post_cache_id_hash;
+		if ( is_user_logged_in() ) {
+			$post_cache_id [] = wp_get_current_user()->roles[0];
+		}
+
+
+		return apply_filters( 'rocket_async_css_get_cache_id', $post_cache_id );
 	}
 
 	/**
@@ -1042,7 +1124,7 @@ class CSS extends Plugin {
 		$filenames
 	) {
 		if ( empty( $this->cache ) ) {
-			$data = [ 'filename' => $filenames ];
+			$data = [ 'filename' => $filename, 'remote_file_list' => $this->remote_file_list ];
 			foreach ( $filenames as $media => $filename ) {
 				$this->put_content( $filename, apply_filters( 'rocket_async_css_output', $this->css[ $media ], $media ) );
 				$data['href'][ $media ] = get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
