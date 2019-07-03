@@ -43,7 +43,7 @@ class ResponsiveImages extends Component {
 
 		$partial = false;
 
-		if ( ! preg_match( '/<html[^>]+>/', $new_content ) ) {
+		if ( ! preg_match( '/<html[^>]*>/', $new_content ) ) {
 			$new_content = "<html><head></head><body><div id=\"domdoc_content\">{$new_content}</div></body></html>";
 			$partial     = true;
 		}
