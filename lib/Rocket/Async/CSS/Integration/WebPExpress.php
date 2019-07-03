@@ -103,7 +103,7 @@ class WebPExpress extends Component {
 	}
 
 	/**
-	 * @param $css
+	 * @param      $css
 	 * @param null $url
 	 *
 	 * @return mixed
@@ -194,11 +194,14 @@ class WebPExpress extends Component {
 	 * @return mixed
 	 */
 	public function override_upload_dir( $upload ) {
-		foreach ( [ 'path', 'url', 'basedir', 'baseurl' ] as $key ) {
-			$upload[ $key ] = str_replace( $upload['subdir'], '', $upload[ $key ] );
-			$upload[ $key ] = dirname( $upload[ $key ] );
+		if ( false === strpos( $upload['subdir'], $this->plugin->cache_path ) ) {
+			foreach ( [ 'path', 'url', 'basedir', 'baseurl' ] as $key ) {
+				$upload[ $key ] = str_replace( $upload['subdir'], '', $upload[ $key ] );
+				$upload[ $key ] = trailingslashit( dirname( $upload[ $key ] ) );
+			}
 		}
 
 		return $upload;
 	}
+
 }
