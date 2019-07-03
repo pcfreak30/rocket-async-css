@@ -1393,8 +1393,8 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 
 		$hash = md5_file( $this->get_local_file_from_url( $match_parts ) );
 
-		if ( isset( $this->file_hash_cache[ $hash ] ) ) {
-			$match_parts = $this->get_url_parts( $this->file_hash_cache );
+		if ( $hash && isset( $this->file_hash_cache[ $hash ] ) ) {
+			$match_parts = $this->get_url_parts( $this->file_hash_cache[ $hash ] );
 		}
 
 		unset( $match_parts['scheme'] );
@@ -1421,6 +1421,10 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 
 		$hash = md5_file( $this->get_local_file_from_url( $match_parts ) );
+
+		if ( ! $hash ) {
+			return $css;
+		}
 
 		if ( isset( $this->file_hash_cache[ $hash ] ) && ! $this->is_url_parts_local( $match_parts ) ) {
 			unset( $this->file_hash_cache[ $hash ] );
