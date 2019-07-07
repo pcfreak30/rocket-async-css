@@ -378,7 +378,6 @@ class Elementor extends Component {
 			$this->plugin->cache_manager->clear_minify_url( $url );
 			do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
 		}
-		$post_css->delete();
 
 		/** @var WebPExpress $webp_express */
 		$webp_express = $this->plugin->integration_manager->get_module( 'WebPExpress' );
@@ -390,7 +389,6 @@ class Elementor extends Component {
 				$this->plugin->cache_manager->clear_minify_url( $url );
 				do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
 			}
-			$post_css->delete();
 		}
 
 	}
