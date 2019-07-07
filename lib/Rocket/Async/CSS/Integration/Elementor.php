@@ -74,11 +74,16 @@ class Elementor extends Component {
 	 */
 	private function process() {
 		add_action( 'elementor/files/file_name', [ $this, 'process_file' ], 10, 2 );
+		add_action( 'after_rocket_clean_domain', [ $this, 'clear_elementor_cache' ] );
 		add_action( 'elementor/core/files/clear_cache', [ $this, 'clear_cache' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ], 11 );
 		add_action( 'rocket_async_css_webpexpress_process', [ $this, 'webp_exclude_file' ], 10, 3 );
 		add_action( 'elementor/document/after_save', [ $this, 'clear_post_cache' ] );
 		add_action( 'elementor/widget/render_content', [ $this, 'add_image_id_carousel' ], 10, 2 );
+	}
+
+	public function clear_elementor_cache() {
+		Plugin::$instance->files_manager->clear_cache();
 	}
 
 	public function process_font( $mode, $rules ) {
