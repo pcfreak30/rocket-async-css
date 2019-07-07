@@ -193,23 +193,9 @@ class Elementor extends Component {
 	 */
 	public function enqueue_styles() {
 		if ( is_singular() && Plugin::$instance->db->is_built_with_elementor( get_the_ID() ) ) {
-
-			if ( ! defined( 'WEBPEXPRESS_PLUGIN_DIR' ) ) {
+			if ( ! apply_filters( 'rocket_async_css_webp_is_enabled', false ) ) {
 				return;
 			}
-			$autoload = WEBPEXPRESS_PLUGIN_DIR . '/vendor/autoload.php';
-			if ( ! $this->plugin->wp_filesystem->is_file( $autoload ) ) {
-				return;
-			}
-
-			require_once $autoload;
-
-			$this->image_replace = new AlterHtmlImageUrls;
-
-			if ( ! class_exists( '\WebPExpress\AlterHtmlImageUrls' ) ) {
-				return;
-			}
-
 			add_filter( 'wp_get_attachment_url', [ $this, 'filter_attachment_url' ], 999999, 1 );
 			add_filter( 'wp_get_attachment_image_src', [ $this, 'filter_attachment_image_src' ], 999999, 1 );
 			add_action( 'elementor/element/before_parse_css', [ $this, 'process_webp_background' ], 10, 2 );
