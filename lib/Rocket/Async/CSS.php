@@ -1392,7 +1392,9 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		$hash = md5_file( $this->get_local_file_from_url( $match_parts ) );
 
 		if ( $hash && isset( $this->file_hash_cache[ $hash ] ) ) {
-			$match_parts = $this->get_url_parts( $this->file_hash_cache[ $hash ] );
+			if ( ! isset( $this->remote_url_cache[ $this->file_hash_cache[ $hash ] ] ) ) {
+				$match_parts = $this->get_url_parts( $this->file_hash_cache[ $hash ], $url );
+			}
 		}
 
 		unset( $match_parts['scheme'] );
