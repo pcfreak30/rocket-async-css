@@ -60,7 +60,7 @@ class WebPExpress extends Component {
 
 			add_action( 'rocket_async_css_webp_clear_minify_file_cache', [ $this, 'clear_minify_file_cache' ] );
 			if ( $this->is_webp_enabled() ) {
-				add_filter( 'rocket_async_css_webp_is_enabled', [ $this, 'is_webp_enabled' ] );
+				add_filter( 'rocket_async_css_webp_enabled', [ $this, 'is_webp_enabled' ] );
 				add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
 				add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
 				foreach ( [ 'local', 'remote', 'inline' ] as $type ) {

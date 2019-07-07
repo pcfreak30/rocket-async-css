@@ -199,7 +199,7 @@ class Elementor extends Component {
 	 */
 	public function enqueue_styles() {
 		if ( is_singular() && Plugin::$instance->db->is_built_with_elementor( get_the_ID() ) ) {
-			if ( ! apply_filters( 'rocket_async_css_webp_is_enabled', false ) ) {
+			if ( ! apply_filters( 'rocket_async_css_webp_enabled', false ) ) {
 				return;
 			}
 
