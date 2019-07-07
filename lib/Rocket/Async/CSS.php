@@ -678,7 +678,7 @@ class CSS extends Plugin {
 			$url_parts = parse_url( $url_parts );
 		}
 
-		return $url_parts['host'] !== $this->domain && ( empty( $this->cdn_domains ) || ( ! empty( $this->cdn_domains ) && ! in_array( $url_parts['host'], $this->cdn_domains ) ) );
+		return isset( $url_parts['host'] ) && $url_parts['host'] !== $this->domain && ( empty( $this->cdn_domains ) || ( ! empty( $this->cdn_domains ) && ! in_array( $url_parts['host'], $this->cdn_domains ) ) );
 	}
 
 	/**
@@ -1377,7 +1377,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			$url_parts = parse_url( $url_parts );
 		}
 
-		return $url_parts['host'] === $this->domain || ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) );
+		return ( ! isset( $url_parts['host'] ) && isset( $url_parts['path'] ) ) || $url_parts['host'] === $this->domain || ( ! empty( $this->cdn_domains ) && in_array( $url_parts['host'], $this->cdn_domains ) );
 	}
 
 	/**
