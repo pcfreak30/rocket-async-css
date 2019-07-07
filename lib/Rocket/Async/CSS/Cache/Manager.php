@@ -71,4 +71,10 @@ class Manager extends Component {
 		$url = md5( $url );
 		$this->store->delete_cache_branch( [ 'cache', "url_{$url}" ] );
 	}
+
+	public function clear_minify_url( $url ) {
+		$key = [ md5( $url ) ];
+
+		return $this->store->delete_cache_branch( $key );
+	}
 }
