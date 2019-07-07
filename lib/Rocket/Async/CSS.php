@@ -976,6 +976,7 @@ class CSS extends Plugin {
 			$src_file = substr( $href, 0, strpos( $href, strrchr( $href, '?' ) ) );
 		}
 		// Break up url
+		$href      = $this->strip_cdn( $href );
 		$url       = $this->strip_cdn( $src_file );
 		$url_parts = parse_url( $url );
 
