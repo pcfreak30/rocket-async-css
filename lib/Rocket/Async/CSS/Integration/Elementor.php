@@ -243,7 +243,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_image_src( $image ) {
-		if ( apply_filters( 'rocket_async_css_webp_enabled', true, $image[0] ) ) {
+		if ( apply_filters( 'rocket_async_css_webp_process', true, $image[0] ) ) {
 			$image[0] = $this->process_url( $image[0] );
 		}
 
@@ -329,7 +329,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_url( $url ) {
-		if ( apply_filters( 'rocket_async_css_webp_enabled', true, $url ) ) {
+		if ( apply_filters( 'rocket_async_css_webp_process', true, $url ) ) {
 			$url = $this->process_url( $url );
 		}
 		return $url;
