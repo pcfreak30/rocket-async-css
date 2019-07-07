@@ -83,6 +83,7 @@ class Elementor extends Component {
 	}
 
 	public function clear_elementor_cache() {
+		remove_action( 'after_rocket_clean_domain', [ $this, 'clear_elementor_cache' ] );
 		Plugin::$instance->files_manager->clear_cache();
 	}
 
