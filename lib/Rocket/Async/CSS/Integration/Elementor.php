@@ -31,12 +31,6 @@ use WebPExpress\Option;
  * @property CSS $plugin
  */
 class Elementor extends Component {
-
-	/**
-	 * @var bool
-	 */
-	private $conditional = false;
-
 	/**
 	 * @var null|AlterHtmlImageUrls
 	 */
@@ -54,17 +48,9 @@ class Elementor extends Component {
 	public function init() {
 
 		if ( class_exists( '\Elementor\Plugin' ) ) {
-
 			add_action( 'deleted_post', [ $this, 'on_delete_post' ] );
 			add_action( 'wxr_export_skip_postmeta', [ $this, 'on_export_post_meta' ], 10, 2 );
 			add_filter( 'rocket_async_css_font_display', [ $this, 'process_font' ], 10, 2 );
-			if ( class_exists( '\WebPExpress\Config' ) && Option::getOption( 'webp-express-alter-html', false ) ) {
-				$options = json_decode( Option::getOption( 'webp-express-alter-html-options', null ), true );
-				if ( 'url' === Option::getOption( 'webp-express-alter-html-replacement' ) && $options['only-for-webp-enabled-browsers'] ) {
-					$this->conditional = true;
-				}
-			}
-
 			$this->process();
 		}
 	}
