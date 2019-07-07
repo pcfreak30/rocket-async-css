@@ -58,6 +58,7 @@ class WebPExpress extends Component {
 
 			$this->image_replace = new AlterHtmlImageUrls;
 
+			add_action( 'rocket_async_css_webp_clear_minify_file_cache', [ $this, 'clear_minify_file_cache' ] );
 			if ( $this->is_webp_enabled() ) {
 				add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
 				add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
@@ -67,6 +68,12 @@ class WebPExpress extends Component {
 				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_page_cache_key' ] );
 			}
 		}
+	}
+
+	public function clear_minify_file_cache( $url ) {
+		$key = [ md5( $url ) ];
+		$key = $this->modify_page_cache_key( $key );
+		$this->plugin->cache_manager->get_store()->delete_cache_branch( $key );
 	}
 
 	/**
