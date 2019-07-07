@@ -106,7 +106,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function process_file( $file_name, Base $file ) {
-		if ( ! apply_filters( 'rocket_async_css_webp_enabled', false ) ) {
+		if ( apply_filters( 'rocket_async_css_webp_enabled', false ) ) {
 			$new_file = $this->get_file_instance( $file, $file_name );
 			if ( $new_file ) {
 				$this->files[] = $new_file;
