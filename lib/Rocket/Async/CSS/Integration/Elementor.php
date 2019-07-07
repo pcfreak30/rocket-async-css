@@ -120,7 +120,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function process_file( $file_name, Base $file ) {
-		if ( $this->is_webp_enabled() ) {
+		if ( ! apply_filters( 'rocket_async_css_webp_enabled', false ) ) {
 			$new_file = $this->get_file_instance( $file, $file_name );
 			if ( $new_file ) {
 				$this->files[] = $new_file;
@@ -128,10 +128,6 @@ class Elementor extends Component {
 		}
 
 		return $file_name;
-	}
-
-	private function is_webp_enabled() {
-		return ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional;
 	}
 
 	/**
