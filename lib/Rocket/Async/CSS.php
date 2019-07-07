@@ -850,11 +850,8 @@ class CSS extends Plugin {
 				}
 				$match       = trim( $match, '"' . "'" );
 				$fixed_match = $match;
-				$url_parts   = $this->get_url_parts( $fixed_match );
-				if ( empty( $url_parts['host'] ) ) {
-					$url_parts = $this->get_url_parts( \phpUri::parse( $url )->join( $match ) );
-				}
-				$css = call_user_func( $callback, $matches, $match, $index, $url_parts, $css, $url );
+				$url_parts   = $this->get_url_parts( $fixed_match, $url );
+				$css         = call_user_func( $callback, $matches, $match, $index, $url_parts, $css, $url );
 			}
 		}
 
@@ -866,14 +863,14 @@ class CSS extends Plugin {
 	 *
 	 * @return mixed
 	 */
-	private function get_url_parts( $url ) {
+	private function get_url_parts( $url, $source = null ) {
 		if ( 0 === strpos( $url, '//' ) ) {
 			//Handle no protocol urls
 			$url = rocket_add_url_protocol( $url );
 		}
 		$url_parts = parse_url( $url );
-		if ( empty( $url_parts['host'] ) ) {
-			$fixed_match = \phpUri::parse( $url )->join( $url );
+		if ( empty( $url_parts['host'] ) && $source ) {
+			$fixed_match = \phpUri::parse( $source )->join( $url );
 			$url_parts   = parse_url( $fixed_match );
 		}
 
@@ -1335,7 +1332,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		if ( $this->is_url_parts_local( $match_parts ) ) {
 			return $css;
 		}
-		$fixed_match = http_build_url( $this->get_url_parts( $match ) );
+		$fixed_match = http_build_url( $this->get_url_parts( $match, $url ) );
 		$data        = $this->remote_fetch( $fixed_match );
 		if ( ! empty( $data ) ) {
 			$content_hash = md5( $data );
