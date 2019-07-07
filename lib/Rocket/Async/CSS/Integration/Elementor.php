@@ -364,8 +364,9 @@ class Elementor extends Component {
 	}
 
 	public function clear_post_cache( Document $document ) {
+		$post_css = new Post( $document->get_post()->ID );
+		$post_css->delete();
 		$post_css = new Post_WebP( $document->get_post()->ID );
-
 		$post_css->delete();
 	}
 }
