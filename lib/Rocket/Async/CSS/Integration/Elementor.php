@@ -202,6 +202,9 @@ class Elementor extends Component {
 			if ( ! apply_filters( 'rocket_async_css_webp_is_enabled', false ) ) {
 				return;
 			}
+
+			$this->image_replace = new AlterHtmlImageUrls;
+
 			add_filter( 'wp_get_attachment_url', [ $this, 'filter_attachment_url' ], 999999, 1 );
 			add_filter( 'wp_get_attachment_image_src', [ $this, 'filter_attachment_image_src' ], 999999, 1 );
 			add_action( 'elementor/element/before_parse_css', [ $this, 'process_webp_background' ], 10, 2 );
