@@ -17,6 +17,7 @@ use Elementor\Core\Settings\Page\Manager as Page_Manager;
 use Elementor\Element_Base;
 use Elementor\Plugin;
 use Elementor\Widget_Base;
+use Rocket\Async\CSS;
 use Rocket\Async\CSS\Integration\Elementor\Dynamic_CSS_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Frontend_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Global_CSS_WebP;
@@ -27,6 +28,7 @@ use WebPExpress\Option;
 /**
  * Class Elementor
  * @package Rocket\Async\CSS\Integration
+ * @property CSS $plugin
  */
 class Elementor extends Component {
 
@@ -112,7 +114,7 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function process_file( $file_name, Base $file ) {
-		if ( ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional ) {
+		if ( $this->is_webp_enabled() ) {
 			$new_file = $this->get_file_instance( $file, $file_name );
 			if ( $new_file ) {
 				$this->files[] = $new_file;
@@ -120,6 +122,10 @@ class Elementor extends Component {
 		}
 
 		return $file_name;
+	}
+
+	private function is_webp_enabled() {
+		return ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional;
 	}
 
 	/**
@@ -365,8 +371,25 @@ class Elementor extends Component {
 
 	public function clear_post_cache( Document $document ) {
 		$post_css = new Post( $document->get_post()->ID );
+		$meta     = $post_css->get_meta();
+
+		if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
+			$item_cache_id = [ md5( $post_css->get_url() ) ];
+			$this->plugin->cache_manager->get_store()->delete_cache_branch( $item_cache_id );
+		}
 		$post_css->delete();
-		$post_css = new Post_WebP( $document->get_post()->ID );
-		$post_css->delete();
+
+		/** @var WebPExpress $webp_express */
+		$webp_express = $this->plugin->integration_manager->get_module( 'WebPExpress' );
+		if ( $webp_express && $webp_express->is_webp_express_available() ) {
+			$post_css = new Post_WebP( $document->get_post()->ID );
+			$meta     = $post_css->get_meta();
+			if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
+				$item_cache_id = [ md5( $post_css->get_url() ) ];
+				$this->plugin->cache_manager->get_store()->delete_cache_branch( $item_cache_id );
+			}
+			$post_css->delete();
+		}
+
 	}
 }
