@@ -374,8 +374,9 @@ class Elementor extends Component {
 		$meta     = $post_css->get_meta();
 
 		if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
-			$item_cache_id = [ md5( $post_css->get_url() ) ];
-			$this->plugin->cache_manager->get_store()->delete_cache_branch( $item_cache_id );
+			$url = $post_css->get_url();
+			$this->plugin->cache_manager->clear_minify_url( $url );
+			do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
 		}
 		$post_css->delete();
 
@@ -385,8 +386,9 @@ class Elementor extends Component {
 			$post_css = new Post_WebP( $document->get_post()->ID );
 			$meta     = $post_css->get_meta();
 			if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
-				$item_cache_id = [ md5( $post_css->get_url() ) ];
-				$this->plugin->cache_manager->get_store()->delete_cache_branch( $item_cache_id );
+				$url = $post_css->get_url();
+				$this->plugin->cache_manager->clear_minify_url( $url );
+				do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
 			}
 			$post_css->delete();
 		}
