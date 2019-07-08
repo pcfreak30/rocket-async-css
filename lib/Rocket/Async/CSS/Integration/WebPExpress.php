@@ -71,17 +71,17 @@ class WebPExpress extends Component {
 		}
 	}
 
-	public function clear_minify_file_cache( $url ) {
-		$key = [ md5( $url ) ];
-		$key = $this->modify_page_cache_key( $key );
-		$this->plugin->cache_manager->get_store()->delete_cache_branch( $key );
-	}
-
 	/**
 	 * @return bool
 	 */
 	public function is_webp_enabled() {
-		return ( $this->conditional && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional;
+		return ( $this->conditional && isset( $_SERVER['HTTP_ACCEPT'] ) && false !== strpos( $_SERVER['HTTP_ACCEPT'], 'image/webp' ) ) || ! $this->conditional;
+	}
+
+	public function clear_minify_file_cache( $url ) {
+		$key = [ md5( $url ) ];
+		$key = $this->modify_page_cache_key( $key );
+		$this->plugin->cache_manager->get_store()->delete_cache_branch( $key );
 	}
 
 	/**
