@@ -558,10 +558,13 @@ class CSS extends Plugin {
 		foreach ( array_keys( $this->media_documents ) as $media ) {
 			// If we have a user logged in, include user role in filename to be unique as we may have user only CSS content. Otherwise file will be a hash of (minify-global-[js_key]-[content_hash]).js
 			if ( is_user_logged_in() ) {
-				$filename = $cache_path . md5( 'minify-' . wp_get_current_user()->roles[0] . '-' . $js_key . '-' . $this->get_cache_hash() . '-' . $media ) . '.css';
+				$filename = [ 'minify', wp_get_current_user()->roles[0], $js_key, $this->get_cache_hash(), $media ];
 			} else {
-				$filename = $cache_path . md5( 'minify-global' . '-' . $js_key . '-' . $this->get_cache_hash() . '-' . $media ) . '.css';
+				$filename = [ 'minify-global', $js_key, $this->get_cache_hash(), $media ];
 			}
+			$filename            = (array) apply_filters( 'rocket_async_css_get_cache_filename', $filename );
+			$filename            = implode( '-', $filename );
+			$filename            = $cache_path . md5( $filename ) . '.css';
 			$filenames[ $media ] = $filename;
 		}
 
