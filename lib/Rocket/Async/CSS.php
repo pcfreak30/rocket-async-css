@@ -991,7 +991,9 @@ class CSS extends Plugin {
 			$css = $this->get_content( $this->get_local_file_from_url( $url ) );
 			$this->hash_local_files( $css, $href );
 		} else {
-			$this->css[ $media ] .= $item_cache;
+			if ( $minify ) {
+				$this->css[ $media ] .= $item_cache;
+			}
 		}
 	}
 
