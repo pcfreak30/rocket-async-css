@@ -499,14 +499,15 @@ class CSS extends Plugin {
 				}
 			}
 			$files = [];
-			foreach ( $this->cache['file_hash_cache'] as $hash => $filename ) {
-				$filepath = ABSPATH . $filename;
-				if ( file_exists( $filepath ) && $hash === md5_file( $filepath ) ) {
-					$files[ $hash ] = $filename;
+			if ( ! empty( $this->cache['file_hash_cache'] ) ) {
+				foreach ( $this->cache['file_hash_cache'] as $hash => $filename ) {
+					$filepath = ABSPATH . $filename;
+					if ( file_exists( $filepath ) && $hash === md5_file( $filepath ) ) {
+						$files[ $hash ] = $filename;
+					}
 				}
+				$this->file_hash_cache = $files;
 			}
-			$this->file_hash_cache = $files;
-
 			return;
 		}
 		$this->cache = false;
