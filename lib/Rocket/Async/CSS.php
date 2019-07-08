@@ -112,10 +112,6 @@ class CSS extends Plugin {
 	 */
 	private $util;
 	/**
-	 * @var string
-	 */
-	private $cache_hash;
-	/**
 	 * @var array
 	 */
 	private $ie_conditionals;
@@ -541,11 +537,7 @@ class CSS extends Plugin {
 	 * @return string
 	 */
 	private function get_cache_hash() {
-		if ( null === $this->cache_hash ) {
-			$this->cache_hash = md5( serialize( $this->cache_list ) );
-		}
-
-		return $this->cache_hash;
+		return md5( serialize( $this->cache_list ) );
 	}
 
 	/**
