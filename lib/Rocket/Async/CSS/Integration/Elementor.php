@@ -23,7 +23,6 @@ use Rocket\Async\CSS\Integration\Elementor\Frontend_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Global_CSS_WebP;
 use Rocket\Async\CSS\Integration\Elementor\Post_WebP;
 use WebPExpress\AlterHtmlImageUrls;
-use WebPExpress\Option;
 
 /**
  * Class Elementor
@@ -61,10 +60,11 @@ class Elementor extends Component {
 	private function process() {
 		add_action( 'elementor/files/file_name', [ $this, 'process_file' ], 10, 2 );
 		add_action( 'after_rocket_clean_domain', [ $this, 'clear_elementor_cache' ] );
+		add_action( 'after_rocket_clean_post', [ $this, 'clear_post_cache' ] );
 		add_action( 'elementor/core/files/clear_cache', [ $this, 'clear_cache' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ], 11 );
 		add_action( 'rocket_async_css_webpexpress_process', [ $this, 'webp_exclude_file' ], 10, 3 );
-		add_action( 'elementor/document/after_save', [ $this, 'clear_post_cache' ] );
+		add_action( 'elementor/document/after_save', [ $this, 'clear_post_elementor_cache' ] );
 		add_action( 'elementor/widget/render_content', [ $this, 'add_image_id_carousel' ], 10, 2 );
 	}
 
@@ -346,25 +346,35 @@ class Elementor extends Component {
 		return $value;
 	}
 
-	public function clear_post_cache( Document $document ) {
-		$post_css = new Post( $document->get_post()->ID );
+	public function clear_post_elementor_cache( Document $document ) {
+		$this->clear_post_cache( $document->get_post(), false );
+	}
+
+	public function clear_post_cache( $post, $delete = true ) {
+		$post_css = new Post( $post->ID );
 		$meta     = $post_css->get_meta();
 
 		if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
 			$url = $post_css->get_url();
 			$this->plugin->cache_manager->clear_minify_url( $url );
 			do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
+			if ( $delete ) {
+				$post_css->delete();
+			}
 		}
 
 		/** @var WebPExpress $webp_express */
 		$webp_express = $this->plugin->integration_manager->get_module( 'WebPExpress' );
 		if ( $webp_express && $webp_express->is_webp_express_available() ) {
-			$post_css = new Post_WebP( $document->get_post()->ID );
+			$post_css = new Post_WebP( $post->ID );
 			$meta     = $post_css->get_meta();
 			if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
 				$url = $post_css->get_url();
 				$this->plugin->cache_manager->clear_minify_url( $url );
 				do_action( 'rocket_async_css_webp_clear_minify_file_cache' );
+				if ( $delete ) {
+					$post_css->delete();
+				}
 			}
 		}
 
