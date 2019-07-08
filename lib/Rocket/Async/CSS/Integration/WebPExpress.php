@@ -67,6 +67,7 @@ class WebPExpress extends Component {
 					add_filter( "rocket_async_css_get_{$type}_style_cache_id", [ $this, 'modify_fragment_cache_key' ] );
 				}
 				add_filter( 'rocket_async_css_get_cache_id', [ $this, 'modify_page_cache_key' ] );
+				add_filter( 'rocket_async_css_get_cache_filename', [ $this, 'modify_page_cache_filename' ] );
 			}
 		}
 	}
@@ -97,6 +98,12 @@ class WebPExpress extends Component {
 		}
 
 		return $key;
+	}
+
+	public function modify_page_cache_filename( $filename ) {
+		array_splice( $filename, count( $filename ) - 1, 0, [ 'webp' ] );
+
+		return $filename;
 	}
 
 	/**
