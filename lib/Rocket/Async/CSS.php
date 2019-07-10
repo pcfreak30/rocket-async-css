@@ -1387,7 +1387,13 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			return $css;
 		}
 
-		$hash = md5_file( $this->get_local_file_from_url( $match_parts ) );
+
+		$file = $this->get_local_file_from_url( $match_parts );
+		$hash = null;
+
+		if ( $this->plugin->wp_filesystem->is_file( $file ) ) {
+			$hash = md5_file( $file );
+		}
 
 		if ( $hash && isset( $this->file_hash_cache[ $hash ] ) ) {
 			if ( ! isset( $this->remote_url_cache[ $this->file_hash_cache[ $hash ] ] ) ) {
@@ -1418,7 +1424,12 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			return $css;
 		}
 
-		$hash = md5_file( $this->get_local_file_from_url( $match_parts ) );
+		$file = $this->get_local_file_from_url( $match_parts );
+		$hash = null;
+
+		if ( $this->plugin->wp_filesystem->is_file( $file ) ) {
+			$hash = md5_file( $file );
+		}
 
 		if ( ! $hash ) {
 			return $css;
