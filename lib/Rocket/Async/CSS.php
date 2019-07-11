@@ -763,27 +763,7 @@ class CSS extends Plugin {
 	 */
 	public function minify_css( $css, $options, $url ) {
 		$css = apply_filters( 'rocket_async_css_before_minify', $css, $url );
-
-		$css = $this->process_css_callback( self::IMPORT_REGEX, $css, $url, function ( $matches ) {
-			return ! empty( $matches ) && ! empty( $matches[1] );
-		}, function ( $matches ) {
-			$new_matches = [];
-			foreach ( $matches[1] as $index => $match ) {
-				$new_matches[ $index ] = $match;
-			}
-
-			return $new_matches;
-		}, 'parse_css_imports' );
-		$css = apply_filters( 'rocket_async_css_after_parse_css_imports', $css, $url );
-
-		$css = $this->lazy_load_fonts( $css, $url );
-		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
-
-		$css = $this->process_css_urls( $css, $url, 'download_remote_files' );
-		$css = apply_filters( 'rocket_async_css_after_download_files', $css, $url );
-
-		$css = $this->process_css_urls( $css, $url, 'process_local_files' );
-		$css = apply_filters( 'rocket_async_css_after_process_local_files', $css, $url );
+		$css = $this->process_css( $css, $url );
 
 		if ( ! class_exists( 'Minify_CSS' ) && $this->plugin->wp_filesystem->is_file( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' ) ) {
 			require_once( WP_ROCKET_PATH . 'min/lib/Minify/Loader.php' );
@@ -812,6 +792,31 @@ class CSS extends Plugin {
 		}
 
 		return apply_filters( 'rocket_async_css_after_minify', $css );
+	}
+
+	public function process_css( $css, $url ) {
+		$css = $this->process_css_callback( self::IMPORT_REGEX, $css, $url, function ( $matches ) {
+			return ! empty( $matches ) && ! empty( $matches[1] );
+		}, function ( $matches ) {
+			$new_matches = [];
+			foreach ( $matches[1] as $index => $match ) {
+				$new_matches[ $index ] = $match;
+			}
+
+			return $new_matches;
+		}, 'parse_css_imports' );
+		$css = apply_filters( 'rocket_async_css_after_parse_css_imports', $css, $url );
+
+		$css = $this->lazy_load_fonts( $css, $url );
+		$css = apply_filters( 'rocket_async_css_after_lazy_load_fonts', $css, $url );
+
+		$css = $this->process_css_urls( $css, $url, 'download_remote_files' );
+		$css = apply_filters( 'rocket_async_css_after_download_files', $css, $url );
+
+		$css = $this->process_css_urls( $css, $url, 'process_local_files' );
+		$css = apply_filters( 'rocket_async_css_after_process_local_files', $css, $url );
+
+		return $css;
 	}
 
 	/**
