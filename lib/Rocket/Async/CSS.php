@@ -873,7 +873,7 @@ class CSS extends Plugin {
 	 *
 	 * @return mixed
 	 */
-	private function get_url_parts( $url, $source = null ) {
+	public function get_url_parts( $url, $source = null ) {
 		if ( 0 === strpos( $url, '//' ) ) {
 			//Handle no protocol urls
 			$url = rocket_add_url_protocol( $url );
@@ -1415,9 +1415,18 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			}
 		}
 
-		unset( $match_parts['scheme'] );
-		unset( $match_parts['host'] );
+		$do_cdn = home_url( $_SERVER['REQUEST_URI'] ) === $url && ! doing_filter( 'rocket_buffer' );
+
+		if ( ! $do_cdn ) {
+			unset( $match_parts['scheme'] );
+			unset( $match_parts['host'] );
+		}
+
 		$final_url = http_build_url( $match_parts );
+
+		if ( $do_cdn ) {
+			$final_url = get_rocket_cdn_url( $final_url, [ 'images', 'all' ] );
+		}
 
 		$this->file_hash_cache[ $hash ] = $final_url;
 
