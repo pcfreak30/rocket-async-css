@@ -9,6 +9,7 @@ use Rocket\Async\CSS;
 
 /**
  * Class WPCriticalCSS
+ *
  * @package Rocket\Async\CSS\Integration
  * @property CSS $plugin
  */
@@ -37,8 +38,7 @@ class WPCriticalCSS extends Component {
 
 		$home = home_url( $_SERVER['REQUEST_URI'] );
 
-		$css = $this->plugin->lazy_load_fonts( $css, $home );
-		$css = $this->plugin->process_css_urls( $css, $home, 'download_remote_files' );
+		$css = $this->plugin->process_css( $css, $home );
 
 		return $css;
 	}
