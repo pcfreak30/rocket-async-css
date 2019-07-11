@@ -23,6 +23,6 @@ class DiviBuilder extends Component {
 	}
 
 	public function scripts() {
-		wp_add_inline_script( 'jquery-core', '(function($){(function check(){if(window.css_loaded && window.preloader_loaded && typeof salvattore !== "undefined"){$(".et_pb_blog_grid").each(function(){salvattore.rescanMediaQueries(this)});return}setTimeout(check,10)})()})(jQuery);' );
+		wp_add_inline_script( 'jquery-core', '(function(a){window.addEventListener("PreloaderDestroyed",function(){"undefined"!==typeof salvattore&&a(".et_pb_blog_grid").each(function(){salvattore.rescanMediaQueries(this)})});window.preloader_event_registered=true})(jQuery);' );
 	}
 }

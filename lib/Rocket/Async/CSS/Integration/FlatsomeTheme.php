@@ -23,7 +23,7 @@ class FlatsomeTheme extends Component {
 
 	public function scripts() {
 		if ( wp_script_is( 'flatsome-js' ) ) {
-			wp_add_inline_script( 'flatsome-js', '(function($){$(window).load(function(){$(\'[data-flickity-options],.flickity-enabled\').flickity(\'resize\')});(function check(){if(window.css_loaded){$(\'.resize-select\').change();return;}setTimeout(check, 10);})();})(jQuery);' );
+			wp_add_inline_script( 'flatsome-js', '(function($){$(window).load(function(){$("[data-flickity-options],.flickity-enabled").flickity("resize")});window.addEventListener("CSSLoaded",function(){$(".resize-select").change()});window.preloader_event_registered=true})(jQuery);' );
 		}
 	}
 }
