@@ -13,6 +13,7 @@ use WebPExpress\Option;
  * Class WebPExpress
  *
  * @package Rocket\Async\CSS\Integration
+ * @property CSS $plugin
  */
 class WebPExpress extends Component {
 
@@ -153,54 +154,46 @@ class WebPExpress extends Component {
 		if ( ! apply_filters( 'rocket_async_css_webpexpress_process', true, $css, $url ) ) {
 			return $css;
 		}
-
-		preg_match_all( CSS::URL_SRC_REGEX, $css, $matches );
-		//Ensure there are matches
-		if ( ! empty( $matches ) && ! empty( $matches[1] ) ) {
-			add_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
-			foreach ( $matches[2] as $index => $match ) {
-				if ( empty( $match ) ) {
-					$match = $matches[1][ $index ];
-				}
-				if ( 0 === strpos( $match, 'data:' ) ) {
-					continue;
-				}
-				$match       = trim( $match, '"' . "'" );
-				$fixed_match = $match;
-				if ( 0 === strpos( $fixed_match, '//' ) ) {
-					//Handle no protocol urls
-					$fixed_match = rocket_add_url_protocol( $fixed_match );
-				}
-				$url_parts = parse_url( $match );
-				if ( empty( $url_parts['host'] ) ) {
-					$fixed_match = \phpUri::parse( $url )->join( $fixed_match );
-					$url_parts   = parse_url( $fixed_match );
-				}
-				if ( $url_parts['host'] != $this->plugin->domain && ! in_array( $url_parts['host'], $this->plugin->cdn_domains ) ) {
-					continue;
-				}
-				$url_parts['host'] = $this->plugin->domain;
-
-				$final_url = http_build_url( $url_parts );
-				if ( ! apply_filters( 'rocket_async_css_webp_process', $final_url ) ) {
-					continue;
-				}
-
-				$final_url = $this->image_replace->replaceUrl( $final_url );
-
-				if ( ! $final_url ) {
-					$final_url = $match;
-				} else {
-					$final_url = get_rocket_cdn_url( $final_url, [ 'images', 'all' ] );
-				}
-
-				$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
-				$css      = str_replace( $matches[0][ $index ], $css_part, $css );
-			}
-			remove_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
-		}
+		add_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
+		$css = $this->plugin->process_css_urls( $css, $url, [ $this, 'process_webp' ] );
+		remove_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
 
 		return $css;
+	}
+
+	public function process_webp( $matches, $match, $index, $match_parts, $css, $url ) {
+		if ( $this->plugin->is_url_parts_remote( $match ) ) {
+			return $css;
+		}
+
+		$new_url = http_build_url( $match_parts );
+
+		if ( ! apply_filters( 'rocket_async_css_webp_process', $new_url ) ) {
+			return $css;
+		}
+
+		$final_url = $this->image_replace->replaceUrl( $new_url );
+		if ( ! $final_url ) {
+			return $css;
+		}
+
+		$url_parts = $this->plugin->get_url_parts( $final_url, $url );
+
+		$do_cdn = home_url( $_SERVER['REQUEST_URI'] ) === $url && ! doing_filter( 'rocket_buffer' );
+
+		if ( ! $do_cdn ) {
+			unset( $url_parts['scheme'] );
+			unset( $url_parts['host'] );
+		}
+
+		$final_url = http_build_url( $url_parts );
+
+		if ( $do_cdn ) {
+			$final_url = get_rocket_cdn_url( $final_url, [ 'images', 'all' ] );
+		}
+
+		$css_part = str_replace( $match, $final_url, $matches[0][ $index ] );
+		return str_replace( $matches[0][ $index ], $css_part, $css );
 	}
 
 	/**
