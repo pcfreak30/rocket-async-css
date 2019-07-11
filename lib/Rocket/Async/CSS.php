@@ -484,7 +484,7 @@ class CSS extends Plugin {
 			return;
 		}
 
-		$this->cache = $this->cache_manager->get_store()->get_cache_fragment( $this->get_cache_id() );
+		$this->cache = $this->get_cache_fragment( $this->get_cache_id() );
 
 		if ( ! empty( $this->cache ) ) {
 			// Cached file is gone, we dont have cache
@@ -504,9 +504,18 @@ class CSS extends Plugin {
 				}
 				$this->file_hash_cache = $files;
 			}
+
 			return;
 		}
 		$this->cache = false;
+	}
+
+	private function get_cache_fragment( $cache_id ) {
+		if ( apply_filters( 'rocket_async_css_save_cache', true ) ) {
+			return $this->cache_manager->get_store()->get_cache_fragment( $cache_id );
+		}
+
+		return false;
 	}
 
 	/**
@@ -687,7 +696,7 @@ class CSS extends Plugin {
 			// Check item cache
 			$item_cache_id = [ md5( $src ) ];
 			$item_cache_id = apply_filters( 'rocket_async_css_get_remote_style_cache_id', $item_cache_id );
-			$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
+			$item_cache    = $this->get_cache_fragment( $item_cache_id );
 			// Only run if there is no item cache
 			if ( empty( $item_cache ) ) {
 				$file = $this->remote_fetch( $src );
@@ -981,7 +990,7 @@ class CSS extends Plugin {
 		// Check item cache
 		$item_cache_id = [ md5( $href ) ];
 		$item_cache_id = apply_filters( 'rocket_async_css_get_local_style_cache_id', $item_cache_id );
-		$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
+		$item_cache    = $this->get_cache_fragment( $item_cache_id );
 		// Only run if there is no item cache
 		if ( empty( $item_cache ) ) {
 			if ( $minify ) {
@@ -1077,7 +1086,7 @@ class CSS extends Plugin {
 			// Check item cache
 			$item_cache_id = [ md5( $tag->textContent ) ];
 			$item_cache_id = apply_filters( 'rocket_async_css_get_inline_style_cache_id', $item_cache_id );
-			$item_cache    = $this->cache_manager->get_store()->get_cache_fragment( $item_cache_id );
+			$item_cache    = $this->get_cache_fragment( $item_cache_id );
 			// Only run if there is no item cache
 			if ( empty( $item_cache ) ) {
 				// Remove any conditional comments for IE that somehow was put in the script tag
