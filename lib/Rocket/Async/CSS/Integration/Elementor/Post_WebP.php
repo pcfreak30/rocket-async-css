@@ -66,4 +66,11 @@ class Post_WebP extends Post {
 	public function write() {
 		return file_put_contents( $this->path, $this->get_content() );
 	}
+
+	public function delete() {
+		if ( file_exists( $this->path ) ) {
+			unlink( $this->path );
+		}
+		parent::delete();
+	}
 }

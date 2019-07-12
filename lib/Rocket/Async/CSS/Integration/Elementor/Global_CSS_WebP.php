@@ -75,4 +75,11 @@ class Global_CSS_WebP extends Global_CSS {
 		return false;
 	}
 
+	public function delete() {
+		if ( file_exists( $this->path ) ) {
+			unlink( $this->path );
+		}
+		parent::delete();
+	}
+
 }

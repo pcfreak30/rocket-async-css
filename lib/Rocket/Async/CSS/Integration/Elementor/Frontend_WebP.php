@@ -38,6 +38,13 @@ class Frontend_WebP extends Frontend {
 		$this->set_path();
 	}
 
+	public function delete() {
+		if ( file_exists( $this->path ) ) {
+			unlink( $this->path );
+		}
+		parent::delete();
+	}
+
 	/**
 	 *
 	 */
