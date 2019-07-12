@@ -977,15 +977,20 @@ class CSS extends Plugin {
 		if ( 0 == strpos( $href, '/' ) ) {
 			$href = $this->home . $href;
 		}
-		// Remove query strings
-		$src_file = $href;
-		if ( false !== strpos( $href, '?' ) ) {
-			$src_file = substr( $href, 0, strpos( $href, strrchr( $href, '?' ) ) );
-		}
 		// Break up url
 		$href      = $this->strip_cdn( $href );
-		$url       = $this->strip_cdn( $src_file );
-		$url_parts = parse_url( $url );
+
+		// Remove query strings
+		$url_parts = parse_url( $href );
+
+		if ( isset( $url_parts['query'] ) ) {
+			unset( $url_parts['query'] );
+		}
+		if ( isset( $url_parts['hash'] ) ) {
+			unset( $url_parts['hash'] );
+		}
+
+		$href = http_build_url( $url_parts );
 
 		// Check item cache
 		$item_cache_id = [ md5( $href ) ];
@@ -994,15 +999,15 @@ class CSS extends Plugin {
 		// Only run if there is no item cache
 		if ( empty( $item_cache ) ) {
 			if ( $minify ) {
-				$file                = $this->get_content( str_replace( $this->home, ABSPATH, $url ) );
+				$file                = $this->get_content( str_replace( $this->home, ABSPATH, $href ) );
 				$css_part            = $file;
-				$css_part            = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $url );
+				$css_part            = $this->minify_css( $css_part, [ 'prependRelativePath' => trailingslashit( dirname( $url_parts['path'] ) ) ], $href );
 				$this->css[ $media ] .= $css_part;
 				$this->update_cache_fragment( $item_cache_id, $css_part );
 
 				return;
 			}
-			$css = $this->get_content( $this->get_local_file_from_url( $url ) );
+			$css = $this->get_content( $this->get_local_file_from_url( $href ) );
 			$this->hash_local_files( $css, $href );
 		} else {
 			if ( $minify ) {
