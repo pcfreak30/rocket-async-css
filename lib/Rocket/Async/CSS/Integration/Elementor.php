@@ -355,7 +355,18 @@ class Elementor extends Component {
 		$meta     = $post_css->get_meta();
 
 		if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
-			$url = $post_css->get_url();
+			$url       = $post_css->get_url();
+			$url_parts = parse_url( $url );
+
+			if ( isset( $url_parts['query'] ) ) {
+				unset( $url_parts['query'] );
+			}
+			if ( isset( $url_parts['hash'] ) ) {
+				unset( $url_parts['hash'] );
+			}
+
+			$url = http_build_url( $url_parts );
+
 			$this->plugin->cache_manager->clear_minify_url( $url );
 			do_action( 'rocket_async_css_webp_clear_minify_file_cache', $url );
 			if ( $delete ) {
@@ -369,7 +380,17 @@ class Elementor extends Component {
 			$post_css = new Post_WebP( $post->ID );
 			$meta     = $post_css->get_meta();
 			if ( CSS_Base_File::CSS_STATUS_INLINE !== $meta['status'] ) {
-				$url = $post_css->get_url();
+				$url       = $post_css->get_url();
+				$url_parts = parse_url( $url );
+
+				if ( isset( $url_parts['query'] ) ) {
+					unset( $url_parts['query'] );
+				}
+				if ( isset( $url_parts['hash'] ) ) {
+					unset( $url_parts['hash'] );
+				}
+
+				$url = http_build_url( $url_parts );
 				$this->plugin->cache_manager->clear_minify_url( $url );
 				do_action( 'rocket_async_css_webp_clear_minify_file_cache', $url );
 				$post_css->delete();
