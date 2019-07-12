@@ -372,9 +372,7 @@ class Elementor extends Component {
 				$url = $post_css->get_url();
 				$this->plugin->cache_manager->clear_minify_url( $url );
 				do_action( 'rocket_async_css_webp_clear_minify_file_cache', $url );
-				if ( $delete ) {
-					$post_css->delete();
-				}
+				$post_css->delete();
 			}
 		}
 
