@@ -166,7 +166,7 @@ class WebPExpress extends Component {
 			return $css;
 		}
 
-		$new_url = http_build_url( $match_parts );
+		$new_url = $this->plugin->strip_cdn( http_build_url( $match_parts ) );
 
 		if ( ! apply_filters( 'rocket_async_css_webp_process', $new_url ) ) {
 			return $css;
