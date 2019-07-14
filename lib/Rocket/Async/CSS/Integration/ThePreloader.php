@@ -64,16 +64,21 @@ class ThePreloader extends Component {
 		wp_add_inline_script( 'jquery-core', <<<JS
 (function ($) {
     $(window).load(function () {
-        $(window).trigger('resize');
+        try {
+            $(window).trigger('resize');
+        } catch (e) {
+        }
         (function check() {
             if (0 < $('#wptime-plugin-preloader').length || !window.preloader_event_registered) {
                 setTimeout(check, 1);
-            }
-            else {
-                $(window).trigger('resize');
+            } else {
+                try {
+                    $(window).trigger('resize');
+                } catch (e) {
+                }
                 window.preloader_loaded = true;
-                if(window.CustomEvent){
-                	window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));
+                if (window.CustomEvent) {
+                    window.dispatchEvent(new CustomEvent("PreloaderDestroyed"));
                 }
             }
         })();
