@@ -63,7 +63,7 @@ class ThePreloader extends Component {
 	public function add_window_resize_js() {
 		wp_add_inline_script( 'jquery-core', <<<JS
 (function ($) {
-    $(window).load(function () {
+    $(window).on('load', function () {
         try {
             $(window).trigger('resize');
         } catch (e) {
