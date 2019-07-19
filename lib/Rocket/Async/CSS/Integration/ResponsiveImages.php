@@ -22,6 +22,9 @@ class ResponsiveImages extends Component {
 	}
 
 	public function init() {
+		if ( is_admin() ) {
+			return;
+		}
 		add_filter( 'the_content', [ $this, 'process' ], 8 );
 		add_filter( 'the_content', [ $this, 'process' ], 13 );
 		add_filter( 'widget_text', [ $this, 'process' ], 9999 );
