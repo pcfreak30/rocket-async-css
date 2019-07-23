@@ -63,6 +63,7 @@ class WebPExpress extends Component {
 			if ( $this->is_webp_enabled() ) {
 				add_filter( 'rocket_async_css_webp_enabled', [ $this, 'is_webp_enabled' ] );
 				add_filter( 'rocket_async_css_after_process_local_files', [ $this, 'maybe_process' ], 10, 2 );
+				add_filter( 'rocket_async_css_webpexpress_process', [ $this, 'process_url' ] );
 				add_filter( 'rocket_async_css_process_responsive_image', '\WebPExpress\AlterHtmlInit::alterHtml' );
 				foreach ( [ 'local', 'remote', 'inline' ] as $type ) {
 					add_filter( "rocket_async_css_get_{$type}_style_cache_id", [ $this, 'modify_fragment_cache_key' ] );
@@ -151,9 +152,6 @@ class WebPExpress extends Component {
 	 */
 	private function process( $css, $url ) {
 
-		if ( ! apply_filters( 'rocket_async_css_webpexpress_process', true, $css, $url ) ) {
-			return $css;
-		}
 		add_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
 		$css = $this->plugin->process_css_urls( $css, $url, [ $this, 'process_webp' ] );
 		remove_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
@@ -168,7 +166,7 @@ class WebPExpress extends Component {
 
 		$new_url = $this->plugin->strip_cdn( http_build_url( $match_parts ) );
 
-		if ( ! apply_filters( 'rocket_async_css_webp_process', $new_url ) ) {
+		if ( ! apply_filters( 'rocket_async_css_webpexpress_do_process', $new_url ) ) {
 			return $css;
 		}
 
@@ -212,4 +210,24 @@ class WebPExpress extends Component {
 		return $upload;
 	}
 
+	private function process_url( $url ) {
+
+		if ( preg_match( '/\.webp$/', $url ) ) {
+			return $url;
+		}
+
+		if ( ! apply_filters( 'rocket_async_css_webpexpress_do_process', $url ) ) {
+			return $url;
+		}
+
+		$new_url = $this->plugin->strip_cdn( http_build_url( $this->plugin->get_url_parts( $url ) ) );
+		add_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
+		$new_url = $this->image_replace->replaceUrl( $new_url );
+		remove_filter( 'upload_dir', [ $this, 'override_upload_dir' ] );
+		if ( ! empty( $new_url ) ) {
+			$url = $new_url;
+			$url = get_rocket_cdn_url( $url, [ 'images', 'all' ] );
+		}
+		return $url;
+	}
 }
