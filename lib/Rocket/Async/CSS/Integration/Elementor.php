@@ -31,10 +31,6 @@ use WebPExpress\AlterHtmlImageUrls;
  */
 class Elementor extends Component {
 	/**
-	 * @var null|AlterHtmlImageUrls
-	 */
-	private $image_replace;
-	/**
 	 * @var Dynamic_CSS_WebP|Frontend_WebP|Global_CSS_WebP|Post_WebP[]
 	 */
 	private $files = [];
@@ -63,7 +59,6 @@ class Elementor extends Component {
 		add_action( 'after_rocket_clean_post', [ $this, 'clear_post_cache' ] );
 		add_action( 'elementor/core/files/clear_cache', [ $this, 'clear_cache' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ], 11 );
-		add_action( 'rocket_async_css_webpexpress_process', [ $this, 'webp_exclude_file' ], 10, 3 );
 		add_action( 'elementor/document/after_save', [ $this, 'clear_post_elementor_cache' ] );
 		add_action( 'elementor/widget/render_content', [ $this, 'add_image_id_carousel' ], 10, 2 );
 	}
@@ -184,9 +179,6 @@ class Elementor extends Component {
 			if ( ! apply_filters( 'rocket_async_css_webp_enabled', false ) ) {
 				return;
 			}
-
-			$this->image_replace = new AlterHtmlImageUrls;
-
 			add_filter( 'wp_get_attachment_url', [ $this, 'filter_attachment_url' ], 999999, 1 );
 			add_filter( 'wp_get_attachment_image_src', [ $this, 'filter_attachment_image_src' ], 999999, 1 );
 			add_action( 'elementor/element/before_parse_css', [ $this, 'process_webp_background' ], 10, 2 );
@@ -225,48 +217,11 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_image_src( $image ) {
-		if ( apply_filters( 'rocket_async_css_webp_process', true, $image[0] ) ) {
-			$image[0] = $this->process_url( $image[0] );
+		if ( apply_filters( 'rocket_async_css_webpexpress_do_process', true, $image[0] ) ) {
+			$image[0] = apply_filters( 'rocket_async_css_webpexpress_process', $image[0] );
 		}
 
 		return $image;
-	}
-
-	private function process_url( $url ) {
-
-		if ( preg_match( '/\.webp$/', $url ) ) {
-			return $url;
-		}
-
-		$domain      = $this->plugin->domain;
-		$cdn_domains = $this->plugin->cdn_domains;
-
-		$url_parts = parse_url( $url );
-		$cdn       = false;
-
-		if ( in_array( $url_parts['host'], $cdn_domains ) ) {
-			$url_parts['host'] = $domain;
-			$url               = http_build_url( $url_parts );
-			$cdn               = true;
-		}
-
-		$new_url = $this->image_replace->replaceUrl( $url );
-		if ( ! empty( $new_url ) ) {
-			$url = $new_url;
-			if ( $cdn ) {
-				$url = get_rocket_cdn_url( $url, [ 'images' ] );
-			}
-		}
-		return $url;
-	}
-
-	public function webp_exclude_file( $process, $css, $url ) {
-		$zones = [ 'images', 'all' ];
-		if ( false !== strpos( get_rocket_cdn_url( $url, $zones ), get_rocket_cdn_url( Base::get_base_uploads_url(), $zones ) ) ) {
-			$process = false;
-		}
-
-		return $process;
 	}
 
 	public function process_webp_background( Base $css, Element_Base $element ) {
@@ -311,8 +266,8 @@ class Elementor extends Component {
 	 * @return mixed
 	 */
 	public function filter_attachment_url( $url ) {
-		if ( apply_filters( 'rocket_async_css_webp_process', true, $url ) ) {
-			$url = $this->process_url( $url );
+		if ( apply_filters( 'rocket_async_css_webpexpress_do_process', true, $url ) ) {
+			$url = apply_filters( 'rocket_async_css_webpexpress_process', $url );
 		}
 		return $url;
 	}
@@ -397,5 +352,33 @@ class Elementor extends Component {
 			}
 		}
 
+	}
+
+	private function process_url( $url ) {
+
+		if ( preg_match( '/\.webp$/', $url ) ) {
+			return $url;
+		}
+
+		$domain      = $this->plugin->domain;
+		$cdn_domains = $this->plugin->cdn_domains;
+
+		$url_parts = parse_url( $url );
+		$cdn       = false;
+
+		if ( in_array( $url_parts['host'], $cdn_domains ) ) {
+			$url_parts['host'] = $domain;
+			$url               = http_build_url( $url_parts );
+			$cdn               = true;
+		}
+
+		$new_url = $this->image_replace->replaceUrl( $url );
+		if ( ! empty( $new_url ) ) {
+			$url = $new_url;
+			if ( $cdn ) {
+				$url = get_rocket_cdn_url( $url, [ 'images' ] );
+			}
+		}
+		return $url;
 	}
 }
