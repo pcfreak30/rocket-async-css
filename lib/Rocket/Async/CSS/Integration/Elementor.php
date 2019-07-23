@@ -353,32 +353,4 @@ class Elementor extends Component {
 		}
 
 	}
-
-	private function process_url( $url ) {
-
-		if ( preg_match( '/\.webp$/', $url ) ) {
-			return $url;
-		}
-
-		$domain      = $this->plugin->domain;
-		$cdn_domains = $this->plugin->cdn_domains;
-
-		$url_parts = parse_url( $url );
-		$cdn       = false;
-
-		if ( in_array( $url_parts['host'], $cdn_domains ) ) {
-			$url_parts['host'] = $domain;
-			$url               = http_build_url( $url_parts );
-			$cdn               = true;
-		}
-
-		$new_url = $this->image_replace->replaceUrl( $url );
-		if ( ! empty( $new_url ) ) {
-			$url = $new_url;
-			if ( $cdn ) {
-				$url = get_rocket_cdn_url( $url, [ 'images' ] );
-			}
-		}
-		return $url;
-	}
 }
