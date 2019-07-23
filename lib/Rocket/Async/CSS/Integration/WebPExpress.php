@@ -210,7 +210,7 @@ class WebPExpress extends Component {
 		return $upload;
 	}
 
-	private function process_url( $url ) {
+	public function process_url( $url ) {
 
 		if ( preg_match( '/\.webp$/', $url ) ) {
 			return $url;
