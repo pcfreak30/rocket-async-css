@@ -27,6 +27,7 @@ class Request extends Component {
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_async_css', '__return_zero' );
 			add_action( 'wp_footer', [ $this, 'scripts' ], PHP_INT_MAX );
+			add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
 		}
 		add_filter( 'pre_get_rocket_option_minify_concatenate_css', '__return_zero' );
 
