@@ -16,7 +16,7 @@ This is NOT an official addon to WP-Rocket!
 
 This plugin will combine all inline and external CSS in the order found on the page and save it to WP-Rocket's cache folder as a new file. Files with media attributes are wrapped in `@media` selectors during processing. Async is powered by [https://github.com/filamentgroup/loadCSS](https://github.com/filamentgroup/loadCSS).
 
-If you need dedicated/professional assistance with this plugin or just want an expert to get your site to run the fastest it can be, you may hire me at [Codeable](https://codeable.io/developers/derrick-hammer/?ref=rvtGZ)
+If you are looking for a professional team to get your WordPress site to run faster, check us out for our speed optimization services at [Rank Grow Digital](https://rankgrowdigital.com/)
 
 Filters `rocket_async_css_process_style` and `rocket_async_css_process_file` can be used to selectively exclude any inline CSS or external CSS from minify and async loading.
 
@@ -55,6 +55,35 @@ This section describes how to install the plugin and get it working.
 4. View HTML source, and test it out!
 
 == Changelog ==
+
+
+### 0.7.1.0 ###
+
+* Bug: Don't do any image processing in admin
+* Bug: Ensure the CDN url is not hashed when caching local files
+* Feature: Add integration with Elementor to support WebP
+* Feature: Add integration with WebPExpress to support WebP in css processing
+* Feature: Add font display support using a filter
+* Feature: Add font-display support for Elementor "eicon" font
+* Feature: Add font-display support for FontAwesome
+* Feature: Add font-display support for GoogleFonts
+* Feature: Add font-display support for Layers icon font
+* Feature: Add font-display support for IcoMoons font
+* Feature: Add new pre-post-processing step to scan and storte a liost of all referenced assets to prioritize local versions of files over remote ones and reduce the chance of duplicates loading
+* Enhancement: Add support for modifying the minify cache key
+* Enhancement: Add support for WebP in the minify cache
+* Enhancement: Ensure image src/data-src removed if srcset exists
+* Enhancement: Major refactor of CSS processing logic using a callback approach and separating to a dedicated process_css method
+* Enhancement: Ensure comments are stripped out from CSS
+* Enhancement: Allow caching read/save to be bypassed
+* Enhancement: Rewrite Responsive Images module to use DOMDocument vs string/regex parsing to improve memory performance
+* Enhancement: Cache fetch calls to reduce network processing
+* Enhancement: Add compatibility with Essential Addons for Elementor
+* Enhancement: Add cache compatibility with Elementor to ensure CSS is cleared on site purge
+* Enhancement: Have the wp-rocket preload bot run on a sitewide purge
+* Compatibility: Add compatibility with Elementor image carousel to render responsive images
+* Compatibility: Add Divi compatibility to disable CSS concatenation
+* Compatibility: Add integration with Rank Math SEO to not process the sitemap
 
 ### 0.7.0.13.1 ###
 

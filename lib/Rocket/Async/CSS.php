@@ -19,7 +19,7 @@ class CSS extends Plugin {
 	/**
 	 * Plugin version
 	 */
-	const VERSION = '0.7.0.13.1';
+	const VERSION = '0.7.1.0';
 
 	/**
 	 *  Transient Prefix
