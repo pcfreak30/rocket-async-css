@@ -3,7 +3,7 @@ Contributors: pcfreak30
 Donate link: https://www.paypal.me/pcfreak30
 Tags: optimize, wp-rocket, async css
 Requires at least: 4.5
-Tested up to: 4.9.4
+Tested up to: 5.2
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
