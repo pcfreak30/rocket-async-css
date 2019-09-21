@@ -22,7 +22,7 @@ class ResponsiveImages extends Component {
 	}
 
 	public function init() {
-		if ( is_admin() ) {
+		if ( is_admin() || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) || wp_is_json_request()) {
 			return;
 		}
 		add_filter( 'the_content', [ $this, 'process' ], 8 );
