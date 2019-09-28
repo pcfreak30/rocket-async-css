@@ -432,7 +432,7 @@ class CSS extends Plugin {
 			}
 			if ( 'style' === $name ) {
 				if ( null === $nested_tag ) {
-					if ( has_filter( 'rocket_async_css_process_style' ) && ! apply_filters( 'rocket_async_css_process_style', true, $tag->textContent ) ) {
+					if ( has_filter( 'rocket_async_css_process_style' ) && ! apply_filters( 'rocket_async_css_process_style', true, $this->util->maybe_decode_script( $tag->textContent ) ) ) {
 						continue;
 					}
 					$this->build_style_list( $tag );
@@ -442,8 +442,9 @@ class CSS extends Plugin {
 			if ( 'link' === $name ) {
 				$this->cache_list['external'][] = $href;
 			} else {
-				$this->cache_list['inline'][] = $tag->textContent;
+				$this->cache_list['inline'][] = $this->util->maybe_decode_script( $tag->textContent );
 			}
+			
 			$this->get_media_document( $media )->appendChild( $tag );
 		}
 	}
@@ -1093,7 +1094,7 @@ class CSS extends Plugin {
 			// Only run if there is no item cache
 			if ( empty( $item_cache ) ) {
 				// Remove any conditional comments for IE that somehow was put in the script tag
-				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', rocket_async_css_instance()->util->maybe_decode_script( $tag->textContent ) );
+				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $this->util->maybe_decode_script( $tag->textContent ) );
 				//Minify ?
 				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 				$this->update_cache_fragment( $item_cache_id, $css_part );
