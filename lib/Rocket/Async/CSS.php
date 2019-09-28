@@ -906,23 +906,21 @@ class CSS extends Plugin {
 					}
 					$chars  = "' " . '"';
 					$srcses = [];
-					if ( isset( $css_rules['src'] ) ) {
-						preg_match_all( self::URL_SRC_REGEX, $css_rules['src'], $src_matches );
-						if ( ! empty( $src_matches ) && ! empty( $src_matches[1] ) ) {
-							$srcses = array_values( $src_matches[2] );
-						}
+					$regex  = self::URL_SRC_REGEX;
+					$regex  = trim( $regex, '/' );
+
+					preg_match_all( "/src:\s*{$regex}/", $font_face_match[1], $src_matches );
+					if ( ! empty( $src_matches ) && ! empty( $src_matches[1] ) ) {
+						$srcses = array_values( $src_matches[2] );
 					}
 					$font_display = apply_filters( 'rocket_async_css_font_display', 'auto', array_merge( $css_rules, [ 'font-family' => ltrim( rtrim( $css_rules['font-family'], $chars ), $chars ) ] ), $url, $srcses );
 					if ( 'auto' !== $font_display ) {
-						$css_rules['font-display'] = $font_display;
-						$css_rule_strings          = [];
-						foreach ( $css_rules as $rule => $value ) {
-							$value              = rtrim( $value );
-							$value              = rtrim( $value, ';' );
-							$css_rule_strings[] = "{$rule}: $value;";
+						if ( false !== strpos( $font_face_match[1], 'font-display' ) ) {
+							$new_font_face = preg_replace( '/font-display\s*:\s*\w+;/', "font-display: {$font_display};", $font_face_match[1] );
+						} else {
+							$new_font_face = trim( trim( $font_face_match[1] ), '{}' ) . ";font-display: {$font_display};";
 						}
-						$new_font_face = implode( '', $css_rule_strings );
-						$css           = str_replace( $font_face_match[1], "{{$new_font_face}}", $css );
+						$css = str_replace( $font_face_match[1], "{{$new_font_face}}", $css );
 					}
 				}
 			}
