@@ -976,7 +976,7 @@ class CSS extends Plugin {
 			$href = $this->home . $href;
 		}
 		// Break up url
-		$href      = $this->strip_cdn( $href );
+		$href = $this->strip_cdn( $href );
 
 		// Remove query strings
 		$url_parts = parse_url( $href );
@@ -1093,7 +1093,7 @@ class CSS extends Plugin {
 			// Only run if there is no item cache
 			if ( empty( $item_cache ) ) {
 				// Remove any conditional comments for IE that somehow was put in the script tag
-				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $tag->textContent );
+				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', rocket_async_css_instance()->util->maybe_decode_script( $tag->textContent ) );
 				//Minify ?
 				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 				$this->update_cache_fragment( $item_cache_id, $css_part );
