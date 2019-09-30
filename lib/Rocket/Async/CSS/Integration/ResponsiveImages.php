@@ -22,7 +22,11 @@ class ResponsiveImages extends Component {
 	}
 
 	public function init() {
-		if ( is_admin() || ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) || wp_is_json_request()) {
+		add_filter( 'wp', [ $this, 'wp_loaded' ] );
+	}
+
+	public function wp_loaded() {
+		if ( is_admin() || wp_is_xml_request() || wp_is_json_request() || is_feed() ) {
 			return;
 		}
 		add_filter( 'the_content', [ $this, 'process' ], 8 );
