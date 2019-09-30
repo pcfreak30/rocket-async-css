@@ -2,8 +2,8 @@
 
 namespace Rocket\Async\CSS\Cache;
 
-use pcfreak30\WordPress\Cache\Store;
 use ComposePress\Core\Abstracts\Component;
+use pcfreak30\WordPress\Cache\Store;
 use Rocket\Async\CSS;
 
 class Manager extends Component {
@@ -33,7 +33,8 @@ class Manager extends Component {
 		add_action( 'after_rocket_clean_post', [ $this, 'purge_post' ] );
 		add_action( 'after_rocket_clean_term', [ $this, 'purge_term' ] );
 		add_action( 'after_rocket_clean_file', [ $this, 'purge_url' ] );
-		add_action( 'after_rocket_clean_domain', 'run_rocket_sitemap_preload', 10, 0 );
+		add_action( 'after_rocket_clean_domain', [ $this, 'do_preload' ], 10, 0 );
+		add_action( 'wp_rocket_start_preload', 'run_rocket_sitemap_preload', 10, 0 );
 		$this->store->set_prefix( CSS::TRANSIENT_PREFIX );
 		$interval = 0;
 		if ( function_exists( 'get_rocket_purge_cron_interval' ) ) {
@@ -41,6 +42,16 @@ class Manager extends Component {
 		}
 		$this->store->set_expire( apply_filters( 'rocket_async_css_cache_expire_period', $interval ) );
 		$this->store->set_max_branch_length( apply_filters( 'rocket_async_css_max_branch_length', 50 ) );
+	}
+
+
+	function do_preload() {
+		if ( wp_doing_cron() ) {
+			run_rocket_sitemap_preload();
+
+			return;
+		}
+		wp_schedule_single_event( time(), 'wp_rocket_start_preload' );
 	}
 
 	/**
