@@ -8,7 +8,6 @@ use ComposePress\Core\Abstracts\Component;
 class Genesis extends Component {
 	public function init() {
 		add_action( 'init', [ $this, 'is_theme_active' ] );
-		add_action( 'wp_enqueue_scripts', [ $this, 'assets' ], 11 );
 	}
 
 	public function is_theme_active() {
@@ -19,6 +18,7 @@ class Genesis extends Component {
 				add_filter( "genesis_attr_nav-{$location}-toggle", [ $this, 'modify_hamburger_button_attr' ] );
 				add_filter( 'genesis_do_nav', [ $this, 'add_hamburger_button' ], 10, 3 );
 			}
+			add_action( 'wp_enqueue_scripts', [ $this, 'assets' ], 11 );
 		}
 	}
 
