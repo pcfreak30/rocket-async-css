@@ -380,15 +380,16 @@ class CSS extends Plugin {
 	 */
 	private function build_style_list( $nested_tag = null ) {
 		if ( null !== $nested_tag ) {
+			$content = $this->util->maybe_decode_script( $nested_tag->textContent );
 			/** @noinspection NotOptimalRegularExpressionsInspection */
-			if ( ! preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $nested_tag->textContent ) ) {
+			if ( ! preg_match( '/<([a-z]+) rel="stylesheet"([^<]+)*(?:>(.*)|\s+\/?>)/U', $content ) ) {
 				return;
 			}
 			$document = new DOMDocument();
-			if ( ! @$document->loadHTML( $nested_tag->textContent ) ) {
+			if ( ! @$document->loadHTML( $content ) ) {
 				return;
 			}
-			$nested_tag->textContent = strip_tags( $nested_tag->textContent );
+			$nested_tag->textContent = $this->util->encode_script( strip_tags( $nested_tag->textContent ) );
 		}
 		$xpath        = new \DOMXPath( isset( $document ) ? $document : $this->document );
 		$excluded_css = implode( '|', function_exists( 'get_rocket_exclude_files' ) ? get_rocket_exclude_files( 'css' ) : get_rocket_exclude_css() );
@@ -444,7 +445,7 @@ class CSS extends Plugin {
 			} else {
 				$this->cache_list['inline'][] = $this->util->maybe_decode_script( $tag->textContent );
 			}
-			
+
 			$this->get_media_document( $media )->appendChild( $tag );
 		}
 	}
@@ -1086,15 +1087,18 @@ class CSS extends Plugin {
 	private function process_inline_style(
 		$tag, $media, $minify
 	) {
+
+		$content = $this->util->maybe_decode_script( $tag->textContent );
+
 		if ( $minify ) {
 			// Check item cache
-			$item_cache_id = [ md5( $tag->textContent ) ];
+			$item_cache_id = [ md5( $content ) ];
 			$item_cache_id = apply_filters( 'rocket_async_css_get_inline_style_cache_id', $item_cache_id );
 			$item_cache    = $this->get_cache_fragment( $item_cache_id );
 			// Only run if there is no item cache
 			if ( empty( $item_cache ) ) {
 				// Remove any conditional comments for IE that somehow was put in the script tag
-				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $this->util->maybe_decode_script( $tag->textContent ) );
+				$css_part = preg_replace( '/(?:<!--)?\[if[^\]]*?\]>.*?<!\[endif\]-->/is', '', $content );
 				//Minify ?
 				$css_part = $this->minify_css( $css_part, [], home_url( $_SERVER['REQUEST_URI'] ) );
 				$this->update_cache_fragment( $item_cache_id, $css_part );
@@ -1107,7 +1111,7 @@ class CSS extends Plugin {
 			return;
 		}
 
-		$this->hash_local_files( $tag->textContent, home_url( $_SERVER['REQUEST_URI'] ) );
+		$this->hash_local_files( $content, home_url( $_SERVER['REQUEST_URI'] ) );
 	}
 
 	/**
