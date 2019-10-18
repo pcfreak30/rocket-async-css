@@ -56,6 +56,14 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.1.1 ###
+
+* Bug:  Ensure admin pages, xml requests, xmlrpc requests, feed requests, and JSON requests are ignmored by the responsive images module
+* Bug: Encode both scripts and styles in DOM processing due to further edge cases found
+* Enhancement: Simplify lazy load font parsing and catch edge cases with embedded fonts
+* Enhancement: Ensure wp-rocket preload only runs on cron by conditionally deferring it
+* Compatibility: Add compatibility with genesis theme
+* Misc: Defer init checks for responsive Image module since the request needs to be parsed
 
 ### 0.7.1.0 ###
 
