@@ -55,7 +55,7 @@ class ResponsiveImages extends Component {
 			$partial     = true;
 		}
 
-		if ( ! @$this->document->loadHTML( mb_convert_encoding( $new_content, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+		if ( ! @$this->document->loadHTML( $new_content ) ) {
 			return $content;
 		}
 

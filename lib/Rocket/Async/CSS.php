@@ -292,7 +292,7 @@ class CSS extends Plugin {
 		$this->disable_minify_overrides();
 		if ( $this->do_process_page( $buffer ) ) {
 			// Import HTML
-			if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+			if ( ! @$this->document->loadHTML( $buffer ) ) {
 				return $buffer;
 			}
 
