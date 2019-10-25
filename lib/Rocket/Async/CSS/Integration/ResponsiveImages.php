@@ -46,6 +46,13 @@ class ResponsiveImages extends Component {
 	}
 
 	public function process( $content ) {
+
+		if ( wp_doing_ajax() ) {
+			if ( json_decode( $content ) ) {
+				return $content;
+			}
+		}
+
 		$new_content = $content;
 
 		$partial = false;
