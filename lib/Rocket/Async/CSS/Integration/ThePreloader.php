@@ -45,7 +45,7 @@ class ThePreloader extends Component {
 	 * @return string
 	 */
 	public function inject_div( $buffer ) {
-		if ( ! @$this->document->loadHTML( mb_convert_encoding( $buffer, 'HTML-ENTITIES', 'UTF-8' ) ) ) {
+		if ( ! @$this->document->loadHTML( $buffer ) ) {
 			return $buffer;
 		}
 		if ( null === $this->document->getElementById( 'wptime-plugin-preloader' ) ) {
