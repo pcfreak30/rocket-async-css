@@ -923,8 +923,8 @@ class CSS extends Plugin {
 							$new_font_face = trim( trim( $font_face_match[1] ), '{}' ) . ";font-display: {$font_display};";
 						}
 
-						$new_font_face = trim( trim( $font_face_match[1] ), '{}' );
-						$css = str_replace( $font_face_match[1], "{{$new_font_face}}", $css );
+						$new_font_face = trim( trim( $new_font_face ), '{}' );
+						$css           = str_replace( $font_face_match[1], "{{$new_font_face}}", $css );
 					}
 				}
 			}
