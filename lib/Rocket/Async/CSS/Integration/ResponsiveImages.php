@@ -207,7 +207,6 @@ class ResponsiveImages extends Component {
 			}
 
 			$image_document = new DOMDocument();
-			$new_image      = mb_convert_encoding( $new_image, 'HTML-ENTITIES', 'UTF-8' );
 			@$image_document->loadHTML( "<html><head></head><body>{$new_image}</body></html>" );
 			$image->parentNode->replaceChild( $this->document->importNode( $image_document->getElementsByTagName( 'img' )->item( 0 ), true ), $image );
 			$collection->next();
