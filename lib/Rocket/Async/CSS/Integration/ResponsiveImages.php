@@ -26,7 +26,7 @@ class ResponsiveImages extends Component {
 	}
 
 	public function wp_loaded() {
-		if ( is_admin() || wp_is_xml_request() || wp_is_json_request() || is_feed() ) {
+		if ( is_admin() || wp_is_xml_request() || wp_is_json_request() || is_feed() || ( function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) ) {
 			return;
 		}
 		add_filter( 'the_content', [ $this, 'process' ], 8 );
