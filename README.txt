@@ -56,6 +56,14 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+
+### 0.7.1.2 ###
+
+* Bug: Do additional cleanup on font processing to prevent bad syntax
+* Bug: Don't process AJAX JSON requests
+* Bug: Exclude ResponsiveImage processing from AMP
+* Enhancement: Centralize multibyte encoding for entities into the DOMDocument class so that style tags do not get processed
+
 ### 0.7.1.1 ###
 
 * Bug:  Ensure admin pages, xml requests, xmlrpc requests, feed requests, and JSON requests are ignmored by the responsive images module
