@@ -27,7 +27,7 @@ class Request extends Component {
 			add_filter( 'pre_get_rocket_option_minify_google_fonts', '__return_zero' );
 			add_filter( 'pre_get_rocket_option_async_css', '__return_zero' );
 			add_action( 'wp_footer', [ $this, 'scripts' ], PHP_INT_MAX );
-			add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+			add_action( 'wp_head', [ $this, 'polyfill_detect' ] );
 		}
 		add_filter( 'pre_get_rocket_option_minify_concatenate_css', '__return_zero' );
 
@@ -62,16 +62,21 @@ class Request extends Component {
 		return 1;
 	}
 
-	public function enqueue_scripts() {
-		wp_enqueue_script( 'picturefill', plugins_url( 'assets/js/picturefill.min.js', $this->plugin->get_plugin_file() ), '3.0.3' );
-	}
-
 	public function process_buffer( $buffer ) {
 		if ( apply_filters( 'rocket_async_css_do_request_buffer', true ) ) {
 			$buffer = apply_filters( 'rocket_async_css_request_buffer', $buffer );
 		}
 
 		return $buffer;
+	}
+
+	public function polyfill_detect() {
+		$polyfill_url = plugins_url( 'assets/js/picturefill.min.js', $this->plugin->get_plugin_file() );
+		?>
+        <script type="text/javascript" data-no-minify="1">
+            !(window.HTMLPictureElement||"sizes"in document.createElement("img"))&&function(b,a){a=b.createElement("script");a.type="text/javascript";a.async=!0;a.src=<?= wp_json_encode( $polyfill_url ) ?>;b.getElementsByTagName("head")[0].appendChild(a)}(document);
+        </script>
+		<?php
 	}
 
 
@@ -82,6 +87,7 @@ class Request extends Component {
             if (window.CustomEvent) {
                 window.dispatchEvent(new CustomEvent("JSLoaded"));
             }
+
         </script>
 		<?php
 	}
