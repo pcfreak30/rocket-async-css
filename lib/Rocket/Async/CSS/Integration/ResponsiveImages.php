@@ -8,8 +8,26 @@ use ComposePress\Core\Abstracts\Component;
 use Rocket\Async\CSS\DOMCollection;
 use Rocket\Async\CSS\DOMDocument;
 
+/**
+ * Class ResponsiveImages
+ * @package Rocket\Async\CSS\Integration
+ */
 class ResponsiveImages extends Component {
+	/**
+	 *
+	 */
+	const CACHE_NAME_URL_TO_ID = 'rocket_async_css_responsive_images_urls';
+	/**
+	 *
+	 */
+	const CACHE_NAME_ID_TO_URL = 'rocket_async_css_responsive_images';
+	/**
+	 * @var
+	 */
 	private $current_guid;
+	/**
+	 * @var DOMDocument
+	 */
 	private $document;
 
 	/**
@@ -21,10 +39,16 @@ class ResponsiveImages extends Component {
 		$this->document = $document;
 	}
 
+	/**
+	 *
+	 */
 	public function init() {
 		add_filter( 'wp', [ $this, 'wp_loaded' ] );
 	}
 
+	/**
+	 *
+	 */
 	public function wp_loaded() {
 		if ( is_admin() || wp_is_xml_request() || wp_is_json_request() || is_feed() || ( function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) ) {
 			return;
@@ -43,8 +67,15 @@ class ResponsiveImages extends Component {
 		add_filter( 'rocket_async_css_request_buffer', 'wp_make_content_images_responsive', 9999 );
 		add_filter( 'rocket_async_css_request_buffer', [ $this, 'process' ], 10000 );
 		add_filter( 'wp_get_attachment_image_attributes', [ $this, 'maybe_remove_src' ], 10, 2 );
+		add_action( 'attachment_updated', [ $this, 'clear_attachment_cache' ] );
+		add_action( 'delete_attachment', [ $this, 'clear_attachment_cache' ] );
 	}
 
+	/**
+	 * @param $content
+	 *
+	 * @return string|string[]|null
+	 */
 	public function process( $content ) {
 
 		if ( wp_doing_ajax() ) {
@@ -131,18 +162,24 @@ class ResponsiveImages extends Component {
 					$collection->next();
 					continue;
 				}
-				add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-				$this->current_guid = $this->plugin->strip_cdn( $src );
-				$attachments        = get_posts( [
-					'post_type'        => 'attachment',
-					'suppress_filters' => false,
-					'posts_per_page'   => 1,
-					'order_by'         => 'none',
-				] );
-				remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
-				if ( ! empty( $attachments ) ) {
-					$attachment_id = end( $attachments )->ID;
+				$striped_src = $this->plugin->strip_cdn( $src );
+				if ( ! ( $attachments = wp_cache_get( $striped_src, self::CACHE_NAME_URL_TO_ID ) ) ) {
+					add_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+					$this->current_guid = $striped_src;
+					$attachments        = get_posts( [
+						'post_type'        => 'attachment',
+						'suppress_filters' => false,
+						'posts_per_page'   => 1,
+						'order_by'         => 'none',
+					] );
+					remove_filter( 'posts_where_paged', [ $this, 'filter_where' ] );
+					if ( ! empty( $attachments ) ) {
+						$attachment_id = end( $attachments )->ID;
+					}
+					wp_cache_set( $striped_src, $attachment_id, self::CACHE_NAME_URL_TO_ID );
+					wp_cache_set( $attachment_id, $striped_src, self::CACHE_NAME_ID_TO_URL );
 				}
+
 				if ( empty( $attachment_id ) ) {
 					$collection->next();
 					continue;
@@ -226,6 +263,11 @@ class ResponsiveImages extends Component {
 		return $content;
 	}
 
+	/**
+	 * @param $where
+	 *
+	 * @return string
+	 */
 	public
 	function filter_where(
 		$where
@@ -242,6 +284,12 @@ class ResponsiveImages extends Component {
 		return $where;
 	}
 
+	/**
+	 * @param $attr
+	 * @param \WP_Post $attachment
+	 *
+	 * @return mixed
+	 */
 	public function maybe_remove_src( $attr, \WP_Post $attachment ) {
 		if ( ! empty( $attr['srcset'] ) || ! empty( $attr['data-srcset'] ) ) {
 			if ( isset( $attr['src'] ) ) {
@@ -260,5 +308,15 @@ class ResponsiveImages extends Component {
 		$attr['class'] = implode( ' ', $classes );
 
 		return $attr;
+	}
+
+	/**
+	 * @param $post_id
+	 */
+	public function clear_attachment_cache( $post_id ) {
+		if ( $url = wp_cache_get( $post_id, self::CACHE_NAME_ID_TO_URL ) ) {
+			wp_cache_delete( $url, self::CACHE_NAME_URL_TO_ID );
+			wp_cache_delete( $post_id, self::CACHE_NAME_ID_TO_URL );
+		}
 	}
 }
