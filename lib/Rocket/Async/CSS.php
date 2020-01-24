@@ -1368,7 +1368,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			}
 
 			$hash      = md5( $match_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $match_parts['port'] ) ? ":{$match_parts['port']}" : '' ) . '/' . $info['filename'] );
-			$filename  = $this->get_cache_path() . $hash . '.' . $info['extension'];
+			$filename  = $this->get_cache_path() . $hash . ( ! empty( $info['extension'] ) ? '.' . $info['extension'] : '' );
 			$final_url = parse_url( get_rocket_cdn_url( set_url_scheme( str_replace( WP_CONTENT_DIR, WP_CONTENT_URL, $filename ) ), [
 				'all',
 				'css',
