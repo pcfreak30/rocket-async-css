@@ -88,6 +88,11 @@ class ResponsiveImages extends Component {
 
 		$partial = false;
 
+		if ( has_filter( current_filter(), 'wpautop' ) ) {
+			$new_content = wpautop( $new_content );
+			$new_content = shortcode_unautop( $new_content );
+		}
+
 		if ( ! preg_match( '/<html[^>]*>/', $new_content ) ) {
 			$new_content = "<html><head></head><body><div id=\"domdoc_content\">{$new_content}</div></body></html>";
 			$partial     = true;
