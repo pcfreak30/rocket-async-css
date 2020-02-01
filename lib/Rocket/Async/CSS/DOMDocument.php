@@ -21,13 +21,6 @@ class DOMDocument extends \DOMDocument {
 		return @parent::loadHTML( $source, $options );
 	}
 
-	public function loadXML( $source, $options = 0 ) {
-		$source = $this->pre_process_scripts( $source );
-		$source = $this->pre_process_styles( $source );
-		$source = mb_convert_encoding( $source, 'HTML-ENTITIES', 'UTF-8' );
-
-		return @parent::loadXML( $source, $options );
-	}
 
 	public function pre_process_scripts( $buffer ) {
 		return preg_replace_callback( '~(<script[^>]*>)(.*)(<\/script>)~isU', [
