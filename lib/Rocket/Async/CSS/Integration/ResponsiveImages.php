@@ -93,7 +93,7 @@ class ResponsiveImages extends Component {
 			$partial     = true;
 		}
 
-		if ( ! @$this->document->loadHTML( $new_content ) ) {
+		if ( ! @$this->document->loadXML( $new_content ) ) {
 			return $content;
 		}
 
