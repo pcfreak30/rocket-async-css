@@ -86,10 +86,7 @@ class ResponsiveImages extends Component {
 
 		$new_content = $content;
 
-		$partial             = false;
-		$newline_placeholder = '<!-- wpnl -->';
-
-		$new_content = str_replace( "\n", $newline_placeholder, $new_content );
+		$partial = false;
 
 		if ( ! preg_match( '/<html[^>]*>/', $new_content ) ) {
 			$new_content = "<html><head></head><body><div id=\"domdoc_content\">{$new_content}</div></body></html>";
@@ -253,7 +250,7 @@ class ResponsiveImages extends Component {
 		}
 
 		if ( ! $partial ) {
-			return str_replace( $newline_placeholder, "\n", $this->document->saveHTML() );
+			return $this->document->saveHTML();
 		}
 
 		$content = '';
@@ -263,7 +260,7 @@ class ResponsiveImages extends Component {
 			$content .= $this->document->saveHTML( $node );
 		}
 
-		return str_replace( $newline_placeholder, "\n", $content );
+		return $content;
 	}
 
 	/**
