@@ -28,6 +28,7 @@ class Request extends Component {
 			add_filter( 'pre_get_rocket_option_async_css', '__return_zero' );
 			add_action( 'wp_footer', [ $this, 'scripts' ], PHP_INT_MAX );
 			add_action( 'wp_head', [ $this, 'polyfill_detect' ] );
+			add_action( 'mime_types', [ $this, 'register_mimes' ] );
 		}
 		add_filter( 'pre_get_rocket_option_minify_concatenate_css', '__return_zero' );
 
@@ -90,5 +91,13 @@ class Request extends Component {
 
         </script>
 		<?php
+	}
+
+	public function register_mimes( $mimes ) {
+		$mimes['woff2'] = 'application/font-woff2';
+		$mimes['woff']  = 'application/font-woff';
+		$mimes['otf']   = 'font/opentype';
+		$mimes['ttf']   = 'font/truetype';
+		return $mimes;
 	}
 }

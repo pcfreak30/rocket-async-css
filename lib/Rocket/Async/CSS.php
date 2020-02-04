@@ -1356,6 +1356,7 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 		}
 		$fixed_match = http_build_url( $this->get_url_parts( $match, $url ) );
 		$data        = $this->remote_fetch( $fixed_match );
+
 		if ( ! empty( $data ) ) {
 			$content_hash = md5( $data );
 			$match_parts  = parse_url( $this->file_hash_cache[ $content_hash ] );
@@ -1365,6 +1366,22 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			}
 			if ( empty( $match_parts['scheme'] ) ) {
 				$match_parts['scheme'] = 'http';
+			}
+
+			if ( empty( $info['extension'] ) ) {
+				$request = wp_remote_head( $fixed_match, [
+					'user-agent' => 'WP-Rocket',
+					'sslverify'  => false,
+				] );
+
+				$mime_type = wp_remote_retrieve_header( $request, 'content-type' );
+				if ( empty( $mime_type ) ) {
+					$mime_type = wp_remote_retrieve_header( $request, 'Content-Type' );
+				}
+				$mimes = array_flip( wp_get_mime_types() );
+				if ( isset( $mimes[ $mime_type ] ) ) {
+					$info['extension'] = $mimes[ $mime_type ];
+				}
 			}
 
 			$hash      = md5( $match_parts['scheme'] . '://' . $info['dirname'] . ( ! empty( $match_parts['port'] ) ? ":{$match_parts['port']}" : '' ) . '/' . $info['filename'] );
