@@ -1524,9 +1524,9 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 	 */
 	private function parse_css_imports( $matches, $match, $index, $match_parts, $css, $url ) {
 		if ( $this->is_url_parts_remote( $match_parts ) ) {
-			$imported_data = $this->remote_fetch( $match );
+			$imported_data = $this->remote_fetch( http_build_url( $match_parts ) );
 		} else {
-			$match = $this->strip_cdn( $match );
+			$match = $this->strip_cdn( http_build_url( $match_parts ) );
 			// Is this a URL? If so replace with ABSPATH
 			$path          = str_replace( $this->home, untrailingslashit( ABSPATH ), $match );
 			$imported_data = $this->get_content( $path );
