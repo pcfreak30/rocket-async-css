@@ -5,7 +5,6 @@
     "pcfreak30/wordpress-cache-store": "^0.1.0",
     "composepress/core": "^0.3.0",
     "pguardiario/phpuri": "^1.0",
-    "ext-fileinfo": "*"
   },
   "autoload": {
     "psr-4": {
