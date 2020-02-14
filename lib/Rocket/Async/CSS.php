@@ -1355,7 +1355,12 @@ c)return b();setTimeout(function(){g(b)})};a.addEventListener&&a.addEventListene
 			return $css;
 		}
 		$fixed_match = http_build_url( $this->get_url_parts( $match, $url ) );
-		$data        = $this->remote_fetch( $fixed_match );
+
+		if ( ! apply_filters( 'rocket_async_css_do_download_remote_file', true, $fixed_match, $css ) ) {
+			return $css;
+		}
+
+		$data = $this->remote_fetch( $fixed_match );
 
 		if ( ! empty( $data ) ) {
 			$content_hash = md5( $data );
