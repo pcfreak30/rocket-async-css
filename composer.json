@@ -4,7 +4,7 @@
     "level-2/dice": "dev-v2.0-PHP5.4-5.5",
     "pcfreak30/wordpress-cache-store": "^0.1.0",
     "composepress/core": "^0.3.0",
-    "pguardiario/phpuri": "^1.0",
+    "pguardiario/phpuri": "^1.0"
   },
   "autoload": {
     "psr-4": {
