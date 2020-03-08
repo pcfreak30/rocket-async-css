@@ -56,6 +56,17 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+### 0.7.1.3 ###
+
+* Bug: Handle edge case where file does not have an extension when fetching remote files
+* Bug: If wpautop is hooked, call it early to prevent DOMDocument from nuking newlines in ResponsiveImages module
+* Enhancement: Optimize loading of picturefill by doing feature detection to conditionally load script
+* Enhancement: Add support for purging cache via cron, using rocket_aync_css_background_cache_purge_item_threshold filter, and preload cache if enabled after
+* Enhancement: Add object cache support to fetching the attachment ID's for a url to reduce unneeded db strain, in ResponsiveImages module
+* Enhancement: Use the remote server to detect the mime type and map it to our registered types if available when fetching files
+* Enhancement: Add filter, rocket_async_css_do_download_remote_file, to allow skipping fetching a remote file
+* Compatibility: Add Visual Composer compatibility
+
 
 ### 0.7.1.2 ###
 
